@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useSoccer } from "@/context/SoccerContext";
 
 export const LocationPicker: React.FC = () => {
   const { setSelectedLocation, selectedLocation } = useSoccer();
   const [fieldDimensions, setFieldDimensions] = useState({ width: 0, height: 0 });
+  const fieldRef = useRef<HTMLDivElement>(null);
   
   const handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -14,19 +15,20 @@ export const LocationPicker: React.FC = () => {
     setSelectedLocation({ x, y });
   };
   
-  const handleFieldRef = (ref: HTMLDivElement | null) => {
-    if (ref) {
+  // Use useEffect instead of a ref callback to measure the field dimensions
+  useEffect(() => {
+    if (fieldRef.current) {
       setFieldDimensions({
-        width: ref.clientWidth,
-        height: ref.clientHeight
+        width: fieldRef.current.clientWidth,
+        height: fieldRef.current.clientHeight
       });
     }
-  };
+  }, []); // Empty dependency array means this runs once on mount
 
   return (
     <div className="flex min-w-60 flex-col items-stretch justify-center w-[370px] p-4">
       <div 
-        ref={handleFieldRef}
+        ref={fieldRef}
         className="bg-[#468f56] border flex min-h-[205px] max-w-full w-[338px] border-black border-solid relative cursor-pointer"
         onClick={handleFieldClick}
       >
