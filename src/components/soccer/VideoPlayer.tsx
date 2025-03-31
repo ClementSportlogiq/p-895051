@@ -11,6 +11,7 @@ import {
 
 export const VideoPlayer: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const dropdownTriggerRef = useRef<HTMLButtonElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -18,6 +19,7 @@ export const VideoPlayer: React.FC = () => {
   const [gameTime, setGameTime] = useState("05:30");
   const [videoTimeFormatted, setVideoTimeFormatted] = useState("00:00:00:00");
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
 
@@ -25,6 +27,11 @@ export const VideoPlayer: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space") {
+        // Don't trigger play if the dropdown is open
+        if (dropdownOpen) {
+          return;
+        }
+        
         e.preventDefault();
         if (videoRef.current) {
           videoRef.current.play().catch((error) => {
@@ -45,12 +52,21 @@ export const VideoPlayer: React.FC = () => {
           "4": 1.8,
           "5": 4
         };
+        // Close dropdown when changing speed with hotkey
+        if (dropdownOpen && dropdownTriggerRef.current) {
+          dropdownTriggerRef.current.click(); // Close the dropdown
+        }
         handlePlaybackRateChange(speedMap[e.key]);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
+        // Don't trigger pause if the dropdown is open
+        if (dropdownOpen) {
+          return;
+        }
+        
         e.preventDefault();
         if (videoRef.current) {
           videoRef.current.pause();
@@ -66,7 +82,7 @@ export const VideoPlayer: React.FC = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [toast]);
+  }, [toast, dropdownOpen]);
 
   // Update time displays and dispatch custom event for other components
   useEffect(() => {
@@ -221,19 +237,22 @@ export const VideoPlayer: React.FC = () => {
         />
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 bg-black text-white p-4 z-10">
+      <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white p-4 z-10">
         <div 
           className="flex w-full items-center justify-between flex-wrap relative cursor-pointer"
           onClick={handleScrubberClick}
         >
           <div className="bg-white self-stretch h-3 absolute left-0" style={{ width: `${progress}%` }} />
-          <div className="bg-[rgba(136,136,136,1)] self-stretch h-3 w-full" />
+          <div className="bg-[rgba(136,136,136,0.6)] self-stretch h-3 w-full" />
         </div>
         
         <div className="flex w-full items-center gap-[40px_100px] justify-between flex-wrap mt-[17px] max-md:max-w-full">
           <div className="self-stretch flex min-w-60 items-center gap-2 text-base text-white font-normal whitespace-nowrap my-auto max-md:max-w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="bg-[rgba(137,150,159,1)] self-stretch flex items-center gap-2 justify-center my-auto px-2 py-1.5">
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger 
+                ref={dropdownTriggerRef}
+                className="bg-[rgba(137,150,159,1)] self-stretch flex items-center gap-2 justify-center my-auto px-2 py-1.5"
+              >
                 <div className="self-stretch my-auto">Speed:</div>
                 <div className="self-stretch my-auto">{playbackRate}x</div>
                 <ChevronDown className="h-4 w-4" />
