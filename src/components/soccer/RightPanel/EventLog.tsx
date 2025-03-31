@@ -1,6 +1,10 @@
+
 import React from "react";
+import { useSoccer } from "@/context/SoccerContext";
 
 export const EventLog: React.FC = () => {
+  const { events } = useSoccer();
+
   return (
     <div className="border w-full overflow-hidden font-normal flex-1 mt-6 border-black border-solid max-md:max-w-full">
       <div className="border flex w-full items-center gap-2 flex-wrap p-2 border-black border-solid max-md:max-w-full">
@@ -39,7 +43,18 @@ export const EventLog: React.FC = () => {
       </div>
       <div className="w-full text-base text-black flex-1 max-md:max-w-full">
         <EventLogItem isHalfMarker type="start" />
-        <EventLogItem />
+        
+        {/* Display user events */}
+        {events.map(event => (
+          <EventLogItem 
+            key={event.id}
+            gameTime={event.gameTime}
+            videoTime={event.videoTime}
+            eventName={event.eventName}
+            eventDetails={event.eventDetails}
+          />
+        ))}
+        
         <EventLogItem />
         <EventLogItem isHalfMarker type="end" />
       </div>
@@ -50,16 +65,27 @@ export const EventLog: React.FC = () => {
 interface EventLogItemProps {
   isHalfMarker?: boolean;
   type?: "start" | "end";
+  gameTime?: string;
+  videoTime?: string;
+  eventName?: string;
+  eventDetails?: string;
 }
 
-const EventLogItem: React.FC<EventLogItemProps> = ({ isHalfMarker, type }) => {
+const EventLogItem: React.FC<EventLogItemProps> = ({ 
+  isHalfMarker, 
+  type,
+  gameTime = "Game Time",
+  videoTime = "Video Time",
+  eventName = "Event Name",
+  eventDetails = "Event Details"
+}) => {
   return (
     <div
       className={`flex w-full items-stretch flex-wrap ${isHalfMarker ? "border-l-4 border-black" : ""} max-md:max-w-full`}
     >
       <div className="border w-[190px] p-4 border-black border-solid">
-        <div>Game Time</div>
-        <div className={type ? "mt-1" : "flex-1 mt-1"}>Video Time</div>
+        <div>{gameTime}</div>
+        <div className={type ? "mt-1" : "flex-1 mt-1"}>{videoTime}</div>
       </div>
       <div
         className={`border ${!isHalfMarker ? "flex min-w-60 items-center gap-1 flex-wrap" : ""} h-full flex-1 shrink basis-[0%] p-4 border-black border-solid max-md:max-w-full`}
@@ -68,8 +94,8 @@ const EventLogItem: React.FC<EventLogItemProps> = ({ isHalfMarker, type }) => {
           <>
             <div className="self-stretch flex min-w-60 items-center gap-2 flex-1 shrink basis-[0%] my-auto max-md:max-w-full">
               <div className="self-stretch flex min-w-60 w-full flex-col items-stretch justify-center flex-1 shrink basis-[0%] my-auto max-md:max-w-full">
-                <div className="max-md:max-w-full">Event Name</div>
-                <div className="max-md:max-w-full">Event Details</div>
+                <div className="max-md:max-w-full">{eventName}</div>
+                <div className="max-md:max-w-full">{eventDetails}</div>
               </div>
             </div>
             <img
@@ -78,7 +104,7 @@ const EventLogItem: React.FC<EventLogItemProps> = ({ isHalfMarker, type }) => {
             />
           </>
         ) : (
-          "Event Name"
+          eventName
         )}
       </div>
     </div>
