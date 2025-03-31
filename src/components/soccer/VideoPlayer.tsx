@@ -237,7 +237,7 @@ export const VideoPlayer: React.FC = () => {
         />
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white p-4 z-10">
+      <div className="absolute bottom-0 left-0 right-0 text-white p-4 z-10">
         <div 
           className="flex w-full items-center justify-between flex-wrap relative cursor-pointer"
           onClick={handleScrubberClick}

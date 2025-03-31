@@ -1,9 +1,10 @@
 
 import React from "react";
 import { useSoccer } from "@/context/SoccerContext";
+import { Trash2 } from "lucide-react";
 
 export const EventLog: React.FC = () => {
-  const { events } = useSoccer();
+  const { events, removeEvent } = useSoccer();
 
   return (
     <div className="border w-full overflow-hidden font-normal flex-1 mt-6 border-black border-solid max-md:max-w-full">
@@ -48,10 +49,12 @@ export const EventLog: React.FC = () => {
         {events.map(event => (
           <EventLogItem 
             key={event.id}
+            id={event.id}
             gameTime={event.gameTime}
             videoTime={event.videoTime}
             eventName={event.eventName}
             eventDetails={event.eventDetails}
+            onDelete={removeEvent}
           />
         ))}
         
@@ -64,19 +67,23 @@ export const EventLog: React.FC = () => {
 interface EventLogItemProps {
   isHalfMarker?: boolean;
   type?: "start" | "end";
+  id?: string;
   gameTime?: string;
   videoTime?: string;
   eventName?: string;
   eventDetails?: string;
+  onDelete?: (id: string) => void;
 }
 
 const EventLogItem: React.FC<EventLogItemProps> = ({ 
   isHalfMarker, 
   type,
+  id,
   gameTime = "Game Time",
   videoTime = "Video Time",
   eventName = "Event Name",
-  eventDetails = "Event Details"
+  eventDetails = "Event Details",
+  onDelete
 }) => {
   // Set specific game times for half markers
   let displayGameTime = gameTime;
@@ -85,6 +92,12 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
   } else if (isHalfMarker && type === "end") {
     displayGameTime = "45:00";
   }
+
+  const handleDelete = () => {
+    if (id && onDelete) {
+      onDelete(id);
+    }
+  };
 
   return (
     <div
@@ -105,10 +118,12 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
                 <div className="max-md:max-w-full">{eventDetails}</div>
               </div>
             </div>
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/e77b69f6e966445580894134b3c026b9/2faf2560eaf57e587364b9147a528e421f168263?placeholderIfAbsent=true"
-              className="aspect-[1] object-contain w-6 self-stretch shrink-0 my-auto"
-            />
+            <button 
+              onClick={handleDelete}
+              className="cursor-pointer"
+            >
+              <Trash2 className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
+            </button>
           </>
         ) : (
           type === "start" ? "Half Start" : "Half End"
