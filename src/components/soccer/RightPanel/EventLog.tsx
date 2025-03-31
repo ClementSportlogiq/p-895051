@@ -55,7 +55,6 @@ export const EventLog: React.FC = () => {
           />
         ))}
         
-        <EventLogItem />
         <EventLogItem isHalfMarker type="end" />
       </div>
     </div>
@@ -79,12 +78,20 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
   eventName = "Event Name",
   eventDetails = "Event Details"
 }) => {
+  // Set specific game times for half markers
+  let displayGameTime = gameTime;
+  if (isHalfMarker && type === "start") {
+    displayGameTime = "00:00";
+  } else if (isHalfMarker && type === "end") {
+    displayGameTime = "45:00";
+  }
+
   return (
     <div
       className={`flex w-full items-stretch flex-wrap ${isHalfMarker ? "border-l-4 border-black" : ""} max-md:max-w-full`}
     >
       <div className="border w-[190px] p-4 border-black border-solid">
-        <div>{gameTime}</div>
+        <div>{displayGameTime}</div>
         <div className={type ? "mt-1" : "flex-1 mt-1"}>{videoTime}</div>
       </div>
       <div
@@ -104,7 +111,7 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
             />
           </>
         ) : (
-          eventName
+          type === "start" ? "Half Start" : "Half End"
         )}
       </div>
     </div>

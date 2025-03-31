@@ -1,15 +1,32 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useSoccer, TeamType } from "@/context/SoccerContext";
 
 export const RosterPanel: React.FC = () => {
   const { selectedTeam, setSelectedTeam, mltRoster, atlRoster } = useSoccer();
+  const [sortType, setSortType] = useState<"0-9" | "A-Z" | "Pos">("0-9");
 
   const handleTeamSelect = (team: TeamType) => {
     setSelectedTeam(team);
   };
 
-  const currentRoster = selectedTeam === "MTL" ? mltRoster : atlRoster;
+  const handleSortTypeChange = (type: "0-9" | "A-Z" | "Pos") => {
+    setSortType(type);
+  };
+
+  // Get the current roster based on selected team
+  const unsortedRoster = selectedTeam === "MTL" ? mltRoster : atlRoster;
+  
+  // Sort the roster based on the selected sort type
+  const currentRoster = [...unsortedRoster].sort((a, b) => {
+    if (sortType === "0-9") {
+      return a.number - b.number;
+    } else if (sortType === "A-Z") {
+      return a.name.localeCompare(b.name);
+    } else { // Pos
+      return a.position.localeCompare(b.position);
+    }
+  });
   
   // Split roster into 3 columns
   const rosterColumn1 = currentRoster.slice(0, 7);
@@ -43,13 +60,22 @@ export const RosterPanel: React.FC = () => {
           </div>
         </div>
         <div className="self-stretch flex min-w-60 items-center gap-px text-base text-white font-normal whitespace-nowrap flex-wrap flex-1 shrink basis-[0%] my-auto max-md:max-w-full">
-          <div className="self-stretch bg-[rgba(12,37,54,1)] gap-2 my-auto px-2 py-1.5">
+          <div 
+            className={`self-stretch ${sortType === "0-9" ? "bg-[rgba(12,37,54,1)]" : "bg-[rgba(137,150,159,1)]"} cursor-pointer gap-2 my-auto px-2 py-1.5`}
+            onClick={() => handleSortTypeChange("0-9")}
+          >
             0-9
           </div>
-          <div className="self-stretch bg-[rgba(137,150,159,1)] gap-2 my-auto px-2 py-1.5">
+          <div 
+            className={`self-stretch ${sortType === "A-Z" ? "bg-[rgba(12,37,54,1)]" : "bg-[rgba(137,150,159,1)]"} cursor-pointer gap-2 my-auto px-2 py-1.5`}
+            onClick={() => handleSortTypeChange("A-Z")}
+          >
             A-Z
           </div>
-          <div className="self-stretch bg-[rgba(137,150,159,1)] gap-2 my-auto px-2 py-1.5">
+          <div 
+            className={`self-stretch ${sortType === "Pos" ? "bg-[rgba(12,37,54,1)]" : "bg-[rgba(137,150,159,1)]"} cursor-pointer gap-2 my-auto px-2 py-1.5`}
+            onClick={() => handleSortTypeChange("Pos")}
+          >
             Pos
           </div>
         </div>
