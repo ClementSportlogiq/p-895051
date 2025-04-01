@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useSoccer } from "@/context/SoccerContext";
 import { Trash2 } from "lucide-react";

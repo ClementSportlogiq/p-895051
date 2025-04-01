@@ -19,6 +19,7 @@ interface SoccerContextType {
   mltRoster: Player[];
   atlRoster: Player[];
   addEvent: (event: GameEvent) => void;
+  removeEvent: (id: string) => void;
   events: GameEvent[];
 }
 
@@ -88,6 +89,10 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setEvents((prev) => [...prev, event]);
   };
 
+  const removeEvent = (id: string) => {
+    setEvents((prev) => prev.filter(event => event.id !== id));
+  };
+
   return (
     <SoccerContext.Provider
       value={{
@@ -100,6 +105,7 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         mltRoster,
         atlRoster,
         addEvent,
+        removeEvent,
         events
       }}
     >
