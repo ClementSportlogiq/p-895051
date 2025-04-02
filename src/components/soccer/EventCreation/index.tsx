@@ -12,14 +12,40 @@ export const EventCreation: React.FC = () => {
     selectedPlayer, 
     selectedTeam, 
     selectedLocation, 
-    addEvent 
+    addEvent,
+    selectedEventCategory,
+    selectedEventType
   } = useSoccer();
   const { toast } = useToast();
   const [gameTime, setGameTime] = useState<string>("05:30");
   const [videoTime, setVideoTime] = useState<string>("00:00:00:00");
   const [eventName, setEventName] = useState<string>("");
+  const [loggedVideoTime, setLoggedVideoTime] = useState<string>("");
 
-  // Update times from video player
+  // Capture initial time once
+  useEffect(() => {
+    // One-time handler for initial video time
+    const handleInitialTimeUpdate = (e: CustomEvent) => {
+      if (!loggedVideoTime) {
+        setLoggedVideoTime(e.detail.videoTime);
+      }
+      // Only need this once, so remove after setting
+      window.removeEventListener("videoTimeUpdate", handleInitialTimeUpdate as EventListener);
+    };
+
+    window.addEventListener("videoTimeUpdate", handleInitialTimeUpdate as EventListener);
+    
+    // Request current video time
+    const timeUpdateEvent = new CustomEvent("getVideoTimeRequest");
+    window.dispatchEvent(timeUpdateEvent);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener("videoTimeUpdate", handleInitialTimeUpdate as EventListener);
+    };
+  }, [loggedVideoTime]);
+
+  // Separate effect just for current time (for display/save purposes)
   useEffect(() => {
     const handleTimeUpdate = (e: CustomEvent) => {
       setGameTime(e.detail.gameTime);
@@ -40,6 +66,13 @@ export const EventCreation: React.FC = () => {
       window.removeEventListener("getVideoTime", handleGetVideoTime as EventListener);
     };
   }, []);
+
+  // Update logged time when user selects an event type or category
+  useEffect(() => {
+    if ((selectedEventType || selectedEventCategory) && !loggedVideoTime) {
+      setLoggedVideoTime(videoTime);
+    }
+  }, [selectedEventType, selectedEventCategory, videoTime, loggedVideoTime]);
 
   // Handle save button and keyboard shortcuts
   useEffect(() => {
@@ -80,22 +113,63 @@ export const EventCreation: React.FC = () => {
     }
 
     const displayName = `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})`;
+    const eventDetails = selectedEventType || "Event Details";
     
     addEvent({
       id: uuidv4(),
       gameTime,
-      videoTime,
+      videoTime: loggedVideoTime || videoTime,
       player: selectedPlayer,
       team: selectedTeam,
       location: selectedLocation,
       eventName: displayName,
-      eventDetails: eventName || "Event Details"
+      eventDetails: eventDetails,
+      category: selectedEventCategory
     });
 
     toast({
       title: "Event Saved",
       description: `${displayName} event has been saved`
     });
+  };
+
+  // Generate event detail display based on selected data
+  const renderEventDetails = () => {
+    if (!selectedPlayer && !selectedEventCategory && !selectedEventType && !loggedVideoTime) {
+      return (
+        <div className="self-stretch border min-h-7 gap-2 my-auto px-3 py-1 rounded-2xl border-[rgba(137,150,159,1)] border-solid text-[rgba(137,150,159,1)]">
+          Select An Event
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {selectedPlayer && (
+          <div className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 rounded-2xl">
+            {selectedPlayer.number} {selectedPlayer.name} ({selectedTeam})
+          </div>
+        )}
+        
+        {loggedVideoTime && (
+          <div className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 rounded-2xl">
+            {loggedVideoTime}
+          </div>
+        )}
+        
+        {selectedEventCategory && (
+          <div className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 rounded-2xl">
+            {selectedEventCategory}
+          </div>
+        )}
+        
+        {selectedEventType && (
+          <div className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 rounded-2xl">
+            {selectedEventType}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -105,12 +179,8 @@ export const EventCreation: React.FC = () => {
         <EventTree />
         <LocationPicker />
       </div>
-      <div className="flex min-h-12 w-full items-center gap-2.5 text-base text-[rgba(137,150,159,1)] font-normal pl-4 border-black border-t max-md:max-w-full">
-        <div className="self-stretch border min-h-7 gap-2 my-auto px-3 py-1 rounded-2xl border-[rgba(137,150,159,1)] border-solid">
-          {selectedPlayer 
-            ? `Selected: ${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})` 
-            : "Select An Event"}
-        </div>
+      <div className="flex min-h-12 w-full items-center gap-2.5 text-base font-normal pl-4 border-black border-t max-md:max-w-full">
+        {renderEventDetails()}
       </div>
       <div className="bg-white border flex w-full gap-4 text-base font-normal flex-wrap p-4 border-black border-solid max-md:max-w-full">
         <button 

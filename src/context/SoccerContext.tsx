@@ -16,6 +16,10 @@ interface SoccerContextType {
   setSelectedPlayer: (player: Player | null) => void;
   selectedLocation: { x: number; y: number } | null;
   setSelectedLocation: (location: { x: number; y: number } | null) => void;
+  selectedEventCategory: string | null;
+  setSelectedEventCategory: (category: string | null) => void;
+  selectedEventType: string | null;
+  setSelectedEventType: (type: string | null) => void;
   mltRoster: Player[];
   atlRoster: Player[];
   addEvent: (event: GameEvent) => void;
@@ -32,6 +36,7 @@ export interface GameEvent {
   location: { x: number; y: number } | null;
   eventName: string;
   eventDetails: string;
+  category?: string | null;
 }
 
 const SoccerContext = createContext<SoccerContextType | undefined>(undefined);
@@ -83,10 +88,18 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [selectedTeam, setSelectedTeam] = useState<TeamType>("MTL");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ x: number; y: number } | null>(null);
+  const [selectedEventCategory, setSelectedEventCategory] = useState<string | null>(null);
+  const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
 
   const addEvent = (event: GameEvent) => {
     setEvents((prev) => [...prev, event]);
+    
+    // Reset state after adding an event
+    setSelectedPlayer(null);
+    setSelectedLocation(null);
+    setSelectedEventCategory(null);
+    setSelectedEventType(null);
   };
 
   const removeEvent = (id: string) => {
@@ -102,6 +115,10 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setSelectedPlayer,
         selectedLocation,
         setSelectedLocation,
+        selectedEventCategory,
+        setSelectedEventCategory,
+        selectedEventType,
+        setSelectedEventType,
         mltRoster,
         atlRoster,
         addEvent,
