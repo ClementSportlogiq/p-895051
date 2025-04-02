@@ -127,7 +127,7 @@ export const LocationPicker: React.FC = () => {
 
   return (
     <div className="min-w-60 flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
-      <div className="text-black max-md:max-w-full mb-2">Event Location</div>
+      <div className="text-black max-md:max-w-full mb-2 text-center">Event Location</div>
       <div className="bg-[#5a9947] flex justify-center items-center max-w-fit mx-auto">
         <SoccerFieldSVG 
           onClick={handleClick} 

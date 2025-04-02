@@ -20,11 +20,14 @@ interface SoccerContextType {
   setSelectedEventCategory: (category: string | null) => void;
   selectedEventType: string | null;
   setSelectedEventType: (type: string | null) => void;
+  selectedEventDetails: Record<string, string | null> | null;
+  setSelectedEventDetails: (details: Record<string, string | null> | null) => void;
   mltRoster: Player[];
   atlRoster: Player[];
   addEvent: (event: GameEvent) => void;
   removeEvent: (id: string) => void;
   events: GameEvent[];
+  resetEventSelection: () => void;
 }
 
 export interface GameEvent {
@@ -37,6 +40,7 @@ export interface GameEvent {
   eventName: string;
   eventDetails: string;
   category?: string | null;
+  additionalDetails?: Record<string, string | null>;
 }
 
 const SoccerContext = createContext<SoccerContextType | undefined>(undefined);
@@ -90,16 +94,21 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [selectedLocation, setSelectedLocation] = useState<{ x: number; y: number } | null>(null);
   const [selectedEventCategory, setSelectedEventCategory] = useState<string | null>(null);
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<Record<string, string | null> | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
 
-  const addEvent = (event: GameEvent) => {
-    setEvents((prev) => [...prev, event]);
-    
-    // Reset state after adding an event
+  const resetEventSelection = () => {
     setSelectedPlayer(null);
     setSelectedLocation(null);
     setSelectedEventCategory(null);
     setSelectedEventType(null);
+    setSelectedEventDetails(null);
+  };
+
+  const addEvent = (event: GameEvent) => {
+    setEvents((prev) => [...prev, event]);
+    // Reset state after adding an event
+    resetEventSelection();
   };
 
   const removeEvent = (id: string) => {
@@ -119,11 +128,14 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setSelectedEventCategory,
         selectedEventType,
         setSelectedEventType,
+        selectedEventDetails,
+        setSelectedEventDetails,
         mltRoster,
         atlRoster,
         addEvent,
         removeEvent,
-        events
+        events,
+        resetEventSelection
       }}
     >
       {children}
