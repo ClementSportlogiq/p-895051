@@ -1,9 +1,21 @@
+
 import React from "react";
-import { useSoccer } from "@/context/SoccerContext";
+import { useSoccer, GameEvent } from "@/context/SoccerContext";
 import { Trash2 } from "lucide-react";
 
 export const EventLog: React.FC = () => {
   const { events, removeEvent } = useSoccer();
+  
+  // Sort events by game time to ensure chronological order
+  const sortedEvents = [...events].sort((a, b) => {
+    // Convert game time (mm:ss) to seconds for comparison
+    const timeToSeconds = (timeStr: string) => {
+      const [minutes, seconds] = timeStr.split(':').map(Number);
+      return minutes * 60 + seconds;
+    };
+    
+    return timeToSeconds(a.gameTime) - timeToSeconds(b.gameTime);
+  });
 
   return (
     <div className="border w-full overflow-hidden font-normal flex-1 mt-6 border-black border-solid max-md:max-w-full">
@@ -41,11 +53,11 @@ export const EventLog: React.FC = () => {
           Event
         </div>
       </div>
-      <div className="w-full text-base text-black flex-1 max-md:max-w-full">
+      <div className="w-full text-base text-black flex-1 max-h-[360px] overflow-y-auto max-md:max-w-full">
         <EventLogItem isHalfMarker type="start" />
         
-        {/* Display user events */}
-        {events.map(event => (
+        {/* Display user events in chronological order */}
+        {sortedEvents.map(event => (
           <EventLogItem 
             key={event.id}
             id={event.id}
@@ -53,6 +65,7 @@ export const EventLog: React.FC = () => {
             videoTime={event.videoTime}
             eventName={event.eventName}
             eventDetails={event.eventDetails}
+            team={event.team}
             onDelete={removeEvent}
           />
         ))}
@@ -71,6 +84,7 @@ interface EventLogItemProps {
   videoTime?: string;
   eventName?: string;
   eventDetails?: string;
+  team?: "MTL" | "ATL";
   onDelete?: (id: string) => void;
 }
 
@@ -82,6 +96,7 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
   videoTime = "Video Time",
   eventName = "Event Name",
   eventDetails = "Event Details",
+  team,
   onDelete
 }) => {
   // Set specific game times for half markers
@@ -96,6 +111,12 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
     if (id && onDelete) {
       onDelete(id);
     }
+  };
+
+  // Team logo URLs
+  const teamLogoUrl = {
+    MTL: "https://cdn.builder.io/api/v1/image/assets/e77b69f6e966445580894134b3c026b9/66efc5c69d4bb652a6aad8b2a8cd023d56d56e67",
+    ATL: "https://cdn.builder.io/api/v1/image/assets/e77b69f6e966445580894134b3c026b9/28bc98fdcb842d951b85245c20cd704e15d790a8"
   };
 
   return (
@@ -113,7 +134,16 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
           <>
             <div className="self-stretch flex min-w-60 items-center gap-2 flex-1 shrink basis-[0%] my-auto max-md:max-w-full">
               <div className="self-stretch flex min-w-60 w-full flex-col items-stretch justify-center flex-1 shrink basis-[0%] my-auto max-md:max-w-full">
-                <div className="max-md:max-w-full">{eventName}</div>
+                <div className="flex items-center gap-2 max-md:max-w-full">
+                  {team && (
+                    <img 
+                      src={teamLogoUrl[team]} 
+                      alt={`${team} logo`}
+                      className="w-5 h-5 object-contain"
+                    />
+                  )}
+                  {eventName}
+                </div>
                 <div className="max-md:max-w-full">{eventDetails}</div>
               </div>
             </div>

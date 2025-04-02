@@ -17,6 +17,7 @@ export const EventCreation: React.FC = () => {
   const { toast } = useToast();
   const [gameTime, setGameTime] = useState<string>("05:30");
   const [videoTime, setVideoTime] = useState<string>("00:00:00:00");
+  const [eventName, setEventName] = useState<string>("");
 
   // Update times from video player
   useEffect(() => {
@@ -25,9 +26,18 @@ export const EventCreation: React.FC = () => {
       setVideoTime(e.detail.videoTime);
     };
 
+    const handleGetVideoTime = () => {
+      // Dispatch an event to request current video time
+      const timeUpdateEvent = new CustomEvent("getVideoTimeRequest");
+      window.dispatchEvent(timeUpdateEvent);
+    };
+
     window.addEventListener("videoTimeUpdate", handleTimeUpdate as EventListener);
+    window.addEventListener("getVideoTime", handleGetVideoTime as EventListener);
+    
     return () => {
       window.removeEventListener("videoTimeUpdate", handleTimeUpdate as EventListener);
+      window.removeEventListener("getVideoTime", handleGetVideoTime as EventListener);
     };
   }, []);
 
@@ -48,7 +58,7 @@ export const EventCreation: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPlayer, selectedTeam, selectedLocation]);
+  }, [selectedPlayer, selectedTeam, selectedLocation, eventName]);
 
   const handleSaveEvent = () => {
     if (!selectedPlayer) {
@@ -69,7 +79,7 @@ export const EventCreation: React.FC = () => {
       return;
     }
 
-    const eventName = `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})`;
+    const displayName = `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})`;
     
     addEvent({
       id: uuidv4(),
@@ -78,13 +88,13 @@ export const EventCreation: React.FC = () => {
       player: selectedPlayer,
       team: selectedTeam,
       location: selectedLocation,
-      eventName,
-      eventDetails: "Event Details"
+      eventName: displayName,
+      eventDetails: eventName || "Event Details"
     });
 
     toast({
       title: "Event Saved",
-      description: `${eventName} event has been saved`
+      description: `${displayName} event has been saved`
     });
   };
 

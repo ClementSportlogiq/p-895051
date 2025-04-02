@@ -1,72 +1,138 @@
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React from "react";
 import { useSoccer } from "@/context/SoccerContext";
 
-export const LocationPicker: React.FC = () => {
-  const { setSelectedLocation, selectedLocation } = useSoccer();
-  const [fieldDimensions, setFieldDimensions] = useState({ width: 0, height: 0 });
-  const fieldRef = useRef<HTMLDivElement>(null);
+const SoccerFieldSVG: React.FC<{
+  onClick: (e: React.MouseEvent<SVGSVGElement>) => void;
+  selectedLocation: { x: number; y: number } | null;
+}> = ({ onClick, selectedLocation }) => {
+  // Field dimensions
+  const width = 300;
+  const height = 200;
   
-  const handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  return (
+    <svg 
+      width={width} 
+      height={height} 
+      viewBox={`0 0 ${width} ${height}`} 
+      onClick={onClick}
+      className="cursor-crosshair"
+    >
+      {/* Field background */}
+      <rect x="0" y="0" width={width} height={height} fill="#5a9947" />
+      
+      {/* Outer boundary */}
+      <rect 
+        x="5" 
+        y="5" 
+        width={width - 10} 
+        height={height - 10} 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      
+      {/* Center line */}
+      <line 
+        x1={width / 2} 
+        y1="5" 
+        x2={width / 2} 
+        y2={height - 5} 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      
+      {/* Center circle */}
+      <circle 
+        cx={width / 2} 
+        cy={height / 2} 
+        r="20" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      <circle 
+        cx={width / 2} 
+        cy={height / 2} 
+        r="2" 
+        fill="white" 
+      />
+      
+      {/* Goal areas */}
+      {/* Left goal area */}
+      <rect 
+        x="5" 
+        y={height / 2 - 30} 
+        width="30" 
+        height="60" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      <rect 
+        x="5" 
+        y={height / 2 - 15} 
+        width="10" 
+        height="30" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      
+      {/* Right goal area */}
+      <rect 
+        x={width - 35} 
+        y={height / 2 - 30} 
+        width="30" 
+        height="60" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      <rect 
+        x={width - 15} 
+        y={height / 2 - 15} 
+        width="10" 
+        height="30" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+      />
+      
+      {/* Selected location marker */}
+      {selectedLocation && (
+        <circle
+          cx={selectedLocation.x}
+          cy={selectedLocation.y}
+          r="5"
+          fill="red"
+          stroke="white"
+          strokeWidth="1"
+        />
+      )}
+    </svg>
+  );
+};
+
+export const LocationPicker: React.FC = () => {
+  const { selectedLocation, setSelectedLocation } = useSoccer();
+
+  const handleClick = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width);
-    const y = ((e.clientY - rect.top) / rect.height);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
     setSelectedLocation({ x, y });
   };
-  
-  // Use useEffect instead of a ref callback to measure the field dimensions
-  useEffect(() => {
-    if (fieldRef.current) {
-      setFieldDimensions({
-        width: fieldRef.current.clientWidth,
-        height: fieldRef.current.clientHeight
-      });
-    }
-  }, []); // Empty dependency array means this runs once on mount
 
   return (
-    <div className="flex min-w-60 flex-col items-stretch justify-center w-[370px] p-4">
-      <div 
-        ref={fieldRef}
-        className="bg-[#468f56] border flex min-h-[205px] max-w-full w-[338px] border-black border-solid relative cursor-pointer"
-        onClick={handleFieldClick}
-      >
-        {/* Soccer field lines */}
-        {/* Center circle */}
-        <div className="absolute left-1/2 top-1/2 w-16 h-16 border-2 border-white rounded-full transform -translate-x-1/2 -translate-y-1/2" />
-        
-        {/* Center line */}
-        <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-white transform -translate-y-1/2" />
-        
-        {/* Center spot */}
-        <div className="absolute left-1/2 top-1/2 w-2 h-2 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2" />
-        
-        {/* Goal areas */}
-        <div className="absolute left-0 top-1/3 right-[85%] bottom-1/3 border-2 border-white" />
-        <div className="absolute right-0 top-1/3 left-[85%] bottom-1/3 border-2 border-white" />
-        
-        {/* Penalty areas */}
-        <div className="absolute left-0 top-1/4 right-[70%] bottom-1/4 border-2 border-white" />
-        <div className="absolute right-0 top-1/4 left-[70%] bottom-1/4 border-2 border-white" />
-        
-        {/* Field boundary */}
-        <div className="absolute inset-1 border-2 border-white" />
-        
-        {/* Penalty spots */}
-        <div className="absolute left-[15%] top-1/2 w-2 h-2 bg-white rounded-full transform -translate-y-1/2" />
-        <div className="absolute right-[15%] top-1/2 w-2 h-2 bg-white rounded-full transform -translate-y-1/2" />
-        
-        {/* Location dot */}
-        {selectedLocation && (
-          <div 
-            className="absolute w-3 h-3 bg-black rounded-full transform -translate-x-1/2 -translate-y-1/2"
-            style={{ 
-              left: `${selectedLocation.x * 100}%`, 
-              top: `${selectedLocation.y * 100}%` 
-            }}
-          />
-        )}
+    <div className="min-w-60 flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
+      <div className="text-black max-md:max-w-full mb-2">Field XY Mockup</div>
+      <div className="bg-[#5a9947] flex justify-center items-center p-1">
+        <SoccerFieldSVG 
+          onClick={handleClick} 
+          selectedLocation={selectedLocation}
+        />
       </div>
     </div>
   );
