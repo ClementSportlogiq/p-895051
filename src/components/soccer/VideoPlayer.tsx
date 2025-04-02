@@ -1,13 +1,13 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Volume2, VolumeX, Play, ChevronDown } from "lucide-react";
+import { Volume2, VolumeX, Play, ChevronDown, RefreshCw } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export const VideoPlayer: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -22,6 +22,7 @@ export const VideoPlayer: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   // Handle play/pause with spacebar
   useEffect(() => {
@@ -35,6 +36,7 @@ export const VideoPlayer: React.FC = () => {
         e.preventDefault();
         if (videoRef.current) {
           videoRef.current.play().catch((error) => {
+            setVideoError(error.message);
             toast({
               variant: "destructive",
               title: "Video Error",
@@ -144,16 +146,23 @@ export const VideoPlayer: React.FC = () => {
     const handleMetadataLoaded = () => {
       if (videoRef.current) {
         setDuration(videoRef.current.duration);
+        setVideoError(null);
       }
+    };
+
+    const handleVideoError = (e: Event) => {
+      setVideoError("Video could not be loaded or played");
     };
 
     if (videoRef.current) {
       videoRef.current.addEventListener('loadedmetadata', handleMetadataLoaded);
+      videoRef.current.addEventListener('error', handleVideoError);
     }
 
     return () => {
       if (videoRef.current) {
         videoRef.current.removeEventListener('loadedmetadata', handleMetadataLoaded);
+        videoRef.current.removeEventListener('error', handleVideoError);
       }
     };
   }, []);
@@ -207,6 +216,7 @@ export const VideoPlayer: React.FC = () => {
         videoRef.current.pause();
       } else {
         videoRef.current.play().catch((error) => {
+          setVideoError(error.message);
           toast({
             variant: "destructive",
             title: "Video Error",
@@ -225,16 +235,55 @@ export const VideoPlayer: React.FC = () => {
     }
   };
 
+  const reloadVideo = () => {
+    if (videoRef.current) {
+      // Force reload the video source
+      const currentSrc = videoRef.current.src;
+      videoRef.current.src = "";
+      
+      // Small timeout to ensure the src is cleared before setting again
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.src = currentSrc;
+          videoRef.current.load();
+          videoRef.current.play().catch(err => {
+            // If auto-play fails, at least we've reloaded the video
+            console.log("Auto-play after reload failed, but video is reloaded");
+          });
+          setVideoError(null);
+        }
+      }, 100);
+      
+      toast({
+        title: "Video Reload",
+        description: "Attempting to reload the video"
+      });
+    }
+  };
+
   return (
     <div className="relative flex min-h-[543px] w-full flex-col max-md:max-w-full max-md:pt-[100px]">
       <div className="absolute z-0 w-full h-full">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover bg-[rgba(217,217,217,1)]"
-          src="/Passing Sequence.mp4"
-          muted={isMuted}
-          onClick={togglePlay}
-        />
+        {videoError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-white">
+            <p className="mb-4">Video Error: {videoError}</p>
+            <Button 
+              onClick={reloadVideo} 
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reload Video
+            </Button>
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover bg-[rgba(217,217,217,1)]"
+            src="/Passing Sequence.mp4"
+            muted={isMuted}
+            onClick={togglePlay}
+          />
+        )}
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 text-white p-4 z-10">
