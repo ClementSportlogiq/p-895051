@@ -12,7 +12,8 @@ import {
   TreeEvent, 
   quickEvents, 
   pressureOptions, 
-  bodyPartOptions 
+  bodyPartOptions,
+  offenseEvents
 } from "./eventData";
 
 export const EventTree: React.FC = () => {
