@@ -1,6 +1,13 @@
 
 import { AnnotationLabel } from "@/types/annotation";
 
+// Define the TreeEvent type that was missing
+export interface TreeEvent {
+  id: string;
+  name: string;
+  hotkey: string;
+}
+
 // Define pressure options
 export const pressureOptions = [
   { id: "pressure", name: "Pressure", hotkey: "Q" },
