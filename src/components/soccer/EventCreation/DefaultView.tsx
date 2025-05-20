@@ -1,12 +1,13 @@
 
 import React from "react";
 import EventButtonRow from "./EventButtonRow";
-import { categories, quickEvents, TreeEvent, EventCategory } from "./eventData";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { EventCategory, AnnotationLabel } from "@/types/annotation";
 
 interface DefaultViewProps {
   selectedCategory: EventCategory | null;
   onCategorySelect: (category: EventCategory) => void;
-  onEventSelect: (event: TreeEvent) => void;
+  onEventSelect: (event: AnnotationLabel) => void;
 }
 
 export const DefaultView: React.FC<DefaultViewProps> = ({ 
@@ -14,7 +15,9 @@ export const DefaultView: React.FC<DefaultViewProps> = ({
   onCategorySelect, 
   onEventSelect 
 }) => {
-  const handleCategorySelect = (item: TreeEvent) => {
+  const { getQuickEvents, categories } = useAnnotationLabels();
+  
+  const handleCategorySelect = (item: AnnotationLabel | { id: string; name: string; hotkey: string }) => {
     onCategorySelect(item.id as EventCategory);
   };
 
@@ -25,7 +28,7 @@ export const DefaultView: React.FC<DefaultViewProps> = ({
           <div className="text-black max-md:max-w-full">
             Quick Events (Press SHIFT for 1-touch events)
           </div>
-          <EventButtonRow items={quickEvents} onSelect={onEventSelect} />
+          <EventButtonRow items={getQuickEvents()} onSelect={onEventSelect} />
         </>
       )}
       

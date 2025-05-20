@@ -6,15 +6,9 @@ import OffenseEvents from "./OffenseEvents";
 import PressureStep from "./PressureStep";
 import BodyPartStep from "./BodyPartStep";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
-import { 
-  WizardStep, 
-  EventCategory, 
-  TreeEvent, 
-  quickEvents, 
-  pressureOptions, 
-  bodyPartOptions,
-  offenseEvents
-} from "./eventData";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { WizardStep, EventCategory, AnnotationLabel } from "@/types/annotation";
+import { pressureOptions, bodyPartOptions } from "./eventData";
 
 export const EventTree: React.FC = () => {
   const { 
@@ -22,6 +16,12 @@ export const EventTree: React.FC = () => {
     setSelectedEventType,
     setSelectedEventDetails
   } = useSoccer();
+  
+  const { 
+    getQuickEvents, 
+    getLabelsByCategory, 
+    categories 
+  } = useAnnotationLabels();
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("default");
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
@@ -81,13 +81,13 @@ export const EventTree: React.FC = () => {
 
   // Handler for quick events
   const handleQuickEventSelect = (eventId: string) => {
-    const event = quickEvents.find(evt => evt.id === eventId);
+    const event = getQuickEvents().find(evt => evt.id === eventId);
     if (event) {
       handleEventSelect(event);
     }
   };
 
-  const handleEventSelect = (event: TreeEvent) => {
+  const handleEventSelect = (event: AnnotationLabel) => {
     setSelectedEvent(event.name);
     // If Pass is selected, go to pressure selection
     if (event.id === "pass") {
@@ -95,12 +95,12 @@ export const EventTree: React.FC = () => {
     }
   };
 
-  const handlePressureSelect = (pressure: TreeEvent) => {
+  const handlePressureSelect = (pressure: AnnotationLabel) => {
     setSelectedPressure(pressure.name);
     setCurrentStep("bodyPart");
   };
 
-  const handleBodyPartSelect = (bodyPart: TreeEvent) => {
+  const handleBodyPartSelect = (bodyPart: AnnotationLabel) => {
     setSelectedBodyPart(bodyPart.name);
     // This is the last step for this flow
   };
@@ -110,7 +110,7 @@ export const EventTree: React.FC = () => {
     currentStep,
     selectedCategory,
     handleQuickEventSelect: (eventId) => {
-      const event = quickEvents.find(evt => evt.id === eventId);
+      const event = getQuickEvents().find(evt => evt.id === eventId);
       if (event) {
         handleEventSelect(event);
       }
@@ -118,22 +118,22 @@ export const EventTree: React.FC = () => {
     handleCategorySelect,
     handleEventSelect: (eventId) => {
       // Find event in the appropriate category
-      const events = selectedCategory === "offense" ? 
-        offenseEvents.find(evt => evt.id === eventId) : 
-        quickEvents.find(evt => evt.id === eventId);
+      const events = selectedCategory ? 
+        getLabelsByCategory(selectedCategory).find(evt => evt.id === eventId) : 
+        getQuickEvents().find(evt => evt.id === eventId);
       
       if (events) {
         handleEventSelect(events);
       }
     },
     handlePressureSelect: (pressureId) => {
-      const pressure = pressureOptions.find(p => p.id === pressureId);
+      const pressure = pressureOptions.find(p => p.id === pressureId) as unknown as AnnotationLabel;
       if (pressure) {
         handlePressureSelect(pressure);
       }
     },
     handleBodyPartSelect: (bodyPartId) => {
-      const bodyPart = bodyPartOptions.find(bp => bp.id === bodyPartId);
+      const bodyPart = bodyPartOptions.find(bp => bp.id === bodyPartId) as unknown as AnnotationLabel;
       if (bodyPart) {
         handleBodyPartSelect(bodyPart);
       }

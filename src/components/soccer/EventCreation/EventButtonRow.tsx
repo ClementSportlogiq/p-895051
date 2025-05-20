@@ -1,10 +1,10 @@
 
 import React from "react";
-import { TreeEvent } from "./eventData";
+import { AnnotationLabel } from "@/types/annotation";
 
 interface EventButtonRowProps {
-  items: TreeEvent[];
-  onSelect: (item: TreeEvent) => void;
+  items: AnnotationLabel[] | { id: string; name: string; hotkey: string }[];
+  onSelect: (item: any) => void;
   start?: number;
   end?: number;
 }

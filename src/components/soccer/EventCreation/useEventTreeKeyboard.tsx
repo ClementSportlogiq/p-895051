@@ -1,14 +1,8 @@
 
 import { useEffect } from "react";
-import { 
-  WizardStep, 
-  EventCategory, 
-  quickEvents, 
-  categories, 
-  pressureOptions, 
-  bodyPartOptions, 
-  getCategoryEvents 
-} from "./eventData";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { WizardStep, EventCategory } from "@/types/annotation";
+import { pressureOptions, bodyPartOptions } from "./eventData";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
@@ -29,53 +23,49 @@ export const useEventTreeKeyboard = ({
   handlePressureSelect,
   handleBodyPartSelect
 }: UseEventTreeKeyboardProps) => {
+  const { getQuickEvents, getLabelsByCategory, categories } = useAnnotationLabels();
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase();
       
       if (currentStep === "default") {
-        // Quick events (Q, W, E, R)
-        if (["Q", "W", "E", "R"].includes(key)) {
-          const event = quickEvents.find(evt => evt.hotkey === key);
+        // Quick events (check hotkeys)
+        if (!selectedCategory) {
+          const quickEvents = getQuickEvents();
+          const event = quickEvents.find(evt => evt.hotkey.toUpperCase() === key);
           if (event) {
             handleQuickEventSelect(event.id);
+            return;
           }
-        } 
-        // Categories (A, S, D, F, Z, X, C)
-        else if (["A", "S", "D", "F", "Z", "X", "C"].includes(key)) {
-          const category = categories.find(cat => cat.hotkey === key);
-          if (category) {
-            handleCategorySelect(category.id as EventCategory);
-          }
+        }
+        
+        // Categories
+        const category = categories.find(cat => cat.hotkey.toUpperCase() === key);
+        if (category) {
+          handleCategorySelect(category.id);
         }
       } 
       else if (currentStep === "pressure") {
-        // Pressure options (Q, W)
-        if (["Q", "W"].includes(key)) {
-          const pressure = pressureOptions.find(opt => opt.hotkey === key);
-          if (pressure) {
-            handlePressureSelect(pressure.id);
-          }
+        // Pressure options
+        const pressure = pressureOptions.find(opt => opt.hotkey.toUpperCase() === key);
+        if (pressure) {
+          handlePressureSelect(pressure.id);
         }
       }
       else if (currentStep === "bodyPart") {
-        // Body part options (Q, W, E, R, A, S, D)
-        if (["Q", "W", "E", "R", "A", "S", "D"].includes(key)) {
-          const bodyPart = bodyPartOptions.find(opt => opt.hotkey === key);
-          if (bodyPart) {
-            handleBodyPartSelect(bodyPart.id);
-          }
+        // Body part options
+        const bodyPart = bodyPartOptions.find(opt => opt.hotkey.toUpperCase() === key);
+        if (bodyPart) {
+          handleBodyPartSelect(bodyPart.id);
         }
       }
       else if (selectedCategory && currentStep !== "pressure" && currentStep !== "bodyPart") {
         // Event selection from category
-        if (["Q", "W", "E", "R", "A", "S", "D", "F"].includes(key)) {
-          const events = getCategoryEvents(selectedCategory);
-          const event = events.find(evt => evt.hotkey === key);
-          if (event) {
-            handleEventSelect(event.id);
-          }
+        const categoryEvents = getLabelsByCategory(selectedCategory);
+        const event = categoryEvents.find(evt => evt.hotkey.toUpperCase() === key);
+        if (event) {
+          handleEventSelect(event.id);
         }
       }
     };
@@ -89,7 +79,10 @@ export const useEventTreeKeyboard = ({
     handleCategorySelect,
     handleEventSelect,
     handlePressureSelect,
-    handleBodyPartSelect
+    handleBodyPartSelect,
+    getQuickEvents,
+    getLabelsByCategory,
+    categories
   ]);
 };
 
