@@ -65,6 +65,7 @@ export function useWizardState() {
       flags: flagValues
     };
     
+    // Convert to the expected format for the context
     setSelectedEventDetails(additionalDetails);
   }, [
     selectedEvent, 
@@ -123,19 +124,20 @@ export function useWizardState() {
   };
 
   // Handler for pressure selection
-  const handlePressureSelect = (pressure: AnnotationLabel) => {
+  const handlePressureSelect = (pressure: {id: string; name: string; hotkey: string}) => {
     setSelectedPressure(pressure.name);
     setCurrentStep("bodyPart");
   };
 
   // Handler for body part selection
-  const handleBodyPartSelect = (bodyPart: AnnotationLabel) => {
+  const handleBodyPartSelect = (bodyPart: {id: string; name: string; hotkey: string}) => {
     setSelectedBodyPart(bodyPart.name);
     
     // After body part, check if there are flags to process
     if (currentLabelId) {
-      const { labels } = useAnnotationLabels();
-      const eventWithFlags = labels.find(l => l.id === currentLabelId);
+      const allLabels = getLabelsByCategory(selectedCategory as EventCategory);
+      const eventWithFlags = allLabels.find(l => l.id === currentLabelId);
+      
       if (eventWithFlags?.flags && eventWithFlags.flags.length > 0) {
         setFlagsForLabel(eventWithFlags.flags);
         setCurrentFlagIndex(0);

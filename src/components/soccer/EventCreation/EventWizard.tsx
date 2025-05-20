@@ -8,7 +8,8 @@ import FlagStep from "./FlagStep";
 import { useWizardState } from "./hooks/useWizardState";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { pressureOptions, bodyPartOptions } from "./eventData";
+import { pressureOptions, bodyPartOptions, TreeEvent } from "./eventData";
+import { AnnotationLabel } from "@/types/annotation";
 
 export const EventWizard: React.FC = () => {
   const {
@@ -35,12 +36,19 @@ export const EventWizard: React.FC = () => {
     handleCategorySelect,
     handleEventSelect: (eventId) => {
       // Find event in the appropriate category
-      const events = selectedCategory ? 
-        getLabelsByCategory(selectedCategory).find(evt => evt.id === eventId) : 
-        getQuickEvents().find(evt => evt.id === eventId);
+      if (selectedCategory) {
+        const events = getLabelsByCategory(selectedCategory);
+        const event = events.find(evt => evt.id === eventId);
+        if (event) {
+          handleEventSelect(event);
+          return;
+        }
+      }
       
-      if (events) {
-        handleEventSelect(events);
+      // Try in quick events if not found in category
+      const quickEvent = getQuickEvents().find(evt => evt.id === eventId);
+      if (quickEvent) {
+        handleEventSelect(quickEvent);
       }
     },
     handlePressureSelect: (pressureId) => {

@@ -69,14 +69,6 @@ export const useEventTreeKeyboard = ({
           handleFlagValueSelect(index);
         }
       }
-      else if (selectedCategory && currentStep === "default") {
-        // Event selection from category
-        const categoryEvents = getLabelsByCategory(selectedCategory);
-        const event = categoryEvents.find(evt => evt.hotkey.toUpperCase() === key);
-        if (event) {
-          handleEventSelect(event.id);
-        }
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
