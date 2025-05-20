@@ -25,5 +25,9 @@ export interface AnnotationFlag {
 
 export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";
 
-// Add this new type to fix the typing issue
-export type EventDetails = Record<string, string | Record<string, string>>;
+// Define EventDetails type to fix the typing issue
+export type EventDetails = {
+  pressure: string;
+  bodyPart: string;
+  flags: Record<string, string>;
+};
