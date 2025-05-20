@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AnnotationLabel, EventCategory, AnnotationCategory } from '@/types/annotation';
+import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag } from '@/types/annotation';
 
 // Default categories that are always available
 export const defaultCategories: AnnotationCategory[] = [
@@ -23,6 +23,7 @@ const defaultQuickEvents: AnnotationLabel[] = [
 
 export function useAnnotationLabels() {
   const [labels, setLabels] = useState<AnnotationLabel[]>([]);
+  const [flags, setFlags] = useState<AnnotationFlag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,6 +36,13 @@ export function useAnnotationLabels() {
         // Use default labels if none are stored
         setLabels(defaultQuickEvents);
       }
+      
+      // Load flags
+      const savedFlags = localStorage.getItem("annotationFlags");
+      if (savedFlags) {
+        setFlags(JSON.parse(savedFlags));
+      }
+      
       setIsLoading(false);
     };
 
@@ -44,6 +52,11 @@ export function useAnnotationLabels() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "annotationLabels") {
         loadLabels();
+      } else if (e.key === "annotationFlags") {
+        const savedFlags = localStorage.getItem("annotationFlags");
+        if (savedFlags) {
+          setFlags(JSON.parse(savedFlags));
+        }
       }
     };
 
@@ -60,11 +73,18 @@ export function useAnnotationLabels() {
     return labels.filter(label => label.category === category);
   };
 
+  const getFlagsByLabel = (labelId: string): AnnotationFlag[] => {
+    const label = labels.find(l => l.id === labelId);
+    return label?.flags || [];
+  };
+
   return {
     labels,
+    flags,
     isLoading,
     getQuickEvents,
     getLabelsByCategory,
+    getFlagsByLabel,
     categories: defaultCategories
   };
 }
