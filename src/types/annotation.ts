@@ -23,4 +23,4 @@ export interface AnnotationFlag {
   values: string[];
 }
 
-export type WizardStep = "default" | "pressure" | "bodyPart";
+export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";

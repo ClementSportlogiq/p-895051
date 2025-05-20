@@ -5,9 +5,10 @@ import DefaultView from "./DefaultView";
 import OffenseEvents from "./OffenseEvents";
 import PressureStep from "./PressureStep";
 import BodyPartStep from "./BodyPartStep";
+import FlagStep from "./FlagStep";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { WizardStep, EventCategory, AnnotationLabel } from "@/types/annotation";
+import { WizardStep, EventCategory, AnnotationLabel, AnnotationFlag } from "@/types/annotation";
 import { pressureOptions, bodyPartOptions } from "./eventData";
 
 export const EventTree: React.FC = () => {
@@ -20,7 +21,8 @@ export const EventTree: React.FC = () => {
   const { 
     getQuickEvents, 
     getLabelsByCategory, 
-    categories 
+    categories,
+    getFlagsByLabel
   } = useAnnotationLabels();
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("default");
@@ -28,6 +30,12 @@ export const EventTree: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedPressure, setSelectedPressure] = useState<string | null>(null);
   const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
+  
+  // New state for handling flag steps
+  const [currentLabelId, setCurrentLabelId] = useState<string | null>(null);
+  const [flagsForLabel, setFlagsForLabel] = useState<AnnotationFlag[]>([]);
+  const [currentFlagIndex, setCurrentFlagIndex] = useState<number>(0);
+  const [flagValues, setFlagValues] = useState<Record<string, string>>({});
 
   // Log video time when category or event is selected
   useEffect(() => {
@@ -51,6 +59,14 @@ export const EventTree: React.FC = () => {
       if (selectedBodyPart) {
         details += ` - ${selectedBodyPart}`;
       }
+      
+      // Add flag values to details if available
+      const flagDetails = Object.entries(flagValues);
+      if (flagDetails.length > 0) {
+        flagDetails.forEach(([flagName, value]) => {
+          details += ` | ${flagName}: ${value}`;
+        });
+      }
     }
     
     setSelectedEventType(details);
@@ -58,11 +74,12 @@ export const EventTree: React.FC = () => {
     // Set additional details for context
     const additionalDetails = {
       pressure: selectedPressure,
-      bodyPart: selectedBodyPart
+      bodyPart: selectedBodyPart,
+      flags: flagValues
     };
     
     setSelectedEventDetails(additionalDetails);
-  }, [selectedEvent, selectedPressure, selectedBodyPart, selectedCategory, setSelectedEventCategory, setSelectedEventType, setSelectedEventDetails]);
+  }, [selectedEvent, selectedPressure, selectedBodyPart, selectedCategory, flagValues, setSelectedEventCategory, setSelectedEventType, setSelectedEventDetails]);
 
   const resetWizard = () => {
     setCurrentStep("default");
@@ -70,6 +87,10 @@ export const EventTree: React.FC = () => {
     setSelectedEvent(null);
     setSelectedPressure(null);
     setSelectedBodyPart(null);
+    setCurrentLabelId(null);
+    setFlagsForLabel([]);
+    setCurrentFlagIndex(0);
+    setFlagValues({});
     setSelectedEventCategory(null);
     setSelectedEventType(null);
     setSelectedEventDetails(null);
@@ -89,8 +110,16 @@ export const EventTree: React.FC = () => {
 
   const handleEventSelect = (event: AnnotationLabel) => {
     setSelectedEvent(event.name);
+    setCurrentLabelId(event.id);
+    
+    // Check if the event has associated flags
+    if (event.flags && event.flags.length > 0) {
+      setFlagsForLabel(event.flags);
+      setCurrentFlagIndex(0);
+      setCurrentStep("flag");
+    } 
     // If Pass is selected, go to pressure selection
-    if (event.id === "pass") {
+    else if (event.id === "pass") {
       setCurrentStep("pressure");
     }
   };
@@ -102,10 +131,36 @@ export const EventTree: React.FC = () => {
 
   const handleBodyPartSelect = (bodyPart: AnnotationLabel) => {
     setSelectedBodyPart(bodyPart.name);
-    // This is the last step for this flow
+    
+    // After body part, check if there are flags to process
+    if (currentLabelId) {
+      const eventWithFlags = labels.find(l => l.id === currentLabelId);
+      if (eventWithFlags?.flags && eventWithFlags.flags.length > 0) {
+        setFlagsForLabel(eventWithFlags.flags);
+        setCurrentFlagIndex(0);
+        setCurrentStep("flag");
+      }
+    }
+  };
+  
+  const handleFlagValueSelect = (value: string) => {
+    const currentFlag = flagsForLabel[currentFlagIndex];
+    
+    // Store selected flag value
+    setFlagValues(prev => ({
+      ...prev,
+      [currentFlag.name]: value
+    }));
+    
+    // Move to next flag if available
+    if (currentFlagIndex < flagsForLabel.length - 1) {
+      setCurrentFlagIndex(prev => prev + 1);
+    }
+    // If no more flags, we're done
   };
 
   // Setup keyboard event handlers
+  const { labels } = useAnnotationLabels();
   useEventTreeKeyboard({
     currentStep,
     selectedCategory,
@@ -137,11 +192,43 @@ export const EventTree: React.FC = () => {
       if (bodyPart) {
         handleBodyPartSelect(bodyPart);
       }
+    },
+    // Add handler for flag values
+    handleFlagValueSelect: (flagValueIndex) => {
+      if (currentStep === "flag" && flagsForLabel.length > 0) {
+        const currentFlag = flagsForLabel[currentFlagIndex];
+        if (flagValueIndex < currentFlag.values.length) {
+          handleFlagValueSelect(currentFlag.values[flagValueIndex]);
+        }
+      }
     }
   });
 
   const handleBack = () => {
-    if (currentStep === "bodyPart") {
+    if (currentStep === "flag") {
+      // If we're on the first flag, go back to the previous step
+      if (currentFlagIndex === 0) {
+        if (selectedBodyPart) {
+          // If we came from bodyPart step
+          setCurrentStep("bodyPart");
+        } else if (selectedPressure) {
+          // If we came from pressure step
+          setCurrentStep("pressure");
+        } else {
+          // If we came directly from event selection
+          setCurrentStep("default");
+        }
+      } else {
+        // Go back to the previous flag
+        setCurrentFlagIndex(prev => prev - 1);
+        // Remove the value for the current flag
+        const currentFlag = flagsForLabel[currentFlagIndex];
+        const newFlagValues = { ...flagValues };
+        delete newFlagValues[currentFlag.name];
+        setFlagValues(newFlagValues);
+      }
+    }
+    else if (currentStep === "bodyPart") {
       setCurrentStep("pressure");
       setSelectedBodyPart(null);
     } 
@@ -191,6 +278,14 @@ export const EventTree: React.FC = () => {
       {/* Body Part Selection */}
       {currentStep === "bodyPart" && (
         <BodyPartStep onBodyPartSelect={handleBodyPartSelect} />
+      )}
+      
+      {/* Flag Selection - dynamic based on selected event */}
+      {currentStep === "flag" && flagsForLabel.length > 0 && (
+        <FlagStep 
+          flag={flagsForLabel[currentFlagIndex]} 
+          onFlagValueSelect={handleFlagValueSelect} 
+        />
       )}
     </div>
   );

@@ -12,6 +12,7 @@ interface UseEventTreeKeyboardProps {
   handleEventSelect: (eventId: string) => void;
   handlePressureSelect: (pressureId: string) => void;
   handleBodyPartSelect: (bodyPartId: string) => void;
+  handleFlagValueSelect?: (flagValueIndex: number) => void; // New handler
 }
 
 export const useEventTreeKeyboard = ({
@@ -21,7 +22,8 @@ export const useEventTreeKeyboard = ({
   handleCategorySelect,
   handleEventSelect,
   handlePressureSelect,
-  handleBodyPartSelect
+  handleBodyPartSelect,
+  handleFlagValueSelect
 }: UseEventTreeKeyboardProps) => {
   const { getQuickEvents, getLabelsByCategory, categories } = useAnnotationLabels();
   
@@ -60,7 +62,14 @@ export const useEventTreeKeyboard = ({
           handleBodyPartSelect(bodyPart.id);
         }
       }
-      else if (selectedCategory && currentStep !== "pressure" && currentStep !== "bodyPart") {
+      else if (currentStep === "flag" && handleFlagValueSelect) {
+        // Flag value selection by hotkey
+        if (key >= 'Q' && key <= 'Z') {
+          const index = key.charCodeAt(0) - 'Q'.charCodeAt(0);
+          handleFlagValueSelect(index);
+        }
+      }
+      else if (selectedCategory && currentStep !== "pressure" && currentStep !== "bodyPart" && currentStep !== "flag") {
         // Event selection from category
         const categoryEvents = getLabelsByCategory(selectedCategory);
         const event = categoryEvents.find(evt => evt.hotkey.toUpperCase() === key);
@@ -80,6 +89,7 @@ export const useEventTreeKeyboard = ({
     handleEventSelect,
     handlePressureSelect,
     handleBodyPartSelect,
+    handleFlagValueSelect,
     getQuickEvents,
     getLabelsByCategory,
     categories

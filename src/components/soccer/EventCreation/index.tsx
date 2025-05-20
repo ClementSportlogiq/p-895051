@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import KeyActorSelector from "./KeyActorSelector";
 import EventTree from "./EventTree";
@@ -200,6 +199,13 @@ export const EventCreation: React.FC = () => {
             Body Part
           </div>
         )}
+        
+        {/* Show flag values as pills */}
+        {selectedEventDetails?.flags && Object.entries(selectedEventDetails.flags).map(([flagName, value]) => (
+          <div key={flagName} className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 rounded-2xl">
+            {flagName}: {value}
+          </div>
+        ))}
       </div>
     );
   };
