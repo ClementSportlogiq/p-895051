@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useSoccer } from "@/context/SoccerContext";
 import DefaultView from "./DefaultView";
@@ -72,9 +71,9 @@ export const EventTree: React.FC = () => {
     setSelectedEventType(details);
     
     // Set additional details for context
-    const additionalDetails = {
-      pressure: selectedPressure,
-      bodyPart: selectedBodyPart,
+    const additionalDetails: Record<string, string | Record<string, string>> = {
+      pressure: selectedPressure || "",
+      bodyPart: selectedBodyPart || "",
       flags: flagValues
     };
     

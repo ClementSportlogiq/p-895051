@@ -12,7 +12,7 @@ interface UseEventTreeKeyboardProps {
   handleEventSelect: (eventId: string) => void;
   handlePressureSelect: (pressureId: string) => void;
   handleBodyPartSelect: (bodyPartId: string) => void;
-  handleFlagValueSelect?: (flagValueIndex: number) => void; // New handler
+  handleFlagValueSelect?: (flagValueIndex: number) => void; // Flag value handler
 }
 
 export const useEventTreeKeyboard = ({
