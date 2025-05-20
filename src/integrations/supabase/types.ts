@@ -9,7 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      annotation_categories: {
+        Row: {
+          hotkey: string
+          id: string
+          name: string
+        }
+        Insert: {
+          hotkey: string
+          id: string
+          name: string
+        }
+        Update: {
+          hotkey?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      annotation_flags: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+          values: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+          values?: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+          values?: Json
+        }
+        Relationships: []
+      }
+      annotation_labels: {
+        Row: {
+          category: string
+          description: string | null
+          flags: Json
+          hotkey: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          flags?: Json
+          hotkey: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          flags?: Json
+          hotkey?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annotation_labels_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "annotation_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

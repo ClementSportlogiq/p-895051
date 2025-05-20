@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag } from '@/types/annotation';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 // Default categories that are always available
 export const defaultCategories: AnnotationCategory[] = [
@@ -25,44 +27,144 @@ export function useAnnotationLabels() {
   const [labels, setLabels] = useState<AnnotationLabel[]>([]);
   const [flags, setFlags] = useState<AnnotationFlag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load data from Supabase
+  const loadData = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Fetch labels
+      const { data: labelsData, error: labelsError } = await supabase
+        .from('annotation_labels')
+        .select('*');
+      
+      if (labelsError) {
+        throw labelsError;
+      }
+
+      // Fetch flags
+      const { data: flagsData, error: flagsError } = await supabase
+        .from('annotation_flags')
+        .select('*');
+      
+      if (flagsError) {
+        throw flagsError;
+      }
+
+      // Process labels: convert flags from JSON strings to objects
+      const processedLabels = labelsData.map((label: any) => {
+        // Convert flags from IDs to actual flag objects
+        const labelFlags = label.flags && Array.isArray(label.flags) 
+          ? label.flags.map((flagId: string) => 
+              flagsData.find((f: any) => f.id === flagId)
+            ).filter(Boolean)
+          : [];
+        
+        return {
+          ...label,
+          flags: labelFlags
+        };
+      });
+
+      // Process flags: convert values from JSON to array if needed
+      const processedFlags = flagsData.map((flag: any) => {
+        return {
+          ...flag,
+          values: Array.isArray(flag.values) ? flag.values : JSON.parse(flag.values)
+        };
+      });
+
+      setLabels(processedLabels.length > 0 ? processedLabels : defaultQuickEvents);
+      setFlags(processedFlags);
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Error loading annotation data:', error);
+      toast({
+        title: "Error loading annotation data",
+        description: "Could not load labels and flags from the database. Using local defaults.",
+        variant: "destructive"
+      });
+      
+      // Fallback to defaults if database fails
+      setLabels(defaultQuickEvents);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize database with default values if empty
+  const initializeDefaults = async () => {
+    if (isInitialized) return;
+    
+    try {
+      // Check if any labels exist
+      const { count: labelCount, error: countError } = await supabase
+        .from('annotation_labels')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+
+      // If no labels exist, populate with defaults
+      if (labelCount === 0) {
+        // Add default labels
+        for (const label of defaultQuickEvents) {
+          const { error } = await supabase
+            .from('annotation_labels')
+            .insert({
+              id: label.id,
+              name: label.name,
+              category: label.category,
+              hotkey: label.hotkey,
+              description: label.description || '',
+              flags: []
+            });
+          
+          if (error) throw error;
+        }
+
+        // Reload data after initialization
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error initializing default data:', error);
+    }
+  };
 
   useEffect(() => {
-    // Load labels from localStorage
-    const loadLabels = () => {
-      const savedLabels = localStorage.getItem("annotationLabels");
-      if (savedLabels) {
-        setLabels(JSON.parse(savedLabels));
-      } else {
-        // Use default labels if none are stored
-        setLabels(defaultQuickEvents);
-      }
+    loadData();
+    
+    // Set up real-time subscription for changes
+    const labelsSubscription = supabase
+      .channel('annotation_labels_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'annotation_labels' },
+        () => loadData()
+      )
+      .subscribe();
+    
+    const flagsSubscription = supabase
+      .channel('annotation_flags_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'annotation_flags' },
+        () => loadData()
+      )
+      .subscribe();
       
-      // Load flags
-      const savedFlags = localStorage.getItem("annotationFlags");
-      if (savedFlags) {
-        setFlags(JSON.parse(savedFlags));
-      }
-      
-      setIsLoading(false);
+    return () => {
+      supabase.removeChannel(labelsSubscription);
+      supabase.removeChannel(flagsSubscription);
     };
-
-    loadLabels();
-
-    // Set up event listener for label changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "annotationLabels") {
-        loadLabels();
-      } else if (e.key === "annotationFlags") {
-        const savedFlags = localStorage.getItem("annotationFlags");
-        if (savedFlags) {
-          setFlags(JSON.parse(savedFlags));
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Initialize defaults after loading
+  useEffect(() => {
+    if (!isLoading && !isInitialized) {
+      initializeDefaults();
+    }
+  }, [isLoading, isInitialized]);
 
   const getQuickEvents = (): AnnotationLabel[] => {
     // Get the most used labels from each category, limited to 4 for quick events
@@ -78,6 +180,125 @@ export function useAnnotationLabels() {
     return label?.flags || [];
   };
 
+  // Save label to database
+  const saveLabel = async (label: AnnotationLabel) => {
+    try {
+      // Extract flag IDs for storage
+      const flagIds = label.flags?.map(flag => flag.id) || [];
+      
+      const { error } = await supabase
+        .from('annotation_labels')
+        .upsert({
+          id: label.id,
+          name: label.name,
+          category: label.category,
+          hotkey: label.hotkey,
+          description: label.description || '',
+          flags: flagIds
+        });
+      
+      if (error) throw error;
+      
+      // No need to manually update the state as the subscription will trigger a reload
+      return true;
+    } catch (error) {
+      console.error('Error saving label:', error);
+      toast({
+        title: "Error saving label",
+        description: "Could not save label to the database.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Delete label from database
+  const deleteLabel = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('annotation_labels')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // No need to manually update the state as the subscription will trigger a reload
+      return true;
+    } catch (error) {
+      console.error('Error deleting label:', error);
+      toast({
+        title: "Error deleting label",
+        description: "Could not delete label from the database.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Save flag to database
+  const saveFlag = async (flag: AnnotationFlag) => {
+    try {
+      const { error } = await supabase
+        .from('annotation_flags')
+        .upsert({
+          id: flag.id,
+          name: flag.name,
+          description: flag.description || '',
+          values: flag.values
+        });
+      
+      if (error) throw error;
+      
+      // No need to manually update the state as the subscription will trigger a reload
+      return true;
+    } catch (error) {
+      console.error('Error saving flag:', error);
+      toast({
+        title: "Error saving flag",
+        description: "Could not save flag to the database.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Delete flag from database
+  const deleteFlag = async (id: string) => {
+    try {
+      // First update any labels that use this flag
+      for (const label of labels) {
+        if (label.flags?.some(f => f.id === id)) {
+          const updatedFlags = label.flags.filter(f => f.id !== id);
+          const flagIds = updatedFlags.map(f => f.id);
+          
+          await supabase
+            .from('annotation_labels')
+            .update({ flags: flagIds })
+            .eq('id', label.id);
+        }
+      }
+      
+      // Then delete the flag
+      const { error } = await supabase
+        .from('annotation_flags')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // No need to manually update the state as the subscription will trigger a reload
+      return true;
+    } catch (error) {
+      console.error('Error deleting flag:', error);
+      toast({
+        title: "Error deleting flag",
+        description: "Could not delete flag from the database.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return {
     labels,
     flags,
@@ -85,7 +306,11 @@ export function useAnnotationLabels() {
     getQuickEvents,
     getLabelsByCategory,
     getFlagsByLabel,
-    categories: defaultCategories
+    categories: defaultCategories,
+    saveLabel,
+    deleteLabel,
+    saveFlag,
+    deleteFlag
   };
 }
 

@@ -16,6 +16,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { toast } from "@/components/ui/use-toast";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 
 const categoriesData = [
   { id: "offense", name: "Offense", hotkey: "A" },
@@ -27,21 +29,17 @@ const categoriesData = [
   { id: "infractions", name: "Infractions", hotkey: "C" },
 ];
 
-const initialLabels = [
-  { id: "pass", name: "Pass", category: "offense" as EventCategory, hotkey: "Q", description: "Standard pass" },
-  { id: "cross", name: "Cross", category: "offense" as EventCategory, hotkey: "W", description: "Cross into the box" },
-  { id: "shot", name: "Shot", category: "offense" as EventCategory, hotkey: "E", description: "Shot on goal" },
-  { id: "reception", name: "Reception", category: "reception" as EventCategory, hotkey: "W", description: "Ball reception" },
-];
-
-const initialFlags: AnnotationFlag[] = [
-  { id: "outcome", name: "Outcome", description: "Result of the action", values: ["Successful", "Unsuccessful"] },
-  { id: "direction", name: "Direction", description: "Direction of movement", values: ["Forward", "Backward", "Sideways"] },
-];
-
 const AnnotationLabels: React.FC = () => {
-  const [labels, setLabels] = useState<AnnotationLabel[]>([]);
-  const [flags, setFlags] = useState<AnnotationFlag[]>([]);
+  const { 
+    labels, 
+    flags, 
+    isLoading, 
+    saveLabel,
+    deleteLabel,
+    saveFlag,
+    deleteFlag
+  } = useAnnotationLabels();
+  
   const [newLabel, setNewLabel] = useState<Partial<AnnotationLabel>>({
     name: "",
     category: "offense",
@@ -62,40 +60,6 @@ const AnnotationLabels: React.FC = () => {
   const [editingFlagId, setEditingFlagId] = useState<string | null>(null);
   const [showFlagsPanel, setShowFlagsPanel] = useState(false);
 
-  useEffect(() => {
-    // Load labels from localStorage if available, otherwise use initial data
-    const savedLabels = localStorage.getItem("annotationLabels");
-    if (savedLabels) {
-      setLabels(JSON.parse(savedLabels));
-    } else {
-      setLabels(initialLabels);
-      localStorage.setItem("annotationLabels", JSON.stringify(initialLabels));
-    }
-
-    // Load flags from localStorage if available, otherwise use initial data
-    const savedFlags = localStorage.getItem("annotationFlags");
-    if (savedFlags) {
-      setFlags(JSON.parse(savedFlags));
-    } else {
-      setFlags(initialFlags);
-      localStorage.setItem("annotationFlags", JSON.stringify(initialFlags));
-    }
-  }, []);
-
-  // Save labels to localStorage whenever they change
-  useEffect(() => {
-    if (labels.length > 0) {
-      localStorage.setItem("annotationLabels", JSON.stringify(labels));
-    }
-  }, [labels]);
-
-  // Save flags to localStorage whenever they change
-  useEffect(() => {
-    if (flags.length > 0) {
-      localStorage.setItem("annotationFlags", JSON.stringify(flags));
-    }
-  }, [flags]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewLabel(prev => ({ ...prev, [name]: value }));
@@ -105,27 +69,35 @@ const AnnotationLabels: React.FC = () => {
     setNewLabel(prev => ({ ...prev, category: value as EventCategory }));
   };
 
-  const handleAddLabel = () => {
+  const handleAddLabel = async () => {
     if (newLabel.name && newLabel.hotkey) {
-      if (editingId) {
-        // Update existing label
-        setLabels(labels.map(label => 
-          label.id === editingId ? { ...label, ...newLabel, id: editingId } as AnnotationLabel : label
-        ));
-        setEditingId(null);
-      } else {
-        // Add new label
-        setLabels([...labels, { ...newLabel, id: uuidv4() } as AnnotationLabel]);
-      }
+      const labelToSave: AnnotationLabel = {
+        id: editingId || uuidv4(),
+        name: newLabel.name,
+        category: newLabel.category as EventCategory,
+        hotkey: newLabel.hotkey,
+        description: newLabel.description,
+        flags: newLabel.flags as AnnotationFlag[]
+      };
+
+      const success = await saveLabel(labelToSave);
       
-      // Reset form
-      setNewLabel({
-        name: "",
-        category: "offense",
-        hotkey: "",
-        description: "",
-        flags: []
-      });
+      if (success) {
+        toast({
+          title: editingId ? "Label updated" : "Label added",
+          description: `The label "${newLabel.name}" has been ${editingId ? "updated" : "added"} successfully.`
+        });
+        
+        // Reset form
+        setNewLabel({
+          name: "",
+          category: "offense",
+          hotkey: "",
+          description: "",
+          flags: []
+        });
+        setEditingId(null);
+      }
     }
   };
 
@@ -137,17 +109,25 @@ const AnnotationLabels: React.FC = () => {
     setEditingId(label.id);
   };
 
-  const handleDeleteLabel = (id: string) => {
-    setLabels(labels.filter(label => label.id !== id));
-    if (editingId === id) {
-      setEditingId(null);
-      setNewLabel({
-        name: "",
-        category: "offense",
-        hotkey: "",
-        description: "",
-        flags: []
+  const handleDeleteLabel = async (id: string) => {
+    const success = await deleteLabel(id);
+    
+    if (success) {
+      toast({
+        title: "Label deleted",
+        description: "The label has been deleted successfully."
       });
+      
+      if (editingId === id) {
+        setEditingId(null);
+        setNewLabel({
+          name: "",
+          category: "offense",
+          hotkey: "",
+          description: "",
+          flags: []
+        });
+      }
     }
   };
 
@@ -163,24 +143,29 @@ const AnnotationLabels: React.FC = () => {
   };
 
   // Flag management functions
-  const handleAddNewFlag = () => {
+  const handleAddNewFlag = async () => {
     if (newFlag.name) {
-      if (editingFlagId) {
-        // Update existing flag
-        setFlags(flags.map(flag => 
-          flag.id === editingFlagId ? { ...flag, ...newFlag, id: editingFlagId } as AnnotationFlag : flag
-        ));
-        setEditingFlagId(null);
-      } else {
-        // Add new flag
-        const newFlagWithId = { ...newFlag, id: uuidv4() } as AnnotationFlag;
-        setFlags([...flags, newFlagWithId]);
-      }
+      const flagToSave: AnnotationFlag = {
+        id: editingFlagId || uuidv4(),
+        name: newFlag.name,
+        description: newFlag.description,
+        values: newFlag.values as string[] || []
+      };
+
+      const success = await saveFlag(flagToSave);
       
-      // Reset form
-      setNewFlag({ name: "", description: "", values: [] });
-      setNewFlagValue("");
-      setIsAddingFlag(false);
+      if (success) {
+        toast({
+          title: editingFlagId ? "Flag updated" : "Flag added",
+          description: `The flag "${newFlag.name}" has been ${editingFlagId ? "updated" : "added"} successfully.`
+        });
+        
+        // Reset form
+        setNewFlag({ name: "", description: "", values: [] });
+        setNewFlagValue("");
+        setIsAddingFlag(false);
+        setEditingFlagId(null);
+      }
     }
   };
 
@@ -190,25 +175,20 @@ const AnnotationLabels: React.FC = () => {
     setIsAddingFlag(true);
   };
 
-  const handleDeleteFlag = (id: string) => {
-    // First remove this flag from any labels that use it
-    const updatedLabels = labels.map(label => {
-      if (label.flags?.some(flag => flag.id === id)) {
-        return {
-          ...label,
-          flags: label.flags.filter(flag => flag.id !== id)
-        };
+  const handleDeleteFlag = async (id: string) => {
+    const success = await deleteFlag(id);
+    
+    if (success) {
+      toast({
+        title: "Flag deleted",
+        description: "The flag has been deleted successfully."
+      });
+      
+      if (editingFlagId === id) {
+        setEditingFlagId(null);
+        setNewFlag({ name: "", description: "", values: [] });
+        setIsAddingFlag(false);
       }
-      return label;
-    });
-    
-    setLabels(updatedLabels);
-    setFlags(flags.filter(flag => flag.id !== id));
-    
-    if (editingFlagId === id) {
-      setEditingFlagId(null);
-      setNewFlag({ name: "", description: "", values: [] });
-      setIsAddingFlag(false);
     }
   };
 
@@ -247,6 +227,29 @@ const AnnotationLabels: React.FC = () => {
       }));
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-white min-h-screen p-5">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-1" size={16} />
+              Back to Main
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">Annotation Labels</h1>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p>Loading labels and flags...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
