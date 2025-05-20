@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSoccer } from "@/context/SoccerContext";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
@@ -65,8 +64,15 @@ export function useWizardState() {
       flags: flagValues
     };
     
-    // Convert to the expected format for the context
-    setSelectedEventDetails(additionalDetails);
+    // Fix: Cast the EventDetails to match what setSelectedEventDetails expects
+    // This assumes that the SoccerContext is using a Record<string, string> type
+    // for event details instead of the EventDetails type
+    setSelectedEventDetails({
+      pressure: selectedPressure || "",
+      bodyPart: selectedBodyPart || "",
+      // Instead of passing flags directly, we'll flatten the structure
+      ...flagValues
+    });
   }, [
     selectedEvent, 
     selectedPressure, 
