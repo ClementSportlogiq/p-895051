@@ -20,7 +20,14 @@ export interface AnnotationFlag {
   id: string;
   name: string;
   description?: string;
-  values: string[];
+  order: number; // Added order field for decision tree processing
+  values: FlagValue[]; // Changed from string[] to FlagValue[]
+}
+
+// New interface for flag values with hotkeys
+export interface FlagValue {
+  value: string;
+  hotkey: string;
 }
 
 export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";

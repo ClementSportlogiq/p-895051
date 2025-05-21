@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag } from '@/types/annotation';
+import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag, FlagValue } from '@/types/annotation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -29,6 +28,51 @@ export function useAnnotationLabels() {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Process flags: convert values from JSON to array if needed and ensure correct structure
+  const processFlags = (flagsData: any[]): AnnotationFlag[] => {
+    return flagsData.map((flag: any) => {
+      let values: (string | FlagValue)[] = [];
+      
+      // Handle different data formats
+      if (Array.isArray(flag.values)) {
+        values = flag.values;
+      } else if (typeof flag.values === 'string') {
+        try {
+          values = JSON.parse(flag.values);
+        } catch (e) {
+          values = [];
+          console.error('Error parsing flag values', e);
+        }
+      }
+      
+      // Convert legacy string values to FlagValue objects if needed
+      const processedValues = values.map((val: any, index) => {
+        if (typeof val === 'string') {
+          // Legacy format - create a FlagValue object with auto-assigned hotkey
+          return {
+            value: val,
+            hotkey: String.fromCharCode(81 + index) // Start from Q (ASCII 81)
+          };
+        } else if (typeof val === 'object' && val !== null && 'value' in val && 'hotkey' in val) {
+          // Already in the right format
+          return val;
+        } else {
+          // Unexpected format - create a placeholder
+          return {
+            value: String(val),
+            hotkey: String.fromCharCode(81 + index)
+          };
+        }
+      });
+
+      return {
+        ...flag,
+        order: flag.order || 0, // Default order to 0 if not present
+        values: processedValues
+      };
+    });
+  };
+
   // Load data from Supabase
   const loadData = async () => {
     setIsLoading(true);
@@ -52,26 +96,21 @@ export function useAnnotationLabels() {
         throw flagsError;
       }
 
+      // Process flags with the new structure
+      const processedFlags = processFlags(flagsData);
+
       // Process labels: convert flags from JSON strings to objects
       const processedLabels = labelsData.map((label: any) => {
         // Convert flags from IDs to actual flag objects
         const labelFlags = label.flags && Array.isArray(label.flags) 
           ? label.flags.map((flagId: string) => 
-              flagsData.find((f: any) => f.id === flagId)
+              processedFlags.find((f: any) => f.id === flagId)
             ).filter(Boolean)
           : [];
         
         return {
           ...label,
           flags: labelFlags
-        };
-      });
-
-      // Process flags: convert values from JSON to array if needed
-      const processedFlags = flagsData.map((flag: any) => {
-        return {
-          ...flag,
-          values: Array.isArray(flag.values) ? flag.values : JSON.parse(flag.values)
         };
       });
 
@@ -245,6 +284,7 @@ export function useAnnotationLabels() {
           id: flag.id,
           name: flag.name,
           description: flag.description || '',
+          order: flag.order || 0,
           values: flag.values
         });
       

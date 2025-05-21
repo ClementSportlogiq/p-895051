@@ -1,23 +1,27 @@
 
 import { useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { WizardStep, EventCategory } from "@/types/annotation";
+import { WizardStep, EventCategory, FlagValue } from "@/types/annotation";
 import { pressureOptions, bodyPartOptions } from "./eventData";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
+  flagsForLabel: { id: string; name: string; values: (string | FlagValue)[] }[];
+  currentFlagIndex: number;
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;
   handleEventSelect: (eventId: string) => void;
   handlePressureSelect: (pressureId: string) => void;
   handleBodyPartSelect: (bodyPartId: string) => void;
-  handleFlagValueSelect?: (flagValueIndex: number) => void; // Flag value handler
+  handleFlagValueSelect: (value: string) => void;
 }
 
 export const useEventTreeKeyboard = ({
   currentStep,
   selectedCategory,
+  flagsForLabel = [],
+  currentFlagIndex,
   handleQuickEventSelect,
   handleCategorySelect,
   handleEventSelect,
@@ -62,11 +66,24 @@ export const useEventTreeKeyboard = ({
           handleBodyPartSelect(bodyPart.id);
         }
       }
-      else if (currentStep === "flag" && handleFlagValueSelect) {
-        // Flag value selection by hotkey
-        if (key >= 'Q' && key <= 'Z') {
-          const index = key.charCodeAt(0) - 'Q'.charCodeAt(0);
-          handleFlagValueSelect(index);
+      else if (currentStep === "flag") {
+        // Flag value selection by hotkey - support the new FlagValue structure
+        if (flagsForLabel.length > 0 && currentFlagIndex < flagsForLabel.length) {
+          const currentFlag = flagsForLabel[currentFlagIndex];
+          if (currentFlag?.values) {
+            // Handle both string and FlagValue types
+            const matchedValue = currentFlag.values.find(val => {
+              if (typeof val === 'string') {
+                return false; // Legacy string values don't have hotkeys
+              } else {
+                return val.hotkey.toUpperCase() === key;
+              }
+            });
+            
+            if (matchedValue && typeof matchedValue !== 'string') {
+              handleFlagValueSelect(matchedValue.value);
+            }
+          }
         }
       }
     };
@@ -76,6 +93,8 @@ export const useEventTreeKeyboard = ({
   }, [
     currentStep, 
     selectedCategory, 
+    flagsForLabel,
+    currentFlagIndex,
     handleQuickEventSelect,
     handleCategorySelect,
     handleEventSelect,

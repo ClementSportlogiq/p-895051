@@ -6,7 +6,8 @@ import {
   EventCategory, 
   AnnotationLabel, 
   AnnotationFlag, 
-  EventDetails 
+  EventDetails,
+  FlagValue
 } from "@/types/annotation";
 
 export function useWizardState() {
@@ -119,7 +120,9 @@ export function useWizardState() {
     
     // Check if the event has associated flags
     if (event.flags && event.flags.length > 0) {
-      setFlagsForLabel(event.flags);
+      // Sort flags by order for the decision tree
+      const orderedFlags = [...event.flags].sort((a, b) => (a.order || 0) - (b.order || 0));
+      setFlagsForLabel(orderedFlags);
       setCurrentFlagIndex(0);
       setCurrentStep("flag");
     } 
@@ -145,7 +148,9 @@ export function useWizardState() {
       const eventWithFlags = allLabels.find(l => l.id === currentLabelId);
       
       if (eventWithFlags?.flags && eventWithFlags.flags.length > 0) {
-        setFlagsForLabel(eventWithFlags.flags);
+        // Sort flags by order for the decision tree
+        const orderedFlags = [...eventWithFlags.flags].sort((a, b) => (a.order || 0) - (b.order || 0));
+        setFlagsForLabel(orderedFlags);
         setCurrentFlagIndex(0);
         setCurrentStep("flag");
       }

@@ -1,7 +1,7 @@
 
 import React from "react";
 import EventButtonRow from "./EventButtonRow";
-import { AnnotationFlag } from "@/types/annotation";
+import { AnnotationFlag, FlagValue } from "@/types/annotation";
 
 interface FlagStepProps {
   flag: AnnotationFlag;
@@ -9,12 +9,25 @@ interface FlagStepProps {
 }
 
 export const FlagStep: React.FC<FlagStepProps> = ({ flag, onFlagValueSelect }) => {
-  const flagItems = flag.values.map((value, index) => ({
-    id: `${flag.id}-${index}`,
-    name: value,
-    hotkey: String.fromCharCode(81 + index), // Start from Q (ASCII 81)
-    description: `${flag.name}: ${value}`
-  }));
+  // Convert flag values to the format expected by EventButtonRow
+  const flagItems = flag.values.map((value, index) => {
+    // Handle both string values (legacy) and FlagValue objects
+    if (typeof value === 'string') {
+      return {
+        id: `${flag.id}-${index}`,
+        name: value,
+        hotkey: String.fromCharCode(81 + index), // Start from Q (ASCII 81) as fallback
+        description: `${flag.name}: ${value}`
+      };
+    } else {
+      return {
+        id: `${flag.id}-${index}`,
+        name: value.value,
+        hotkey: value.hotkey,
+        description: `${flag.name}: ${value.value}`
+      };
+    }
+  });
 
   return (
     <div>

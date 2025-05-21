@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { AnnotationFlag } from "@/types/annotation";
+import { AnnotationFlag, FlagValue } from "@/types/annotation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FlagForm } from "./FlagForm";
 import { FlagList } from "./FlagList";
@@ -23,24 +23,45 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
 }) => {
   const [showFlagsPanel, setShowFlagsPanel] = useState(false);
   const [isAddingFlag, setIsAddingFlag] = useState(false);
-  const [newFlag, setNewFlag] = useState<Partial<AnnotationFlag>>({ name: "", description: "", values: [] });
+  const [newFlag, setNewFlag] = useState<Partial<AnnotationFlag>>({ 
+    name: "", 
+    description: "", 
+    values: [], 
+    order: 0 
+  });
   const [newFlagValue, setNewFlagValue] = useState("");
+  const [newFlagHotkey, setNewFlagHotkey] = useState("");
   const [editingFlagId, setEditingFlagId] = useState<string | null>(null);
 
   const handleAddFlagValue = () => {
-    if (newFlagValue && !newFlag.values?.includes(newFlagValue)) {
+    if (newFlagValue && newFlagHotkey) {
+      // Check if the hotkey is already used
+      const isHotkeyUsed = newFlag.values?.some(val => val.hotkey.toUpperCase() === newFlagHotkey.toUpperCase());
+      
+      if (isHotkeyUsed) {
+        alert("This hotkey is already used for another value. Please choose a different hotkey.");
+        return;
+      }
+      
+      const newValue: FlagValue = {
+        value: newFlagValue,
+        hotkey: newFlagHotkey.toUpperCase()
+      };
+      
       setNewFlag(prev => ({ 
         ...prev, 
-        values: [...(prev.values || []), newFlagValue] 
+        values: [...(prev.values || []), newValue] 
       }));
+      
       setNewFlagValue("");
+      setNewFlagHotkey("");
     }
   };
 
-  const handleRemoveFlagValue = (value: string) => {
-    setNewFlag(prev => ({ 
-      ...prev, 
-      values: prev.values?.filter(v => v !== value) || [] 
+  const handleRemoveFlagValue = (index: number) => {
+    setNewFlag(prev => ({
+      ...prev,
+      values: prev.values?.filter((_, i) => i !== index) || []
     }));
   };
 
@@ -55,7 +76,8 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
           id: editingFlagId,
           name: newFlag.name,
           description: newFlag.description || "",
-          values: newFlag.values as string[] || []
+          order: newFlag.order || 0,
+          values: newFlag.values as FlagValue[] || []
         };
       } else {
         // Creating new flag - let the database generate ID
@@ -63,7 +85,8 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
           id: uuidv4(), // Generate a client-side UUID for new flags
           name: newFlag.name,
           description: newFlag.description || "",
-          values: newFlag.values as string[] || []
+          order: newFlag.order || 0,
+          values: newFlag.values as FlagValue[] || []
         };
       }
 
@@ -82,8 +105,9 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   };
 
   const resetFlagForm = () => {
-    setNewFlag({ name: "", description: "", values: [] });
+    setNewFlag({ name: "", description: "", values: [], order: 0 });
     setNewFlagValue("");
+    setNewFlagHotkey("");
     setIsAddingFlag(false);
     setEditingFlagId(null);
   };
@@ -122,10 +146,13 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
           <FlagForm
             newFlag={newFlag}
             newFlagValue={newFlagValue}
+            newFlagHotkey={newFlagHotkey}
             editingFlagId={editingFlagId}
             onFlagNameChange={(name) => setNewFlag({...newFlag, name})}
             onFlagDescriptionChange={(description) => setNewFlag({...newFlag, description})}
+            onFlagOrderChange={(order) => setNewFlag({...newFlag, order})}
             onNewFlagValueChange={setNewFlagValue}
+            onNewFlagHotkeyChange={setNewFlagHotkey}
             onAddFlagValue={handleAddFlagValue}
             onRemoveFlagValue={handleRemoveFlagValue}
             onSaveFlag={handleSaveFlag}
