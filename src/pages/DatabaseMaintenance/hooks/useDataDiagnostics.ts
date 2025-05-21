@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { DatabaseStats, FlagIssue, AffectedItem } from '../types';
+import { useDataService } from '@/hooks/annotations/useDataService';
 
 const initialStats: DatabaseStats = {
   labelCount: 0,
@@ -16,8 +17,10 @@ const initialStats: DatabaseStats = {
 export function useDataDiagnostics() {
   const [stats, setStats] = useState<DatabaseStats>(initialStats);
   const [flagIssues, setFlagIssues] = useState<FlagIssue[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [lastError, setLastError] = useState<Error | null>(null);
+  
+  const { loadData } = useDataService();
   
   // Run database diagnostics
   const runDiagnostics = useCallback(async () => {

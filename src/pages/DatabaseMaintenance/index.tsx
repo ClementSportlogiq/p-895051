@@ -2,19 +2,19 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { DatabaseStats } from "./DatabaseStats";
 import { FlagDiagnostics } from "./FlagDiagnostics";
 import { FlagRepair } from "./FlagRepair";
-// Import from the new location
 import { useDatabaseMaintenance } from "./hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+
+const MAX_RETRY_COUNT = 3;
 
 const DatabaseMaintenance: React.FC = () => {
   const { labels, flags, isLoading: isLabelsLoading } = useAnnotationLabels();
@@ -28,6 +28,9 @@ const DatabaseMaintenance: React.FC = () => {
   } = useDatabaseMaintenance();
   
   const [activeTab, setActiveTab] = useState("overview");
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasCriticalError, setHasCriticalError] = useState(false);
+  
   const isLoading = isLabelsLoading || isDiagnosticsLoading;
   
   // Run diagnostics when component mounts and data is loaded
@@ -36,16 +39,38 @@ const DatabaseMaintenance: React.FC = () => {
       console.log('Data loaded, running diagnostics...');
       runDiagnostics().catch(error => {
         console.error('Failed to run diagnostics:', error);
-        toast({
-          title: "Diagnostics Error",
-          description: "Failed to run database diagnostics. Please try again.",
-          variant: "destructive"
+        
+        // Increment retry count if there's an error
+        setRetryCount(prev => {
+          const newCount = prev + 1;
+          
+          // Mark as critical error if we've exceeded max retries
+          if (newCount >= MAX_RETRY_COUNT) {
+            setHasCriticalError(true);
+            toast({
+              title: "Critical Error",
+              description: "Database diagnostics failed after multiple attempts. Please refresh the page.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Diagnostics Error",
+              description: "Failed to run database diagnostics. Retrying...",
+              variant: "destructive"
+            });
+          }
+          
+          return newCount;
         });
       });
     }
   }, [isLabelsLoading, labels, flags, runDiagnostics]);
 
   const handleRefresh = () => {
+    // Reset error states
+    setRetryCount(0);
+    setHasCriticalError(false);
+    
     runDiagnostics().catch(error => {
       console.error('Error refreshing diagnostics:', error);
       toast({
@@ -56,7 +81,7 @@ const DatabaseMaintenance: React.FC = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !hasCriticalError) {
     return (
       <div className="bg-white min-h-screen p-5">
         <div className="flex items-center gap-4 mb-6">
@@ -85,6 +110,34 @@ const DatabaseMaintenance: React.FC = () => {
     );
   }
 
+  // Critical error state
+  if (hasCriticalError) {
+    return (
+      <div className="bg-white min-h-screen p-5">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" asChild>
+            <Link to="/labels">
+              <ArrowLeft className="mr-1" size={16} />
+              Back to Labels
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">Database Maintenance</h1>
+        </div>
+        
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Critical Error</AlertTitle>
+          <AlertDescription>
+            The database diagnostics have failed after multiple attempts. This may indicate a problem with the database connection or data integrity.
+            <div className="mt-4">
+              <Button onClick={handleRefresh}>Try Again</Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white min-h-screen p-5">
       <div className="flex items-center gap-4 mb-6">
@@ -109,10 +162,13 @@ const DatabaseMaintenance: React.FC = () => {
       
       {lastError && (
         <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
+          <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
             An error occurred: {lastError.message}
+            <div className="mt-2 text-sm">
+              The system will continue to function with potentially incomplete data. You can try refreshing to resolve this issue.
+            </div>
           </AlertDescription>
         </Alert>
       )}
