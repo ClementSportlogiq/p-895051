@@ -38,6 +38,7 @@ export function useWizardState(): WizardStateContextValue {
     flagsForLabel: flagLogic.flagsForLabel,
     availableFlags: flagLogic.availableFlags,
     currentFlagIndex: flagLogic.currentFlagIndex,
-    ...handlers
+    ...handlers,
+    resetWizard: handlers.resetWizard // Explicitly include resetWizard
   };
 }

@@ -262,6 +262,13 @@ export function useWizardHandlers({
     return flag ? flag.name : flagId;
   };
 
+  // Reset wizard - exposed publicly for the WizardStateContextValue
+  const resetWizard = () => {
+    resetState();
+    // Reset to default view
+    selection.setCurrentStep("default");
+  };
+
   return {
     handleCategorySelect,
     handleQuickEventSelect,
@@ -271,6 +278,7 @@ export function useWizardHandlers({
     handleFlagValueSelect,
     handleBack,
     getFlagNameById,
+    resetWizard // Export the resetWizard function
   };
 }
 
