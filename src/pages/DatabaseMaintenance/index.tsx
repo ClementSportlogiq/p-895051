@@ -6,23 +6,23 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import DatabaseStats from "./DatabaseStats";
-import FlagDiagnostics from "./FlagDiagnostics";
-import FlagRepair from "./FlagRepair";
+import { DatabaseStats } from "./DatabaseStats";
+import { FlagDiagnostics } from "./FlagDiagnostics";
+import { FlagRepair } from "./FlagRepair";
 import { useDatabaseMaintenance } from "./useDatabaseMaintenance";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DatabaseMaintenance: React.FC = () => {
   const { labels, flags, isLoading } = useAnnotationLabels();
-  const { databaseStats, flagIssues, analyzeDatabase } = useDatabaseMaintenance();
+  const { stats, flagIssues, runDiagnostics, fixAllFlagIssues } = useDatabaseMaintenance();
   const [activeTab, setActiveTab] = useState("overview");
   
   useEffect(() => {
     // Run diagnostics when component mounts and data is loaded
     if (!isLoading && labels && flags) {
-      analyzeDatabase(labels, flags);
+      runDiagnostics();
     }
-  }, [isLoading, labels, flags]);
+  }, [isLoading, labels, flags, runDiagnostics]);
 
   if (isLoading) {
     return (
@@ -73,15 +73,15 @@ const DatabaseMaintenance: React.FC = () => {
         </TabsList>
         
         <TabsContent value="overview">
-          <DatabaseStats stats={databaseStats} />
+          <DatabaseStats stats={stats} isLoading={isLoading} />
         </TabsContent>
         
         <TabsContent value="diagnostics">
-          <FlagDiagnostics issues={flagIssues} />
+          <FlagDiagnostics flagIssues={flagIssues} isLoading={isLoading} />
         </TabsContent>
         
         <TabsContent value="repair">
-          <FlagRepair issues={flagIssues} />
+          <FlagRepair flagIssues={flagIssues} isLoading={isLoading} onFixAll={fixAllFlagIssues} />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,3 +65,5 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, status, isLoading }) 
     </Card>
   );
 };
+
+export default DatabaseStats;

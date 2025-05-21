@@ -189,3 +189,5 @@ export const FlagRepair: React.FC<FlagRepairProps> = ({ flagIssues, isLoading, o
     </>
   );
 };
+
+export default FlagRepair;

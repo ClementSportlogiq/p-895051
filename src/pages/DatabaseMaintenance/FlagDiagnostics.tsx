@@ -87,3 +87,5 @@ export const FlagDiagnostics: React.FC<FlagDiagnosticsProps> = ({ flagIssues, is
     </Card>
   );
 };
+
+export default FlagDiagnostics;
