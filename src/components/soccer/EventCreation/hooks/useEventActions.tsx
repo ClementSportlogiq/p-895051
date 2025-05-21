@@ -1,5 +1,5 @@
 
-import { useSoccer } from "@/context/SoccerContext";
+import { useSoccer, TeamType } from "@/context/SoccerContext";
 import { 
   useEventValidation, 
   useKeyboardShortcuts,
@@ -57,7 +57,7 @@ export function useEventActions({
       loggedVideoTime,
       videoTime,
       selectedPlayer,
-      selectedTeam,
+      selectedTeam as TeamType, // Ensure it's cast to TeamType
       selectedLocation,
       selectedEventCategory,
       selectedEventType,
