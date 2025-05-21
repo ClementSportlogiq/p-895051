@@ -238,6 +238,7 @@ export function useAnnotationLabels() {
   // Save flag to database
   const saveFlag = async (flag: AnnotationFlag) => {
     try {
+      // For new flags, if id is empty string, let Supabase generate it
       const { error } = await supabase
         .from('annotation_flags')
         .upsert({

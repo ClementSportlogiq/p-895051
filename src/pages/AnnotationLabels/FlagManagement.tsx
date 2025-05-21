@@ -6,6 +6,7 @@ import { AnnotationFlag } from "@/types/annotation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FlagForm } from "./FlagForm";
 import { FlagList } from "./FlagList";
+import { v4 as uuidv4 } from "uuid";
 
 interface FlagManagementProps {
   flags: AnnotationFlag[];
@@ -45,12 +46,26 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
 
   const handleSaveFlag = async () => {
     if (newFlag.name) {
-      const flagToSave: AnnotationFlag = {
-        id: editingFlagId || "",
-        name: newFlag.name,
-        description: newFlag.description,
-        values: newFlag.values as string[] || []
-      };
+      // Create the flag object for saving
+      let flagToSave: AnnotationFlag;
+      
+      if (editingFlagId) {
+        // Editing existing flag - include the ID
+        flagToSave = {
+          id: editingFlagId,
+          name: newFlag.name,
+          description: newFlag.description || "",
+          values: newFlag.values as string[] || []
+        };
+      } else {
+        // Creating new flag - let the database generate ID
+        flagToSave = {
+          id: uuidv4(), // Generate a client-side UUID for new flags
+          name: newFlag.name,
+          description: newFlag.description || "",
+          values: newFlag.values as string[] || []
+        };
+      }
 
       const success = await onSaveFlag(flagToSave);
       
