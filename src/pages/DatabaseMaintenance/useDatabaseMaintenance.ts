@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { DatabaseStats, FlagIssue, AffectedItem } from './types';
 import { AnnotationFlag, AnnotationLabel, FlagValue } from '@/types/annotation';
-import { processFlags, processConditions } from '@/hooks/annotations/utils';
 
 const initialStats: DatabaseStats = {
   labelCount: 0,
@@ -19,27 +18,42 @@ export function useDatabaseMaintenance() {
   const [stats, setStats] = useState<DatabaseStats>(initialStats);
   const [flagIssues, setFlagIssues] = useState<FlagIssue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastError, setLastError] = useState<Error | null>(null);
   
-  // Run database diagnostics
+  // Run database diagnostics - completely standalone function to avoid hook nesting
   const runDiagnostics = useCallback(async () => {
     setIsLoading(true);
+    setLastError(null);
     
     try {
+      console.log('Starting database diagnostics...');
+      
       // Fetch raw data from database to do integrity checks
       const { data: labelsData, error: labelsError } = await supabase
         .from('annotation_labels')
         .select('*');
       
-      if (labelsError) throw labelsError;
+      if (labelsError) {
+        console.error('Error fetching labels:', labelsError);
+        throw labelsError;
+      }
 
       const { data: flagsData, error: flagsError } = await supabase
         .from('annotation_flags')
         .select('*');
       
-      if (flagsError) throw flagsError;
+      if (flagsError) {
+        console.error('Error fetching flags:', flagsError);
+        throw flagsError;
+      }
+      
+      console.log(`Fetched ${labelsData?.length || 0} labels and ${flagsData?.length || 0} flags`);
+      
+      // Safety check for null data
+      const actualLabelsData = labelsData || [];
+      const actualFlagsData = flagsData || [];
       
       // Process flags with special error handling to catch issues
-      const processedFlags: AnnotationFlag[] = [];
       const flagIssues: FlagIssue[] = [];
       
       // Count flag values
@@ -47,7 +61,7 @@ export function useDatabaseMaintenance() {
       let flagValueIssuesCount = 0;
       
       // Check for flag data issues
-      flagsData.forEach((flag: any) => {
+      actualFlagsData.forEach((flag: any) => {
         try {
           let values: (string | FlagValue)[] = [];
           let hasIssue = false;
@@ -122,27 +136,6 @@ export function useDatabaseMaintenance() {
               }
             });
           }
-          
-          // Add to processed flags regardless of issues to provide complete data
-          processedFlags.push({
-            ...flag,
-            order_priority: flag.order_priority || 0,
-            values: Array.isArray(values) ? values.map((val, index) => {
-              if (typeof val === 'string') {
-                return {
-                  value: val,
-                  hotkey: String.fromCharCode(81 + index) // Start from Q (ASCII 81)
-                };
-              } else if (typeof val === 'object' && val !== null && 'value' in val && 'hotkey' in val) {
-                return val;
-              } else {
-                return {
-                  value: String(val),
-                  hotkey: String.fromCharCode(81 + index)
-                };
-              }
-            }) : []
-          });
         } catch (error) {
           console.error(`Error processing flag ${flag.id}:`, error);
           flagIssues.push({
@@ -157,7 +150,7 @@ export function useDatabaseMaintenance() {
       // Check for label issues with flag references
       let labelIssuesCount = 0;
       
-      labelsData.forEach((label: any) => {
+      actualLabelsData.forEach((label: any) => {
         if (!label.flags) {
           labelIssuesCount++;
           flagIssues.push({
@@ -169,7 +162,7 @@ export function useDatabaseMaintenance() {
         } else if (Array.isArray(label.flags)) {
           // Check for references to non-existent flags
           const invalidFlags = label.flags.filter((flagId: string) => 
-            !flagsData.some((flag: any) => flag.id === flagId)
+            !actualFlagsData.some((flag: any) => flag.id === flagId)
           );
           
           if (invalidFlags.length > 0) {
@@ -200,20 +193,20 @@ export function useDatabaseMaintenance() {
             if (Array.isArray(conditions)) {
               const invalidConditions = conditions.filter((condition: any) => {
                 // Check if flagId exists
-                const flagExists = flagsData.some((flag: any) => flag.id === condition.flagId);
+                const flagExists = actualFlagsData.some((flag: any) => flag.id === condition.flagId);
                 
                 // Check flagsToHideIds (if they exist)
                 let invalidHideFlags = false;
                 if (condition.flagsToHideIds && Array.isArray(condition.flagsToHideIds)) {
                   invalidHideFlags = condition.flagsToHideIds.some((hideId: string) => 
-                    !flagsData.some((flag: any) => flag.id === hideId)
+                    !actualFlagsData.some((flag: any) => flag.id === hideId)
                   );
                 }
                 
                 // Check legacy nextFlagId (if it exists)
                 let invalidNextFlag = false;
                 if (condition.nextFlagId) {
-                  invalidNextFlag = !flagsData.some((flag: any) => flag.id === condition.nextFlagId);
+                  invalidNextFlag = !actualFlagsData.some((flag: any) => flag.id === condition.nextFlagId);
                 }
                 
                 return !flagExists || invalidHideFlags || invalidNextFlag;
@@ -242,25 +235,29 @@ export function useDatabaseMaintenance() {
       });
       
       // Update stats
-      setStats({
-        labelCount: labelsData.length,
-        flagCount: flagsData.length,
+      const newStats: DatabaseStats = {
+        labelCount: actualLabelsData.length,
+        flagCount: actualFlagsData.length,
         flagValuesCount: totalFlagValues,
         labelIssuesCount,
         flagIssuesCount: flagIssues.filter(issue => 
           issue.affectedItems.some(item => item.type === 'flag')
         ).length,
         flagValueIssuesCount
-      });
+      };
+      
+      console.log('Diagnostic results:', newStats);
       
       // Set flag issues
+      setStats(newStats);
       setFlagIssues(flagIssues);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error running diagnostics:', error);
+      setLastError(error);
       toast({
         title: "Diagnostics Error",
-        description: "An error occurred while running database diagnostics.",
+        description: `An error occurred while running database diagnostics: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -271,6 +268,7 @@ export function useDatabaseMaintenance() {
   // Fix all flag issues
   const fixAllFlagIssues = useCallback(async () => {
     setIsLoading(true);
+    setLastError(null);
     
     try {
       // Fetch all flags and labels to work with
@@ -278,13 +276,24 @@ export function useDatabaseMaintenance() {
         .from('annotation_flags')
         .select('*');
       
-      if (flagsError) throw flagsError;
+      if (flagsError) {
+        console.error('Error fetching flags:', flagsError);
+        throw flagsError;
+      }
       
       const { data: labelsData, error: labelsError } = await supabase
         .from('annotation_labels')
         .select('*');
       
-      if (labelsError) throw labelsError;
+      if (labelsError) {
+        console.error('Error fetching labels:', labelsError);
+        throw labelsError;
+      }
+
+      // Safety check
+      if (!flagsData || !labelsData) {
+        throw new Error('Failed to fetch data for repair');
+      }
       
       const flagsById = Object.fromEntries(flagsData.map((flag: any) => [flag.id, flag]));
       
@@ -335,6 +344,7 @@ export function useDatabaseMaintenance() {
           });
           
           if (needsUpdate) {
+            console.log(`Updating flag ${flag.id} (${flag.name}) values`);
             // Update flag in database
             const { error: updateError } = await supabase
               .from('annotation_flags')
@@ -363,6 +373,7 @@ export function useDatabaseMaintenance() {
           const validFlags = label.flags.filter((flagId: string) => flagsById[flagId]);
           
           if (validFlags.length !== label.flags.length) {
+            console.log(`Fixing label ${label.id} (${label.name}) invalid flag references`);
             needsUpdate = true;
             label.flags = validFlags;
           }
@@ -414,12 +425,14 @@ export function useDatabaseMaintenance() {
               });
               
               if (conditionsChanged || updatedConditions.some((_, i) => updatedConditions[i] !== validConditions[i])) {
+                console.log(`Fixing label ${label.id} (${label.name}) flag conditions`);
                 label.flag_conditions = updatedConditions;
                 needsUpdate = true;
               }
             }
           } catch (e) {
             // If parsing fails, initialize empty array
+            console.log(`Resetting label ${label.id} (${label.name}) invalid flag conditions`);
             label.flag_conditions = [];
             needsUpdate = true;
           }
@@ -444,17 +457,19 @@ export function useDatabaseMaintenance() {
       }
       
       // Re-run diagnostics to update stats and issues
+      console.log('Repair completed, running diagnostics again');
       await runDiagnostics();
       
       toast({
         title: "Repair Completed",
         description: "Database flag issues have been repaired successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fixing flag issues:', error);
+      setLastError(error);
       toast({
         title: "Repair Failed",
-        description: "An error occurred while fixing flag issues.",
+        description: `An error occurred while fixing flag issues: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -464,6 +479,7 @@ export function useDatabaseMaintenance() {
   
   // Run diagnostics on initial load
   useEffect(() => {
+    console.log('Database maintenance hook initialized, running initial diagnostics');
     runDiagnostics();
   }, [runDiagnostics]);
   
@@ -471,7 +487,10 @@ export function useDatabaseMaintenance() {
     stats,
     flagIssues,
     isLoading,
+    lastError,
     runDiagnostics,
     fixAllFlagIssues
   };
 }
+
+export default useDatabaseMaintenance;
