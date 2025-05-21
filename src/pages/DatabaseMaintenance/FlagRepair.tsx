@@ -14,7 +14,7 @@ import { toast } from "@/components/ui/use-toast";
 interface FlagRepairProps {
   flagIssues: FlagIssue[];
   isLoading: boolean;
-  onFixAll: () => Promise<void>;
+  onFixAll: () => Promise<boolean>; // Updated return type to boolean
 }
 
 export const FlagRepair: React.FC<FlagRepairProps> = ({ flagIssues, isLoading, onFixAll }) => {
@@ -24,11 +24,19 @@ export const FlagRepair: React.FC<FlagRepairProps> = ({ flagIssues, isLoading, o
   const handleFixAll = async () => {
     try {
       setIsRepairing(true);
-      await onFixAll();
-      toast({
-        title: "Repair completed",
-        description: "All flag issues have been fixed successfully.",
-      });
+      const success = await onFixAll(); // Now handles the boolean return
+      if (success) {
+        toast({
+          title: "Repair completed",
+          description: "All flag issues have been fixed successfully.",
+        });
+      } else {
+        toast({
+          title: "Repair partially completed",
+          description: "Some issues may not have been fixed completely.",
+          variant: "default"
+        });
+      }
     } catch (error) {
       console.error("Error fixing flag issues:", error);
       toast({
