@@ -1,61 +1,71 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash } from "lucide-react";
 import { AnnotationFlag } from "@/types/annotation";
+import { Edit, Trash2 } from "lucide-react";
 
 interface FlagListProps {
   flags: AnnotationFlag[];
   onEditFlag: (flag: AnnotationFlag) => void;
-  onDeleteFlag: (id: string) => Promise<void>;
+  onDeleteFlag: (id: string) => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
 }
 
 export const FlagList: React.FC<FlagListProps> = ({
   flags,
   onEditFlag,
-  onDeleteFlag,
+  onDeleteFlag
 }) => {
   return (
-    <div className="space-y-2">
-      <h3 className="font-medium mb-2">Existing Flags</h3>
-      {flags.length === 0 ? (
-        <p className="text-gray-500">No flags created yet.</p>
-      ) : (
-        flags.map(flag => (
-          <div 
-            key={flag.id} 
-            className="flex flex-col bg-white p-3 border rounded-md"
-          >
-            <div className="flex items-center justify-between">
-              <div className="font-medium">{flag.name}</div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={() => onEditFlag(flag)}>
-                  <Pencil size={16} />
+    <div className="mt-4">
+      <h3 className="font-medium text-sm mb-2">Available Flags</h3>
+      
+      {flags.length === 0 && (
+        <p className="text-sm text-gray-500">No flags created yet.</p>
+      )}
+      
+      <div className="space-y-2">
+        {flags.map(flag => (
+          <div key={flag.id} className="p-3 bg-white border rounded-md">
+            <div className="flex justify-between items-center mb-1">
+              <h4 className="font-medium">{flag.name}</h4>
+              <div className="space-x-2">
+                <Button variant="ghost" size="icon" onClick={() => onEditFlag(flag)}>
+                  <Edit className="h-4 w-4 text-blue-500" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => onDeleteFlag(flag.id)}>
-                  <Trash size={16} />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={async () => {
+                    if (window.confirm(`Are you sure you want to delete "${flag.name}"?`)) {
+                      await onDeleteFlag(flag.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </div>
             </div>
             
             {flag.description && (
-              <div className="text-sm text-gray-500 mt-1">{flag.description}</div>
+              <p className="text-sm text-gray-500 mb-2">{flag.description}</p>
             )}
             
-            <div className="mt-2">
-              <div className="text-xs font-medium text-gray-500">Values:</div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {flag.values.map(value => (
-                  <Badge key={value} variant="outline" className="text-xs">
-                    {value}
-                  </Badge>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {flag.values.map((value, idx) => (
+                <span 
+                  key={idx} 
+                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+                >
+                  {value}
+                </span>
+              ))}
+              {flag.values.length === 0 && (
+                <span className="text-xs text-gray-400">No values</span>
+              )}
             </div>
           </div>
-        ))
-      )}
+        ))}
+      </div>
     </div>
   );
 };

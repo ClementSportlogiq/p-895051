@@ -10,7 +10,7 @@ import { FlagList } from "./FlagList";
 interface FlagManagementProps {
   flags: AnnotationFlag[];
   onEditFlag: (flag: AnnotationFlag) => void;
-  onDeleteFlag: (id: string) => Promise<void>;
+  onDeleteFlag: (id: string) => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
   onSaveFlag: (flag: AnnotationFlag) => Promise<boolean>;
 }
 
