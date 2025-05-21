@@ -6,16 +6,26 @@ export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
   return flagsData.map((flag: any) => {
     let values: (string | FlagValue)[] = [];
     
-    // Handle different data formats
-    if (Array.isArray(flag.values)) {
-      values = flag.values;
-    } else if (typeof flag.values === 'string') {
-      try {
-        values = JSON.parse(flag.values);
-      } catch (e) {
-        values = [];
-        console.error('Error parsing flag values', e);
+    try {
+      // Handle different data formats
+      if (Array.isArray(flag.values)) {
+        values = flag.values;
+      } else if (typeof flag.values === 'string') {
+        try {
+          values = JSON.parse(flag.values);
+        } catch (e) {
+          // If JSON parsing fails, try to treat the string as a single value
+          values = [flag.values];
+          console.warn(`Could not parse flag values for ${flag.name}, using as single value`, e);
+        }
+      } else if (flag.values && typeof flag.values === 'object') {
+        // Handle case where values is already an object but not an array
+        values = [flag.values];
       }
+    } catch (e) {
+      console.error('Error processing flag values', e);
+      // Provide default values to prevent UI from breaking
+      values = [{ value: "Default", hotkey: "D" }];
     }
     
     // Convert legacy string values to FlagValue objects if needed

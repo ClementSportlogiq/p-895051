@@ -6,7 +6,14 @@ import { toast } from '@/components/ui/use-toast';
 export function useRealtimeSubscription(loadData: () => Promise<void>) {
   useEffect(() => {
     // Load initial data
-    loadData();
+    loadData().catch(error => {
+      console.error('Error loading initial data:', error);
+      toast({
+        title: "Data Loading Error",
+        description: "An error occurred while loading data. Please refresh the page.",
+        variant: "destructive"
+      });
+    });
     
     // Set up real-time subscription for all changes (INSERT, UPDATE, DELETE)
     const labelsSubscription = supabase
@@ -20,7 +27,9 @@ export function useRealtimeSubscription(loadData: () => Promise<void>) {
         },
         (payload) => {
           console.log('Labels data changed:', payload.eventType);
-          loadData();
+          loadData().catch(error => {
+            console.error('Error reloading data after labels change:', error);
+          });
         }
       )
       .subscribe((status) => {
@@ -46,7 +55,9 @@ export function useRealtimeSubscription(loadData: () => Promise<void>) {
         },
         (payload) => {
           console.log('Flags data changed:', payload.eventType);
-          loadData();
+          loadData().catch(error => {
+            console.error('Error reloading data after flags change:', error);
+          });
         }
       )
       .subscribe((status) => {

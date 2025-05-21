@@ -30,11 +30,17 @@ export function useAnnotationLabels() {
   
   // Memoize the loadData function to prevent infinite re-renders
   const loadData = useCallback(async () => {
-    const {
-      loadData: innerLoadData
-    } = useDataInitialization(setLabels, setFlags, setIsLoading, processLabels);
-    
-    return innerLoadData();
+    try {
+      const {
+        loadData: innerLoadData
+      } = useDataInitialization(setLabels, setFlags, setIsLoading, processLabels);
+      
+      return innerLoadData();
+    } catch (error) {
+      console.error('Error in loadData:', error);
+      setIsLoading(false); // Make sure to set loading to false on error
+      throw error;
+    }
   }, [setLabels, setFlags, setIsLoading, processLabels]);
   
   const {
@@ -48,7 +54,9 @@ export function useAnnotationLabels() {
   // Initialize defaults after loading
   useEffect(() => {
     if (!isLoading && !isInitialized) {
-      initializeDefaults();
+      initializeDefaults().catch(error => {
+        console.error('Error initializing defaults:', error);
+      });
     }
   }, [isLoading, isInitialized, initializeDefaults]);
 
