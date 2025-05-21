@@ -9,7 +9,8 @@ import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { DatabaseStats } from "./DatabaseStats";
 import { FlagDiagnostics } from "./FlagDiagnostics";
 import { FlagRepair } from "./FlagRepair";
-import { useDatabaseMaintenance } from "./useDatabaseMaintenance";
+// Import from the new location
+import { useDatabaseMaintenance } from "./hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

@@ -19,6 +19,7 @@ export function useRealtimeSubscription(loadData: () => Promise<void>) {
         },
         (payload) => {
           console.log('Labels data changed:', payload.eventType);
+          // Don't use catch directly in the callback to avoid swallowing errors
           loadData().catch(error => {
             console.error('Error reloading data after labels change:', error);
           });
