@@ -35,18 +35,18 @@ export const LabelForm: React.FC<LabelFormProps> = ({
 }) => {
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [selectedFlagValue, setSelectedFlagValue] = useState<string | null>(null);
-  const [nextFlagId, setNextFlagId] = useState<string | null>(null);
+  const [flagToKeepId, setFlagToKeepId] = useState<string | null>(null);
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>(
     newLabel.flag_conditions || []
   );
 
   // Save flag condition relationship
   const handleSaveCondition = () => {
-    if (selectedFlagId && selectedFlagValue && nextFlagId) {
+    if (selectedFlagId && selectedFlagValue && flagToKeepId) {
       const newCondition: FlagCondition = {
         flagId: selectedFlagId,
         value: selectedFlagValue,
-        nextFlagId: nextFlagId
+        nextFlagId: flagToKeepId // We keep the property name for DB compatibility
       };
       
       // Add the new condition
@@ -66,7 +66,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
       // Reset form
       setSelectedFlagId(null);
       setSelectedFlagValue(null);
-      setNextFlagId(null);
+      setFlagToKeepId(null);
     }
   };
 
@@ -295,14 +295,14 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                 </div>
                 
                 <div>
-                  <label className="text-xs text-gray-500">Then show</label>
+                  <label className="text-xs text-gray-500">Then hide all except</label>
                   <Select 
-                    value={nextFlagId || ""}
-                    onValueChange={setNextFlagId}
+                    value={flagToKeepId || ""}
+                    onValueChange={setFlagToKeepId}
                     disabled={!selectedFlagValue}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select next flag" />
+                      <SelectValue placeholder="Select flag to keep" />
                     </SelectTrigger>
                     <SelectContent>
                       {newLabel.flags
@@ -321,7 +321,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                 size="sm" 
                 variant="outline" 
                 onClick={handleSaveCondition}
-                disabled={!selectedFlagId || !selectedFlagValue || !nextFlagId}
+                disabled={!selectedFlagId || !selectedFlagValue || !flagToKeepId}
                 className="w-full"
               >
                 Add Condition
@@ -340,7 +340,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                         <span className="text-gray-500">=</span>
                         <Badge variant="outline">{condition.value}</Badge>
                         <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
-                        <span>{getFlagName(condition.nextFlagId)}</span>
+                        <span>Hide all except {getFlagName(condition.nextFlagId)}</span>
                       </div>
                       <Button 
                         variant="ghost" 
@@ -377,7 +377,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                             <Badge>{condition.value}</Badge>
                             <div className="h-5 border-l"></div>
                             <div className="p-2 border rounded bg-white">
-                              {getFlagName(condition.nextFlagId)}
+                              Only {getFlagName(condition.nextFlagId)} remains visible
                             </div>
                           </div>
                         ))}
