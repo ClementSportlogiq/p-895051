@@ -32,6 +32,8 @@ export const EventWizard: React.FC = () => {
   useEventTreeKeyboard({
     currentStep,
     selectedCategory,
+    flagsForLabel,
+    currentFlagIndex,
     handleQuickEventSelect,
     handleCategorySelect,
     handleEventSelect: (eventId) => {
@@ -67,8 +69,13 @@ export const EventWizard: React.FC = () => {
     handleFlagValueSelect: (flagValueIndex) => {
       if (currentStep === "flag" && flagsForLabel.length > 0) {
         const currentFlag = flagsForLabel[currentFlagIndex];
-        if (flagValueIndex < currentFlag.values.length) {
-          handleFlagValueSelect(currentFlag.values[flagValueIndex]);
+        if (currentFlag && currentFlag.values && flagValueIndex < currentFlag.values.length) {
+          const flagValue = currentFlag.values[flagValueIndex];
+          if (typeof flagValue === 'string') {
+            handleFlagValueSelect(flagValue);
+          } else if (flagValue.value) {
+            handleFlagValueSelect(flagValue.value);
+          }
         }
       }
     }

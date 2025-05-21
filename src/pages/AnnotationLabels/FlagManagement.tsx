@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 interface FlagManagementProps {
   flags: AnnotationFlag[];
   onEditFlag: (flag: AnnotationFlag) => void;
-  onDeleteFlag: (id: string) => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
+  onDeleteFlag: (id: string) => Promise<boolean>;
   onSaveFlag: (flag: AnnotationFlag) => Promise<boolean>;
 }
 
@@ -27,7 +27,7 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
     name: "", 
     description: "", 
     values: [], 
-    order: 0 
+    order_priority: 0 
   });
   const [newFlagValue, setNewFlagValue] = useState("");
   const [newFlagHotkey, setNewFlagHotkey] = useState("");
@@ -36,7 +36,9 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   const handleAddFlagValue = () => {
     if (newFlagValue && newFlagHotkey) {
       // Check if the hotkey is already used
-      const isHotkeyUsed = newFlag.values?.some(val => val.hotkey.toUpperCase() === newFlagHotkey.toUpperCase());
+      const isHotkeyUsed = newFlag.values?.some(val => 
+        typeof val === 'object' && val.hotkey.toUpperCase() === newFlagHotkey.toUpperCase()
+      );
       
       if (isHotkeyUsed) {
         alert("This hotkey is already used for another value. Please choose a different hotkey.");
@@ -76,16 +78,16 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
           id: editingFlagId,
           name: newFlag.name,
           description: newFlag.description || "",
-          order: newFlag.order || 0,
+          order_priority: newFlag.order_priority || 0,
           values: newFlag.values as FlagValue[] || []
         };
       } else {
-        // Creating new flag - let the database generate ID
+        // Creating new flag - generate a UUID client side
         flagToSave = {
           id: uuidv4(), // Generate a client-side UUID for new flags
           name: newFlag.name,
           description: newFlag.description || "",
-          order: newFlag.order || 0,
+          order_priority: newFlag.order_priority || 0,
           values: newFlag.values as FlagValue[] || []
         };
       }
@@ -105,7 +107,7 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   };
 
   const resetFlagForm = () => {
-    setNewFlag({ name: "", description: "", values: [], order: 0 });
+    setNewFlag({ name: "", description: "", values: [], order_priority: 0 });
     setNewFlagValue("");
     setNewFlagHotkey("");
     setIsAddingFlag(false);
@@ -169,3 +171,5 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
     </Collapsible>
   );
 };
+
+export default FlagManagement;

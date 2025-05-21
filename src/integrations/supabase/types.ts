@@ -32,18 +32,21 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          order_priority: number | null
           values: Json
         }
         Insert: {
           description?: string | null
           id?: string
           name: string
+          order_priority?: number | null
           values?: Json
         }
         Update: {
           description?: string | null
           id?: string
           name?: string
+          order_priority?: number | null
           values?: Json
         }
         Relationships: []
@@ -52,6 +55,7 @@ export type Database = {
         Row: {
           category: string
           description: string | null
+          flag_conditions: Json | null
           flags: Json
           hotkey: string
           id: string
@@ -60,6 +64,7 @@ export type Database = {
         Insert: {
           category: string
           description?: string | null
+          flag_conditions?: Json | null
           flags?: Json
           hotkey: string
           id?: string
@@ -68,6 +73,7 @@ export type Database = {
         Update: {
           category?: string
           description?: string | null
+          flag_conditions?: Json | null
           flags?: Json
           hotkey?: string
           id?: string

@@ -120,8 +120,10 @@ export function useWizardState() {
     
     // Check if the event has associated flags
     if (event.flags && event.flags.length > 0) {
-      // Sort flags by order for the decision tree
-      const orderedFlags = [...event.flags].sort((a, b) => (a.order || 0) - (b.order || 0));
+      // Sort flags by order_priority for the decision tree
+      const orderedFlags = [...event.flags].sort((a, b) => 
+        (a.order_priority || 0) - (b.order_priority || 0)
+      );
       setFlagsForLabel(orderedFlags);
       setCurrentFlagIndex(0);
       setCurrentStep("flag");
@@ -148,8 +150,10 @@ export function useWizardState() {
       const eventWithFlags = allLabels.find(l => l.id === currentLabelId);
       
       if (eventWithFlags?.flags && eventWithFlags.flags.length > 0) {
-        // Sort flags by order for the decision tree
-        const orderedFlags = [...eventWithFlags.flags].sort((a, b) => (a.order || 0) - (b.order || 0));
+        // Sort flags by order_priority for the decision tree
+        const orderedFlags = [...eventWithFlags.flags].sort((a, b) => 
+          (a.order_priority || 0) - (b.order_priority || 0)
+        );
         setFlagsForLabel(orderedFlags);
         setCurrentFlagIndex(0);
         setCurrentStep("flag");

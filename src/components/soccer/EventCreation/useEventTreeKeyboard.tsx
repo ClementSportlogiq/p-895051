@@ -1,13 +1,13 @@
 
 import { useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { WizardStep, EventCategory, FlagValue } from "@/types/annotation";
+import { WizardStep, EventCategory, FlagValue, AnnotationFlag } from "@/types/annotation";
 import { pressureOptions, bodyPartOptions } from "./eventData";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
-  flagsForLabel: { id: string; name: string; values: (string | FlagValue)[] }[];
+  flagsForLabel: AnnotationFlag[];
   currentFlagIndex: number;
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;

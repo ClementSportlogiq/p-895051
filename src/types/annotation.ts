@@ -6,6 +6,7 @@ export interface AnnotationLabel {
   hotkey: string;
   description?: string;
   flags?: AnnotationFlag[]; // Added flags association
+  flag_conditions?: FlagCondition[]; // Added for decision tree logic
 }
 
 export type EventCategory = "offense" | "defense" | "reception" | "goalkeeper" | "deadball" | "playerAction" | "infractions";
@@ -20,7 +21,7 @@ export interface AnnotationFlag {
   id: string;
   name: string;
   description?: string;
-  order: number; // Added order field for decision tree processing
+  order_priority: number; // Renamed from order to match database column
   values: FlagValue[]; // Changed from string[] to FlagValue[]
 }
 
@@ -28,6 +29,13 @@ export interface AnnotationFlag {
 export interface FlagValue {
   value: string;
   hotkey: string;
+}
+
+// New interface for conditional logic in the decision tree
+export interface FlagCondition {
+  flagId: string;
+  value: string;
+  nextFlagId: string;
 }
 
 export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";

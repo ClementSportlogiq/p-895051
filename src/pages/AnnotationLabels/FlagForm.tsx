@@ -1,16 +1,18 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { AnnotationFlag, FlagValue } from "@/types/annotation";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { X, Plus } from "lucide-react";
+import { FlagValue } from "@/types/annotation";
 
 interface FlagFormProps {
-  newFlag: Partial<AnnotationFlag>;
+  newFlag: {
+    name: string;
+    description?: string;
+    order_priority?: number;
+    values?: (FlagValue | string)[];
+  };
   newFlagValue: string;
   newFlagHotkey: string;
   editingFlagId: string | null;
@@ -41,102 +43,105 @@ export const FlagForm: React.FC<FlagFormProps> = ({
   onCancelFlag,
 }) => {
   return (
-    <div className="space-y-4 mb-4 border-b pb-4">
-      <h3 className="font-medium">{editingFlagId ? "Edit Flag" : "Add New Flag"}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="border rounded-md p-4 mb-4 bg-white">
+      <h3 className="font-medium mb-3">{editingFlagId ? "Edit Flag" : "Add New Flag"}</h3>
+      
+      <div className="space-y-3">
         <div>
-          <Label htmlFor="flag-name" className="block text-sm font-medium mb-1">Flag Name</Label>
+          <label className="block text-sm mb-1">Flag Name</label>
           <Input 
-            id="flag-name"
-            value={newFlag.name || ""} 
-            onChange={(e) => onFlagNameChange(e.target.value)}
-            placeholder="e.g., Outcome, Direction"
+            value={newFlag.name} 
+            onChange={(e) => onFlagNameChange(e.target.value)} 
+            placeholder="e.g., Impact, Direction, etc."
+            className="mb-2"
           />
         </div>
         
         <div>
-          <Label htmlFor="flag-order" className="block text-sm font-medium mb-1">Order (Decision Tree Priority)</Label>
+          <label className="block text-sm mb-1">Description (Optional)</label>
+          <Textarea 
+            value={newFlag.description || ''} 
+            onChange={(e) => onFlagDescriptionChange(e.target.value)} 
+            placeholder="Brief description of the flag"
+            className="mb-2"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm mb-1">Decision Tree Priority (Order)</label>
           <Input 
-            id="flag-order"
             type="number" 
-            value={newFlag.order || 0} 
-            onChange={(e) => onFlagOrderChange(parseInt(e.target.value))}
-            placeholder="1, 2, 3, etc."
+            min="0"
+            value={newFlag.order_priority || 0} 
+            onChange={(e) => onFlagOrderChange(parseInt(e.target.value))} 
+            placeholder="0"
+            className="mb-2"
           />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="flag-desc" className="block text-sm font-medium mb-1">Description (Optional)</Label>
-        <Textarea 
-          id="flag-desc"
-          value={newFlag.description || ""} 
-          onChange={(e) => onFlagDescriptionChange(e.target.value)}
-          placeholder="Brief description of what this flag represents"
-        />
-      </div>
-      
-      <div>
-        <Label className="block text-sm font-medium mb-1">Flag Values with Hotkeys</Label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <Input 
-            value={newFlagValue} 
-            onChange={(e) => onNewFlagValueChange(e.target.value)}
-            placeholder="Value (e.g., Success)"
-            className="col-span-2"
-          />
-          <Input 
-            value={newFlagHotkey} 
-            onChange={(e) => onNewFlagHotkeyChange(e.target.value)}
-            placeholder="Hotkey (e.g., S)"
-            maxLength={1}
-          />
-        </div>
-        <div className="mt-2">
-          <Button type="button" onClick={onAddFlagValue}>Add Value</Button>
+          <p className="text-xs text-gray-500">Lower numbers will appear first in decision trees</p>
         </div>
         
-        {newFlag.values && newFlag.values.length > 0 && (
-          <Table className="mt-4">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Value</TableHead>
-                <TableHead>Hotkey</TableHead>
-                <TableHead className="w-[100px]">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <div>
+          <label className="block text-sm mb-1">Flag Values</label>
+          
+          <div className="flex gap-2 mb-2">
+            <Input 
+              value={newFlagValue} 
+              onChange={(e) => onNewFlagValueChange(e.target.value)} 
+              placeholder="Value"
+              className="flex-1"
+            />
+            <Input 
+              value={newFlagHotkey} 
+              onChange={(e) => onNewFlagHotkeyChange(e.target.value)} 
+              placeholder="Hotkey"
+              maxLength={1}
+              className="w-20"
+            />
+            <Button 
+              type="button" 
+              onClick={onAddFlagValue}
+              variant="outline"
+              disabled={!newFlagValue || !newFlagHotkey}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {newFlag.values && newFlag.values.length > 0 ? (
+            <div className="space-y-2 mt-3">
               {newFlag.values.map((value, index) => (
-                <TableRow key={index}>
-                  <TableCell>{value.value}</TableCell>
-                  <TableCell>{value.hotkey}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => onRemoveFlagValue(index)}
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <div>
+                    <span className="font-medium">
+                      {typeof value === 'string' ? value : value.value}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      (Hotkey: {typeof value === 'string' ? `Unknown` : value.hotkey})
+                    </span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onRemoveFlagValue(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-      
-      <div className="flex gap-2">
-        <Button onClick={onSaveFlag}>
-          {editingFlagId ? "Update" : "Save"} Flag
-        </Button>
-        <Button 
-          variant="ghost" 
-          onClick={onCancelFlag}
-        >
-          Cancel
-        </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No values added yet.</p>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <Button onClick={onSaveFlag}>
+            {editingFlagId ? "Update Flag" : "Add Flag"}
+          </Button>
+          <Button variant="outline" onClick={onCancelFlag}>
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );

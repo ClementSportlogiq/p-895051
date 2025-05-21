@@ -67,7 +67,7 @@ export function useAnnotationLabels() {
 
       return {
         ...flag,
-        order: flag.order || 0, // Default order to 0 if not present
+        order_priority: flag.order_priority || 0, // Use order_priority from database
         values: processedValues
       };
     });
@@ -233,7 +233,8 @@ export function useAnnotationLabels() {
           category: label.category,
           hotkey: label.hotkey,
           description: label.description || '',
-          flags: flagIds
+          flags: flagIds,
+          flag_conditions: label.flag_conditions || []
         });
       
       if (error) throw error;
@@ -284,8 +285,9 @@ export function useAnnotationLabels() {
           id: flag.id,
           name: flag.name,
           description: flag.description || '',
-          order: flag.order || 0,
-          values: flag.values
+          order_priority: flag.order_priority || 0, // Use order_priority instead of order
+          // Convert FlagValue[] to JSON for storage
+          values: JSON.stringify(flag.values)
         });
       
       if (error) throw error;
