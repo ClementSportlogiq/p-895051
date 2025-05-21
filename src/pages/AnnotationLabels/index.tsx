@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
-import { AnnotationLabel, EventCategory, AnnotationFlag } from "@/types/annotation";
+import { AnnotationLabel, EventCategory, AnnotationFlag, FlagCondition } from "@/types/annotation";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { LabelForm } from "./LabelForm";
 import { LabelList } from "./LabelList";
@@ -28,7 +28,8 @@ const AnnotationLabels: React.FC = () => {
     category: "offense",
     hotkey: "",
     description: "",
-    flags: []
+    flags: [],
+    flag_conditions: []
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -49,7 +50,8 @@ const AnnotationLabels: React.FC = () => {
         category: newLabel.category as EventCategory,
         hotkey: newLabel.hotkey,
         description: newLabel.description,
-        flags: newLabel.flags as AnnotationFlag[]
+        flags: newLabel.flags as AnnotationFlag[],
+        flag_conditions: newLabel.flag_conditions as FlagCondition[]
       };
 
       const success = await saveLabel(labelToSave);
@@ -66,7 +68,8 @@ const AnnotationLabels: React.FC = () => {
           category: "offense",
           hotkey: "",
           description: "",
-          flags: []
+          flags: [],
+          flag_conditions: []
         });
         setEditingId(null);
       }
@@ -76,7 +79,8 @@ const AnnotationLabels: React.FC = () => {
   const handleEditLabel = (label: AnnotationLabel) => {
     setNewLabel({
       ...label,
-      flags: label.flags || []
+      flags: label.flags || [],
+      flag_conditions: label.flag_conditions || []
     });
     setEditingId(label.id);
   };
@@ -103,7 +107,8 @@ const AnnotationLabels: React.FC = () => {
       category: "offense",
       hotkey: "",
       description: "",
-      flags: []
+      flags: [],
+      flag_conditions: []
     });
   };
 

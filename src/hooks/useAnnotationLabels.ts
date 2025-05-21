@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag, FlagValue } from '@/types/annotation';
 import { supabase } from '@/integrations/supabase/client';
@@ -225,6 +226,9 @@ export function useAnnotationLabels() {
       // Extract flag IDs for storage
       const flagIds = label.flags?.map(flag => flag.id) || [];
       
+      // Convert flag_conditions to JSON for database storage
+      const flagConditionsJson = label.flag_conditions ? JSON.stringify(label.flag_conditions) : null;
+      
       const { error } = await supabase
         .from('annotation_labels')
         .upsert({
@@ -234,7 +238,7 @@ export function useAnnotationLabels() {
           hotkey: label.hotkey,
           description: label.description || '',
           flags: flagIds,
-          flag_conditions: label.flag_conditions || []
+          flag_conditions: flagConditionsJson
         });
       
       if (error) throw error;

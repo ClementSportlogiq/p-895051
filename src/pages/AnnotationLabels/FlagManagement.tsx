@@ -23,7 +23,12 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
 }) => {
   const [showFlagsPanel, setShowFlagsPanel] = useState(false);
   const [isAddingFlag, setIsAddingFlag] = useState(false);
-  const [newFlag, setNewFlag] = useState<Partial<AnnotationFlag>>({ 
+  const [newFlag, setNewFlag] = useState<{
+    name: string;
+    description?: string;
+    values?: (FlagValue | string)[];
+    order_priority?: number;
+  }>({ 
     name: "", 
     description: "", 
     values: [], 
@@ -101,7 +106,12 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   };
 
   const handleEditFlag = (flag: AnnotationFlag) => {
-    setNewFlag(flag);
+    setNewFlag({
+      name: flag.name,
+      description: flag.description,
+      values: flag.values,
+      order_priority: flag.order_priority
+    });
     setEditingFlagId(flag.id);
     setIsAddingFlag(true);
   };
@@ -152,7 +162,7 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
             editingFlagId={editingFlagId}
             onFlagNameChange={(name) => setNewFlag({...newFlag, name})}
             onFlagDescriptionChange={(description) => setNewFlag({...newFlag, description})}
-            onFlagOrderChange={(order) => setNewFlag({...newFlag, order})}
+            onFlagOrderChange={(order_priority) => setNewFlag({...newFlag, order_priority})}
             onNewFlagValueChange={setNewFlagValue}
             onNewFlagHotkeyChange={setNewFlagHotkey}
             onAddFlagValue={handleAddFlagValue}

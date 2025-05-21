@@ -68,19 +68,6 @@ export const FlagForm: React.FC<FlagFormProps> = ({
         </div>
         
         <div>
-          <label className="block text-sm mb-1">Decision Tree Priority (Order)</label>
-          <Input 
-            type="number" 
-            min="0"
-            value={newFlag.order_priority || 0} 
-            onChange={(e) => onFlagOrderChange(parseInt(e.target.value))} 
-            placeholder="0"
-            className="mb-2"
-          />
-          <p className="text-xs text-gray-500">Lower numbers will appear first in decision trees</p>
-        </div>
-        
-        <div>
           <label className="block text-sm mb-1">Flag Values</label>
           
           <div className="flex gap-2 mb-2">

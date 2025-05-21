@@ -66,18 +66,8 @@ export const EventWizard: React.FC = () => {
       }
     },
     // Add handler for flag values
-    handleFlagValueSelect: (flagValueIndex) => {
-      if (currentStep === "flag" && flagsForLabel.length > 0) {
-        const currentFlag = flagsForLabel[currentFlagIndex];
-        if (currentFlag && currentFlag.values && flagValueIndex < currentFlag.values.length) {
-          const flagValue = currentFlag.values[flagValueIndex];
-          if (typeof flagValue === 'string') {
-            handleFlagValueSelect(flagValue);
-          } else if (flagValue.value) {
-            handleFlagValueSelect(flagValue.value);
-          }
-        }
-      }
+    handleFlagValueSelect: (flagValue) => {
+      handleFlagValueSelect(flagValue);
     }
   });
 

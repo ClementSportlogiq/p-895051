@@ -17,12 +17,12 @@ export const FlagList: React.FC<FlagListProps> = ({
   onEditFlag,
   onDeleteFlag
 }) => {
-  // Sort flags by order for display
-  const sortedFlags = [...flags].sort((a, b) => (a.order || 0) - (b.order || 0));
+  // Sort flags by order_priority for display
+  const sortedFlags = [...flags].sort((a, b) => (a.order_priority || 0) - (b.order_priority || 0));
   
   return (
     <div className="mt-4">
-      <h3 className="font-medium text-sm mb-2">Available Flags (Ordered by Decision Tree Priority)</h3>
+      <h3 className="font-medium text-sm mb-2">Available Flags</h3>
       
       {flags.length === 0 && (
         <p className="text-sm text-gray-500">No flags created yet.</p>
@@ -34,7 +34,6 @@ export const FlagList: React.FC<FlagListProps> = ({
             <div className="flex justify-between items-center mb-1">
               <div className="flex items-center gap-2">
                 <h4 className="font-medium">{flag.name}</h4>
-                <Badge variant="outline">Order: {flag.order || 0}</Badge>
               </div>
               <div className="space-x-2">
                 <Button variant="ghost" size="icon" onClick={() => onEditFlag(flag)}>
