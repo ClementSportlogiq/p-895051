@@ -1,14 +1,14 @@
 
 import { useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { WizardStep, EventCategory, FlagValue, AnnotationFlag } from "@/types/annotation";
+import { WizardStep, EventCategory, AnnotationFlag } from "@/types/annotation";
 import { pressureOptions, bodyPartOptions } from "./eventData";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
   flagsForLabel: AnnotationFlag[];
-  availableFlags?: AnnotationFlag[]; // Add available flags
+  availableFlags?: AnnotationFlag[]; // Available flags that aren't hidden by conditions
   currentFlagIndex: number;
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;
@@ -73,7 +73,7 @@ export const useEventTreeKeyboard = ({
         if (flagsForLabel.length > 0 && currentFlagIndex < flagsForLabel.length) {
           const currentFlag = flagsForLabel[currentFlagIndex];
           
-          // Check if this flag should be available based on conditional logic
+          // Only process hotkeys for flags that aren't hidden by conditions
           const isAvailable = availableFlags.some(f => f.id === currentFlag.id);
           
           if (isAvailable && currentFlag?.values) {

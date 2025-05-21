@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSoccer } from "@/context/SoccerContext";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
@@ -103,39 +104,38 @@ export function useWizardState() {
     setAvailableFlags([]);
   };
 
-  // Helper function to determine which flags should be available based on conditions
+  // Modified helper function to determine which flags should be hidden based on conditions
   const determineAvailableFlags = (label: AnnotationLabel, currentValues: Record<string, string>) => {
-    if (!label.flags || !label.flag_conditions) {
-      return label.flags || [];
+    if (!label.flags) {
+      return [];
     }
     
-    // Start with all flags 
+    // Start with all flags (the base set)
     let flags = [...label.flags];
     
     // Create a set of flag IDs that should be hidden based on conditions
     const hiddenFlagIds = new Set<string>();
     
-    // Check each flag condition
-    (label.flag_conditions || []).forEach((condition: FlagCondition) => {
-      // Get the selected value for the flag in the condition
-      const selectedValue = currentValues[getFlagNameById(flags, condition.flagId)];
-      
-      // If the selected value matches this condition
-      if (selectedValue === condition.value) {
-        // Then we should only show the next flag in the condition
-        // and hide all other flags at the same level
+    // Check each flag condition if available
+    if (label.flag_conditions) {
+      label.flag_conditions.forEach((condition: FlagCondition) => {
+        // Get the selected value for the flag in the condition
+        const selectedValue = currentValues[getFlagNameById(flags, condition.flagId)];
         
-        // Add all other flags to hidden set
-        flags.forEach(flag => {
-          // Skip if it's the source flag or the target flag
-          if (flag.id !== condition.flagId && flag.id !== condition.nextFlagId) {
-            hiddenFlagIds.add(flag.id);
-          }
-        });
-      }
-    });
+        // If the selected value matches this condition, then hide all flags except the next one
+        if (selectedValue === condition.value) {
+          // Add all flags to hidden set EXCEPT the next flag specified in the condition
+          flags.forEach(flag => {
+            // Skip the source flag (already selected) and the target flag (should be shown)
+            if (flag.id !== condition.flagId && flag.id !== condition.nextFlagId) {
+              hiddenFlagIds.add(flag.id);
+            }
+          });
+        }
+      });
+    }
     
-    // Filter out any flags that should be hidden
+    // Return only the flags that should be available (not hidden)
     return flags.filter(flag => !hiddenFlagIds.has(flag.id));
   };
   
@@ -205,6 +205,7 @@ export function useWizardState() {
           (a.order_priority || 0) - (b.order_priority || 0)
         );
         setFlagsForLabel(orderedFlags);
+        setAvailableFlags(determineAvailableFlags(eventWithFlags, {}));
         setCurrentFlagIndex(0);
         setCurrentStep("flag");
       }
@@ -229,7 +230,8 @@ export function useWizardState() {
       const eventWithFlags = allLabels.find(l => l.id === currentLabelId);
       
       if (eventWithFlags) {
-        // Update available flags based on new selection
+        // Update available flags based on new selection - this will determine
+        // which flags are hidden based on the conditions
         const newAvailableFlags = determineAvailableFlags(eventWithFlags, updatedFlagValues);
         setAvailableFlags(newAvailableFlags);
       }
@@ -240,7 +242,7 @@ export function useWizardState() {
       // Find the next flag that should be displayed (not hidden)
       let nextIndex = currentFlagIndex + 1;
       
-      // Skip over any flags that are not in the available flags list
+      // Skip over any flags that should be hidden based on conditions
       while (
         nextIndex < flagsForLabel.length && 
         !availableFlags.some(f => f.id === flagsForLabel[nextIndex].id)

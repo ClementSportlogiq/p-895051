@@ -8,8 +8,7 @@ import FlagStep from "./FlagStep";
 import { useWizardState } from "./hooks/useWizardState";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { pressureOptions, bodyPartOptions, TreeEvent } from "./eventData";
-import { AnnotationLabel } from "@/types/annotation";
+import { pressureOptions, bodyPartOptions } from "./eventData";
 
 export const EventWizard: React.FC = () => {
   const {
@@ -67,10 +66,7 @@ export const EventWizard: React.FC = () => {
         handleBodyPartSelect(bodyPart);
       }
     },
-    // Add handler for flag values
-    handleFlagValueSelect: (flagValue) => {
-      handleFlagValueSelect(flagValue);
-    }
+    handleFlagValueSelect
   });
 
   // Get current flag to display
@@ -114,7 +110,7 @@ export const EventWizard: React.FC = () => {
         <BodyPartStep onBodyPartSelect={handleBodyPartSelect} />
       )}
       
-      {/* Flag Selection - dynamic based on selected event and conditions */}
+      {/* Flag Selection - only show flags that aren't hidden by conditions */}
       {currentStep === "flag" && shouldDisplayFlag && (
         <FlagStep 
           flag={currentFlag} 
