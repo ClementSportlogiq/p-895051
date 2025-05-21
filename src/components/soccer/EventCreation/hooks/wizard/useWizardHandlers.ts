@@ -1,214 +1,265 @@
 
-import { AnnotationLabel } from "@/types/annotation";
-import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { useState } from "react";
+import { AnnotationLabel, EventCategory } from "@/types/annotation";
 
-interface WizardHandlersProps {
-  selection: {
-    setCurrentStep: React.Dispatch<React.SetStateAction<"default" | "pressure" | "bodyPart" | "flag">>;
-    setSelectedCategory: React.Dispatch<React.SetStateAction<any>>;
-    setSelectedEvent: React.Dispatch<React.SetStateAction<string | null>>;
-    setSelectedPressure: React.Dispatch<React.SetStateAction<string | null>>;
-    setSelectedBodyPart: React.Dispatch<React.SetStateAction<string | null>>;
-    selectedCategory: any;
-    selectedEvent: string | null;
-    selectedPressure: string | null;
-    selectedBodyPart: string | null;
-    currentStep: "default" | "pressure" | "bodyPart" | "flag";
-  };
-  flagLogic: {
-    setCurrentLabelId: React.Dispatch<React.SetStateAction<string | null>>;
-    setFlagsForLabel: React.Dispatch<React.SetStateAction<any[]>>;
-    setCurrentFlagIndex: React.Dispatch<React.SetStateAction<number>>;
-    setFlagValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-    setAvailableFlags: React.Dispatch<React.SetStateAction<any[]>>;
-    currentLabelId: string | null;
-    flagsForLabel: any[];
-    currentFlagIndex: number;
-    flagValues: Record<string, string>;
-    determineAvailableFlags: (label: AnnotationLabel, currentValues: Record<string, string>) => any[];
-    getFlagNameById: (flags: any[], flagId: string) => string;
-  };
-  sockerContext: {
-    setSelectedEventCategory: (category: any) => void;
-    setSelectedEventType: (type: any) => void;
-    setSelectedEventDetails: (details: any) => void;
-  };
-}
-
-export function useWizardHandlers({
-  selection,
-  flagLogic,
-  sockerContext
-}: WizardHandlersProps) {
-  const { getLabelsByCategory, getQuickEvents } = useAnnotationLabels();
-
-  // Handler for category selection
-  const handleCategorySelect = (category: any) => {
+export function useWizardHandlers({ 
+  selection, 
+  flagLogic, 
+  sockerContext 
+}) {
+  // Handle category selection
+  const handleCategorySelect = (category: EventCategory) => {
     selection.setSelectedCategory(category);
   };
 
-  // Handler for quick events
+  // Handle event selection for quick events
   const handleQuickEventSelect = (eventId: string) => {
-    const event = getQuickEvents().find(evt => evt.id === eventId);
+    const { getLabelsByCategory, getQuickEvents } = sockerContext.annotationLabels;
+    
+    // Find the event in all categories
+    const allEvents = getQuickEvents();
+    const event = allEvents.find(evt => evt.id === eventId);
+    
     if (event) {
       handleEventSelect(event);
     }
   };
 
-  // Handler for event selection
+  // Handle event selection
   const handleEventSelect = (event: AnnotationLabel) => {
-    selection.setSelectedEvent(event.name);
-    flagLogic.setCurrentLabelId(event.id);
+    selection.setSelectedEvent(event.id);
     
-    // Check if the event has associated flags
+    // Setup flags if this event has them
     if (event.flags && event.flags.length > 0) {
-      // Sort flags by order_priority for the decision tree
-      const orderedFlags = [...event.flags].sort((a, b) => 
-        (a.order_priority || 0) - (b.order_priority || 0)
-      );
-      
-      // Determine which flags should be available based on conditions
-      const initialAvailableFlags = flagLogic.determineAvailableFlags(event, {});
-      
-      flagLogic.setFlagsForLabel(orderedFlags);
-      flagLogic.setAvailableFlags(initialAvailableFlags);
+      flagLogic.setCurrentLabelId(event.id);
+      flagLogic.setFlagsForLabel(event.flags);
       flagLogic.setCurrentFlagIndex(0);
-      selection.setCurrentStep("flag");
-    } 
-    // If Pass is selected, go to pressure selection
-    else if (event.id === "pass") {
+      
+      // Process flags based on conditions
+      const updatedAvailableFlags = flagLogic.determineAvailableFlags(
+        event.flags,
+        event.flag_conditions || []
+      );
+      flagLogic.setAvailableFlags(updatedAvailableFlags);
+      
+      // Next step in wizard based on flags and business logic
+      determineNextStep(event);
+    } else {
+      // If no flags, go to pressure step
       selection.setCurrentStep("pressure");
     }
   };
 
-  // Handler for pressure selection
-  const handlePressureSelect = (pressure: {id: string; name: string; hotkey: string}) => {
-    selection.setSelectedPressure(pressure.name);
-    selection.setCurrentStep("bodyPart");
+  // Determine next step based on event selected
+  const determineNextStep = (event: AnnotationLabel) => {
+    const goToFlag = hasAvailableFlags(event);
+    const goToBodyPart = needsBodyPartSelection(event);
+
+    if (goToFlag) {
+      selection.setCurrentStep("flag");
+    } else if (goToBodyPart || goToPressure(event)) {
+      // Some events go directly to body part selection (e.g. heading)
+      if (goToBodyPart && !goToPressure(event)) {
+        selection.setCurrentStep("bodyPart");
+      } else {
+        selection.setCurrentStep("pressure");
+      }
+    } else {
+      // Return to default view if no additional info needed
+      selection.setCurrentStep("default");
+      handleBack(); // Complete the event and go back to start
+    }
   };
 
-  // Handler for body part selection
-  const handleBodyPartSelect = (bodyPart: {id: string; name: string; hotkey: string}) => {
-    selection.setSelectedBodyPart(bodyPart.name);
+  // Check if event needs pressure selection
+  const goToPressure = (event: AnnotationLabel) => {
+    const needsPressure = ["pass", "reception", "shot", "cross", "clearance"];
+    return needsPressure.includes(event.id);
+  };
+
+  // Check if event needs body part selection
+  const needsBodyPartSelection = (event: AnnotationLabel) => {
+    const needsBodyPart = ["pass", "shot", "reception", "header", "cross", "clearance"];
+    return needsBodyPart.includes(event.id);
+  };
+
+  // Check if event has available flags
+  const hasAvailableFlags = (event: AnnotationLabel) => {
+    return flagLogic.availableFlags.length > 0 && event.flags && event.flags.length > 0;
+  };
+
+  // Handle pressure selection
+  const handlePressureSelect = (pressure: { id: string; name: string }) => {
+    selection.setSelectedPressure(pressure.id);
     
-    // After body part, check if there are flags to process
-    if (flagLogic.currentLabelId) {
-      const allLabels = getLabelsByCategory(selection.selectedCategory);
-      const eventWithFlags = allLabels.find(l => l.id === flagLogic.currentLabelId);
+    // Check if body part selection is needed
+    if (needsBodyPartSelection({ id: selection.selectedEvent || "" } as AnnotationLabel)) {
+      selection.setCurrentStep("bodyPart");
+    } else {
+      // If no body part needed, go to default view
+      selection.setCurrentStep("default");
+      completeEventCreation();
+    }
+  };
+
+  // Handle body part selection
+  const handleBodyPartSelect = (bodyPart: { id: string; name: string }) => {
+    selection.setSelectedBodyPart(bodyPart.id);
+    selection.setCurrentStep("default");
+    completeEventCreation();
+  };
+
+  // Handle flag value selection
+  const handleFlagValueSelect = (value: string) => {
+    // Save flag value
+    if (flagLogic.currentFlagIndex < flagLogic.flagsForLabel.length) {
+      const currentFlag = flagLogic.flagsForLabel[flagLogic.currentFlagIndex];
       
-      if (eventWithFlags?.flags && eventWithFlags.flags.length > 0) {
-        // Sort flags by order_priority for the decision tree
-        const orderedFlags = [...eventWithFlags.flags].sort((a, b) => 
-          (a.order_priority || 0) - (b.order_priority || 0)
-        );
-        flagLogic.setFlagsForLabel(orderedFlags);
-        flagLogic.setAvailableFlags(flagLogic.determineAvailableFlags(eventWithFlags, {}));
-        flagLogic.setCurrentFlagIndex(0);
-        selection.setCurrentStep("flag");
+      if (currentFlag) {
+        // Update flag values
+        flagLogic.setFlagValues({
+          ...flagLogic.flagValues,
+          [currentFlag.id]: value
+        });
+        
+        // Apply conditions based on selection
+        const conditionsForFlag = flagLogic.getFlagConditions(flagLogic.currentLabelId, currentFlag.id, value);
+        
+        if (conditionsForFlag.length > 0) {
+          // Update available flags based on conditions
+          const updatedAvailableFlags = flagLogic.determineAvailableFlags(
+            flagLogic.flagsForLabel,
+            flagLogic.getFlagConditions(flagLogic.currentLabelId)
+          );
+          flagLogic.setAvailableFlags(updatedAvailableFlags);
+        }
+        
+        // Move to the next flag
+        const nextIndex = flagLogic.currentFlagIndex + 1;
+        
+        // If more flags, go to next flag
+        if (nextIndex < flagLogic.flagsForLabel.length) {
+          flagLogic.setCurrentFlagIndex(nextIndex);
+          
+          // Skip unavailable flags
+          let checkIndex = nextIndex;
+          while (
+            checkIndex < flagLogic.flagsForLabel.length && 
+            !flagLogic.availableFlags.some(af => af.id === flagLogic.flagsForLabel[checkIndex].id)
+          ) {
+            checkIndex++;
+            flagLogic.setCurrentFlagIndex(checkIndex);
+          }
+          
+          // If all remaining flags are hidden, finish the process
+          if (checkIndex >= flagLogic.flagsForLabel.length) {
+            completeAndMoveOn();
+          }
+        } else {
+          completeAndMoveOn();
+        }
       }
     }
   };
   
-  // Handler for flag value selection
-  const handleFlagValueSelect = (value: string) => {
-    const currentFlag = flagLogic.flagsForLabel[flagLogic.currentFlagIndex];
+  // Helper to move to next step after flags
+  const completeAndMoveOn = () => {
+    // Check if event needs body part or pressure selection
+    const needsBodyPart = needsBodyPartSelection({ id: selection.selectedEvent || "" } as AnnotationLabel);
+    const needsPressure = goToPressure({ id: selection.selectedEvent || "" } as AnnotationLabel);
     
-    // Store selected flag value
-    const updatedFlagValues = {
-      ...flagLogic.flagValues,
-      [currentFlag.name]: value
+    if (needsBodyPart && !needsPressure) {
+      selection.setCurrentStep("bodyPart");
+    } else if (needsPressure) {
+      selection.setCurrentStep("pressure");
+    } else {
+      // If no additional steps needed, complete the event
+      selection.setCurrentStep("default");
+      completeEventCreation();
+    }
+  };
+
+  // Complete the event creation
+  const completeEventCreation = () => {
+    // Save event to context
+    const eventData = {
+      category: selection.selectedCategory,
+      eventId: selection.selectedEvent,
+      pressure: selection.selectedPressure,
+      bodyPart: selection.selectedBodyPart,
+      flags: flagLogic.flagValues
     };
     
-    flagLogic.setFlagValues(updatedFlagValues);
-    
-    // Get the current label to check conditions
-    if (flagLogic.currentLabelId) {
-      const allLabels = getLabelsByCategory(selection.selectedCategory);
-      const eventWithFlags = allLabels.find(l => l.id === flagLogic.currentLabelId);
+    // Add to events list
+    if (sockerContext.addEvent && eventData.eventId) {
+      sockerContext.addEvent(eventData);
       
-      if (eventWithFlags) {
-        // Update available flags based on new selection - this will determine
-        // which flags are hidden based on the conditions
-        const newAvailableFlags = flagLogic.determineAvailableFlags(eventWithFlags, updatedFlagValues);
-        flagLogic.setAvailableFlags(newAvailableFlags);
-      }
-    }
-    
-    // Move to next flag if available
-    if (flagLogic.currentFlagIndex < flagLogic.flagsForLabel.length - 1) {
-      // Find the next flag that should be displayed (not hidden)
-      let nextIndex = flagLogic.currentFlagIndex + 1;
-      
-      // Skip over any flags that should be hidden based on conditions
-      while (
-        nextIndex < flagLogic.flagsForLabel.length && 
-        !flagLogic.availableFlags.some(f => f.id === flagLogic.flagsForLabel[nextIndex].id)
-      ) {
-        nextIndex++;
-      }
-      
-      // If we found a valid next flag, set it
-      if (nextIndex < flagLogic.flagsForLabel.length) {
-        flagLogic.setCurrentFlagIndex(nextIndex);
-      }
+      // Reset after adding
+      resetState();
     }
   };
 
-  // Handler for going back in the wizard
-  const handleBack = () => {
-    if (selection.currentStep === "flag") {
-      // If we're on the first flag, go back to the previous step
-      if (flagLogic.currentFlagIndex === 0) {
-        if (selection.selectedBodyPart) {
-          // If we came from bodyPart step
-          selection.setCurrentStep("bodyPart");
-        } else if (selection.selectedPressure) {
-          // If we came from pressure step
-          selection.setCurrentStep("pressure");
-        } else {
-          // If we came directly from event selection
-          selection.setCurrentStep("default");
-        }
-      } else {
-        // Go back to the previous flag
-        flagLogic.setCurrentFlagIndex(prev => prev - 1);
-        // Remove the value for the current flag
-        const currentFlag = flagLogic.flagsForLabel[flagLogic.currentFlagIndex];
-        const newFlagValues = { ...flagLogic.flagValues };
-        delete newFlagValues[currentFlag.name];
-        flagLogic.setFlagValues(newFlagValues);
-      }
-    }
-    else if (selection.currentStep === "bodyPart") {
-      selection.setCurrentStep("pressure");
-      selection.setSelectedBodyPart(null);
-    } 
-    else if (selection.currentStep === "pressure") {
-      selection.setCurrentStep("default");
-      selection.setSelectedEvent(null);
-      selection.setSelectedPressure(null);
-    } 
-    else if (selection.selectedCategory) {
-      selection.setSelectedCategory(null);
-      selection.setSelectedEvent(null);
-      selection.setCurrentStep("default");
-    }
-  };
-
-  const resetWizard = () => {
-    selection.setCurrentStep("default");
+  // Reset wizard state
+  const resetState = () => {
     selection.setSelectedCategory(null);
     selection.setSelectedEvent(null);
     selection.setSelectedPressure(null);
     selection.setSelectedBodyPart(null);
-    flagLogic.setCurrentLabelId(null);
+    flagLogic.setCurrentLabelId("");
     flagLogic.setFlagsForLabel([]);
     flagLogic.setCurrentFlagIndex(0);
     flagLogic.setFlagValues({});
     flagLogic.setAvailableFlags([]);
-    sockerContext.setSelectedEventCategory(null);
-    sockerContext.setSelectedEventType(null);
-    sockerContext.setSelectedEventDetails(null);
+  };
+
+  // Handle back button
+  const handleBack = () => {
+    // Logic for back button depends on current step
+    if (selection.currentStep === "pressure") {
+      // Go back to category view or default view
+      if (selection.selectedEvent) {
+        const hasFlags = flagLogic.flagsForLabel.length > 0;
+        if (hasFlags) {
+          selection.setCurrentStep("flag");
+          flagLogic.setCurrentFlagIndex(Math.max(0, flagLogic.flagsForLabel.length - 1));
+        } else {
+          selection.setCurrentStep("default");
+        }
+      } else {
+        selection.setCurrentStep("default");
+      }
+    } else if (selection.currentStep === "bodyPart") {
+      // Go back to pressure or flag step
+      if (selection.selectedPressure) {
+        selection.setCurrentStep("pressure");
+      } else {
+        const hasFlags = flagLogic.flagsForLabel.length > 0;
+        if (hasFlags) {
+          selection.setCurrentStep("flag");
+          flagLogic.setCurrentFlagIndex(Math.max(0, flagLogic.flagsForLabel.length - 1));
+        } else {
+          selection.setCurrentStep("default");
+        }
+      }
+    } else if (selection.currentStep === "flag") {
+      // Go back to previous flag or default view
+      if (flagLogic.currentFlagIndex > 0) {
+        flagLogic.setCurrentFlagIndex(flagLogic.currentFlagIndex - 1);
+      } else {
+        selection.setCurrentStep("default");
+      }
+    } else {
+      // From default view with a category selected, go back to main categories
+      if (selection.selectedCategory) {
+        selection.setSelectedCategory(null);
+      }
+    }
+  };
+
+  // Utility to get flag name by ID
+  const getFlagNameById = (flags: any[], flagId: string): string => {
+    const flag = flags.find(f => f.id === flagId);
+    return flag ? flag.name : flagId;
   };
 
   return {
@@ -219,6 +270,8 @@ export function useWizardHandlers({
     handleBodyPartSelect,
     handleFlagValueSelect,
     handleBack,
-    resetWizard
+    getFlagNameById,
   };
 }
+
+export default useWizardHandlers;
