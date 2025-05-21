@@ -7,6 +7,13 @@ import { useDataInitialization } from './useDataInitialization';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
 import { defaultCategories } from './constants';
 
+// Add global window augmentation
+declare global {
+  interface Window {
+    _soccerLabels?: AnnotationLabel[];
+  }
+}
+
 export function useAnnotationLabels() {
   const { 
     labels, 
@@ -27,6 +34,13 @@ export function useAnnotationLabels() {
     saveFlag,
     deleteFlag: deleteFlag_
   } = useFlags();
+  
+  // Make labels available globally for debugging and access by other components
+  useEffect(() => {
+    if (labels && labels.length > 0) {
+      window._soccerLabels = labels;
+    }
+  }, [labels]);
   
   // Memoize the loadData function to prevent infinite re-renders
   const loadData = useCallback(async () => {
