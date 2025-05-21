@@ -35,18 +35,18 @@ export const LabelForm: React.FC<LabelFormProps> = ({
 }) => {
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [selectedFlagValue, setSelectedFlagValue] = useState<string | null>(null);
-  const [flagToKeepId, setFlagToKeepId] = useState<string | null>(null);
+  const [flagsToHide, setFlagsToHide] = useState<string[]>([]); // New state for flags to hide
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>(
     newLabel.flag_conditions || []
   );
 
   // Save flag condition relationship
   const handleSaveCondition = () => {
-    if (selectedFlagId && selectedFlagValue && flagToKeepId) {
+    if (selectedFlagId && selectedFlagValue && flagsToHide.length > 0) {
       const newCondition: FlagCondition = {
         flagId: selectedFlagId,
         value: selectedFlagValue,
-        nextFlagId: flagToKeepId // We keep the property name for DB compatibility
+        flagsToHideIds: flagsToHide // Using the array of flag IDs to hide
       };
       
       // Add the new condition
@@ -66,7 +66,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
       // Reset form
       setSelectedFlagId(null);
       setSelectedFlagValue(null);
-      setFlagToKeepId(null);
+      setFlagsToHide([]);
     }
   };
 
@@ -96,6 +96,15 @@ export const LabelForm: React.FC<LabelFormProps> = ({
     // In a real implementation, this would need to pass back to the parent
   };
 
+  // Toggle a flag in the flags to hide array
+  const handleFlagToHideToggle = (flagId: string, checked: boolean) => {
+    if (checked) {
+      setFlagsToHide(prev => [...prev, flagId]);
+    } else {
+      setFlagsToHide(prev => prev.filter(id => id !== flagId));
+    }
+  };
+
   // Get flag name from ID
   const getFlagName = (flagId: string): string => {
     const flag = flags.find(f => f.id === flagId);
@@ -117,6 +126,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
   const handleFlagSelect = (flagId: string) => {
     setSelectedFlagId(flagId);
     setSelectedFlagValue(null); // Reset value when flag changes
+    setFlagsToHide([]); // Reset flags to hide when flag changes
   };
 
   return (
@@ -254,7 +264,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
             </h3>
             
             <div className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs text-gray-500">If Flag</label>
                   <Select 
@@ -293,35 +303,42 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div>
-                  <label className="text-xs text-gray-500">Then hide all except</label>
-                  <Select 
-                    value={flagToKeepId || ""}
-                    onValueChange={setFlagToKeepId}
-                    disabled={!selectedFlagValue}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select flag to keep" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {newLabel.flags
-                        .filter(f => f.id !== selectedFlagId)
-                        .map(flag => (
-                          <SelectItem key={flag.id} value={flag.id}>
-                            {flag.name}
-                          </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
+              
+              {/* Multi-select for flags to hide */}
+              {selectedFlagId && selectedFlagValue && (
+                <div>
+                  <label className="text-xs text-gray-500">Then hide these flags:</label>
+                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 mt-1">
+                    {newLabel.flags
+                      .filter(f => f.id !== selectedFlagId)
+                      .map(flag => (
+                        <div key={flag.id} className="flex items-center space-x-2 py-1">
+                          <Checkbox 
+                            id={`hide-flag-${flag.id}`}
+                            checked={flagsToHide.includes(flag.id)}
+                            onCheckedChange={(checked) => 
+                              handleFlagToHideToggle(flag.id, checked === true)
+                            }
+                          />
+                          <label
+                            htmlFor={`hide-flag-${flag.id}`}
+                            className="text-sm"
+                          >
+                            {flag.name}
+                          </label>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
               
               <Button 
                 size="sm" 
                 variant="outline" 
                 onClick={handleSaveCondition}
-                disabled={!selectedFlagId || !selectedFlagValue || !flagToKeepId}
+                disabled={!selectedFlagId || !selectedFlagValue || flagsToHide.length === 0}
                 className="w-full"
               >
                 Add Condition
@@ -335,12 +352,21 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                 <div className="space-y-2">
                   {flagConditions.map((condition, index) => (
                     <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">{getFlagName(condition.flagId)}</span>
-                        <span className="text-gray-500">=</span>
-                        <Badge variant="outline">{condition.value}</Badge>
-                        <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
-                        <span>Hide all except {getFlagName(condition.nextFlagId)}</span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">{getFlagName(condition.flagId)}</span>
+                          <span className="text-gray-500">=</span>
+                          <Badge variant="outline">{condition.value}</Badge>
+                          <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
+                          <span>Hide:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1 ml-6">
+                          {condition.flagsToHideIds?.map(flagId => (
+                            <Badge key={flagId} variant="secondary" className="text-xs">
+                              {getFlagName(flagId)}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                       <Button 
                         variant="ghost" 
@@ -360,7 +386,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
               <div className="mt-3 border-t pt-3">
                 <h4 className="text-sm font-medium mb-2">Decision Tree Preview:</h4>
                 <div className="bg-gray-50 p-3 rounded-md overflow-auto">
-                  {/* This is a simplified visualization - in a real app you might use a library */}
+                  {/* Simplified tree visualization */}
                   <div className="flex flex-col items-center">
                     {newLabel.flags && newLabel.flags.length > 0 && (
                       <div className="p-2 border rounded bg-white mb-2">
@@ -369,7 +395,6 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                     )}
                     <div className="h-5 border-l"></div>
                     <div className="flex flex-wrap justify-center gap-3">
-                      {/* Just a simple tree visualization */}
                       {flagConditions
                         .filter(c => newLabel.flags && newLabel.flags[0] && c.flagId === newLabel.flags[0].id)
                         .map((condition, idx) => (
@@ -377,7 +402,9 @@ export const LabelForm: React.FC<LabelFormProps> = ({
                             <Badge>{condition.value}</Badge>
                             <div className="h-5 border-l"></div>
                             <div className="p-2 border rounded bg-white">
-                              Only {getFlagName(condition.nextFlagId)} remains visible
+                              <div className="text-xs">
+                                Hidden flags: {condition.flagsToHideIds.map(id => getFlagName(id)).join(", ")}
+                              </div>
                             </div>
                           </div>
                         ))}

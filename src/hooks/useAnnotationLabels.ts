@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag, FlagValue } from '@/types/annotation';
+import { AnnotationLabel, EventCategory, AnnotationCategory, AnnotationFlag, FlagValue, FlagCondition } from '@/types/annotation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -74,6 +74,23 @@ export function useAnnotationLabels() {
     });
   };
 
+  // Process flag conditions: convert legacy nextFlagId to flagsToHideIds array if needed
+  const processConditions = (conditions: any[]): FlagCondition[] => {
+    if (!conditions) return [];
+    
+    return conditions.map(condition => {
+      // Handle legacy format with nextFlagId
+      if ('nextFlagId' in condition && !('flagsToHideIds' in condition)) {
+        return {
+          flagId: condition.flagId,
+          value: condition.value,
+          flagsToHideIds: condition.nextFlagId ? [condition.nextFlagId] : []
+        };
+      }
+      return condition;
+    });
+  };
+
   // Load data from Supabase
   const loadData = async () => {
     setIsLoading(true);
@@ -108,10 +125,26 @@ export function useAnnotationLabels() {
               processedFlags.find((f: any) => f.id === flagId)
             ).filter(Boolean)
           : [];
+
+        // Process flag conditions for the new format
+        let flagConditions;
+        try {
+          if (label.flag_conditions) {
+            flagConditions = typeof label.flag_conditions === 'string' 
+              ? processConditions(JSON.parse(label.flag_conditions))
+              : processConditions(label.flag_conditions);
+          } else {
+            flagConditions = [];
+          }
+        } catch (e) {
+          console.error('Error parsing flag conditions', e);
+          flagConditions = [];
+        }
         
         return {
           ...label,
-          flags: labelFlags
+          flags: labelFlags,
+          flag_conditions: flagConditions
         };
       });
 
@@ -226,8 +259,14 @@ export function useAnnotationLabels() {
       // Extract flag IDs for storage
       const flagIds = label.flags?.map(flag => flag.id) || [];
       
-      // Convert flag_conditions to JSON for database storage
-      const flagConditionsJson = label.flag_conditions ? JSON.stringify(label.flag_conditions) : null;
+      // Convert flag_conditions to support the new structure with flagsToHideIds
+      const flagConditionsJson = label.flag_conditions 
+        ? JSON.stringify(label.flag_conditions.map(condition => ({
+            flagId: condition.flagId,
+            value: condition.value,
+            flagsToHideIds: condition.flagsToHideIds || [] // Ensure array even if coming from legacy data
+          })))
+        : null;
       
       const { error } = await supabase
         .from('annotation_labels')

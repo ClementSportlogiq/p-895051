@@ -104,7 +104,7 @@ export function useWizardState() {
     setAvailableFlags([]);
   };
 
-  // Modified helper function to determine which flags should be hidden based on conditions
+  // Modified helper function to hide specific flags based on conditions
   const determineAvailableFlags = (label: AnnotationLabel, currentValues: Record<string, string>) => {
     if (!label.flags) {
       return [];
@@ -114,7 +114,7 @@ export function useWizardState() {
     let flags = [...label.flags];
     
     // Create a set of flag IDs that should be hidden based on conditions
-    const hiddenFlagIds = new Set<string>();
+    const flagsToHideSet = new Set<string>();
     
     // Check each flag condition if available
     if (label.flag_conditions) {
@@ -122,21 +122,18 @@ export function useWizardState() {
         // Get the selected value for the flag in the condition
         const selectedValue = currentValues[getFlagNameById(flags, condition.flagId)];
         
-        // If the selected value matches this condition, then hide all flags except the next one
-        if (selectedValue === condition.value) {
-          // Add all flags to hidden set EXCEPT the next flag specified in the condition
-          flags.forEach(flag => {
-            // Skip the source flag (already selected) and the target flag (should be shown)
-            if (flag.id !== condition.flagId && flag.id !== condition.nextFlagId) {
-              hiddenFlagIds.add(flag.id);
-            }
+        // If the selected value matches this condition, then hide the specified flags
+        if (selectedValue === condition.value && condition.flagsToHideIds) {
+          // Add each flag ID in the flagsToHideIds array to the hidden set
+          condition.flagsToHideIds.forEach(flagId => {
+            flagsToHideSet.add(flagId);
           });
         }
       });
     }
     
     // Return only the flags that should be available (not hidden)
-    return flags.filter(flag => !hiddenFlagIds.has(flag.id));
+    return flags.filter(flag => !flagsToHideSet.has(flag.id));
   };
   
   // Helper to get flag name from ID

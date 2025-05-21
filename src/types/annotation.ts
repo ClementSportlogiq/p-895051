@@ -31,11 +31,11 @@ export interface FlagValue {
   hotkey: string;
 }
 
-// New interface for conditional logic in the decision tree
+// Updated interface for conditional logic in the decision tree with flagsToHideIds array
 export interface FlagCondition {
   flagId: string;
   value: string;
-  nextFlagId: string;
+  flagsToHideIds: string[]; // Changed from nextFlagId to flagsToHideIds array
 }
 
 export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";
