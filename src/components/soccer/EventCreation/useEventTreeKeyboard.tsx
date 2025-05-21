@@ -8,6 +8,7 @@ interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
   flagsForLabel: AnnotationFlag[];
+  availableFlags?: AnnotationFlag[]; // Add available flags
   currentFlagIndex: number;
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;
@@ -21,6 +22,7 @@ export const useEventTreeKeyboard = ({
   currentStep,
   selectedCategory,
   flagsForLabel = [],
+  availableFlags = [],
   currentFlagIndex,
   handleQuickEventSelect,
   handleCategorySelect,
@@ -70,7 +72,11 @@ export const useEventTreeKeyboard = ({
         // Flag value selection by hotkey - support the new FlagValue structure
         if (flagsForLabel.length > 0 && currentFlagIndex < flagsForLabel.length) {
           const currentFlag = flagsForLabel[currentFlagIndex];
-          if (currentFlag?.values) {
+          
+          // Check if this flag should be available based on conditional logic
+          const isAvailable = availableFlags.some(f => f.id === currentFlag.id);
+          
+          if (isAvailable && currentFlag?.values) {
             // Handle both string and FlagValue types
             const matchedValue = currentFlag.values.find(val => {
               if (typeof val === 'string') {
@@ -94,6 +100,7 @@ export const useEventTreeKeyboard = ({
     currentStep, 
     selectedCategory, 
     flagsForLabel,
+    availableFlags,
     currentFlagIndex,
     handleQuickEventSelect,
     handleCategorySelect,

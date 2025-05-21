@@ -16,6 +16,7 @@ export const EventWizard: React.FC = () => {
     currentStep,
     selectedCategory,
     flagsForLabel,
+    availableFlags,
     currentFlagIndex,
     handleCategorySelect,
     handleQuickEventSelect,
@@ -33,6 +34,7 @@ export const EventWizard: React.FC = () => {
     currentStep,
     selectedCategory,
     flagsForLabel,
+    availableFlags,
     currentFlagIndex,
     handleQuickEventSelect,
     handleCategorySelect,
@@ -71,6 +73,11 @@ export const EventWizard: React.FC = () => {
     }
   });
 
+  // Get current flag to display
+  const currentFlag = flagsForLabel[currentFlagIndex];
+  // Check if the current flag should be displayed based on available flags
+  const shouldDisplayFlag = currentFlag && availableFlags.some(f => f.id === currentFlag.id);
+
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
       {/* Back button (appears after first selection) */}
@@ -107,10 +114,10 @@ export const EventWizard: React.FC = () => {
         <BodyPartStep onBodyPartSelect={handleBodyPartSelect} />
       )}
       
-      {/* Flag Selection - dynamic based on selected event */}
-      {currentStep === "flag" && flagsForLabel.length > 0 && (
+      {/* Flag Selection - dynamic based on selected event and conditions */}
+      {currentStep === "flag" && shouldDisplayFlag && (
         <FlagStep 
-          flag={flagsForLabel[currentFlagIndex]} 
+          flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 
         />
       )}

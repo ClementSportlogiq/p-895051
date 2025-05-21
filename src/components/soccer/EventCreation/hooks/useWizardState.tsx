@@ -7,7 +7,8 @@ import {
   AnnotationLabel, 
   AnnotationFlag, 
   EventDetails,
-  FlagValue
+  FlagValue,
+  FlagCondition
 } from "@/types/annotation";
 
 export function useWizardState() {
@@ -31,6 +32,7 @@ export function useWizardState() {
   const [flagsForLabel, setFlagsForLabel] = useState<AnnotationFlag[]>([]);
   const [currentFlagIndex, setCurrentFlagIndex] = useState<number>(0);
   const [flagValues, setFlagValues] = useState<Record<string, string>>({});
+  const [availableFlags, setAvailableFlags] = useState<AnnotationFlag[]>([]);
 
   // Update the context when selections change
   useEffect(() => {
@@ -98,6 +100,49 @@ export function useWizardState() {
     setSelectedEventCategory(null);
     setSelectedEventType(null);
     setSelectedEventDetails(null);
+    setAvailableFlags([]);
+  };
+
+  // Helper function to determine which flags should be available based on conditions
+  const determineAvailableFlags = (label: AnnotationLabel, currentValues: Record<string, string>) => {
+    if (!label.flags || !label.flag_conditions) {
+      return label.flags || [];
+    }
+    
+    // Start with all flags 
+    let flags = [...label.flags];
+    
+    // Create a set of flag IDs that should be hidden based on conditions
+    const hiddenFlagIds = new Set<string>();
+    
+    // Check each flag condition
+    (label.flag_conditions || []).forEach((condition: FlagCondition) => {
+      // Get the selected value for the flag in the condition
+      const selectedValue = currentValues[getFlagNameById(flags, condition.flagId)];
+      
+      // If the selected value matches this condition
+      if (selectedValue === condition.value) {
+        // Then we should only show the next flag in the condition
+        // and hide all other flags at the same level
+        
+        // Add all other flags to hidden set
+        flags.forEach(flag => {
+          // Skip if it's the source flag or the target flag
+          if (flag.id !== condition.flagId && flag.id !== condition.nextFlagId) {
+            hiddenFlagIds.add(flag.id);
+          }
+        });
+      }
+    });
+    
+    // Filter out any flags that should be hidden
+    return flags.filter(flag => !hiddenFlagIds.has(flag.id));
+  };
+  
+  // Helper to get flag name from ID
+  const getFlagNameById = (flags: AnnotationFlag[], flagId: string): string => {
+    const flag = flags.find(f => f.id === flagId);
+    return flag ? flag.name : '';
   };
 
   // Handler for category selection
@@ -124,7 +169,12 @@ export function useWizardState() {
       const orderedFlags = [...event.flags].sort((a, b) => 
         (a.order_priority || 0) - (b.order_priority || 0)
       );
+      
+      // Determine which flags should be available based on conditions
+      const initialAvailableFlags = determineAvailableFlags(event, {});
+      
       setFlagsForLabel(orderedFlags);
+      setAvailableFlags(initialAvailableFlags);
       setCurrentFlagIndex(0);
       setCurrentStep("flag");
     } 
@@ -166,14 +216,42 @@ export function useWizardState() {
     const currentFlag = flagsForLabel[currentFlagIndex];
     
     // Store selected flag value
-    setFlagValues(prev => ({
-      ...prev,
+    const updatedFlagValues = {
+      ...flagValues,
       [currentFlag.name]: value
-    }));
+    };
+    
+    setFlagValues(updatedFlagValues);
+    
+    // Get the current label to check conditions
+    if (currentLabelId) {
+      const allLabels = getLabelsByCategory(selectedCategory as EventCategory);
+      const eventWithFlags = allLabels.find(l => l.id === currentLabelId);
+      
+      if (eventWithFlags) {
+        // Update available flags based on new selection
+        const newAvailableFlags = determineAvailableFlags(eventWithFlags, updatedFlagValues);
+        setAvailableFlags(newAvailableFlags);
+      }
+    }
     
     // Move to next flag if available
     if (currentFlagIndex < flagsForLabel.length - 1) {
-      setCurrentFlagIndex(prev => prev + 1);
+      // Find the next flag that should be displayed (not hidden)
+      let nextIndex = currentFlagIndex + 1;
+      
+      // Skip over any flags that are not in the available flags list
+      while (
+        nextIndex < flagsForLabel.length && 
+        !availableFlags.some(f => f.id === flagsForLabel[nextIndex].id)
+      ) {
+        nextIndex++;
+      }
+      
+      // If we found a valid next flag, set it
+      if (nextIndex < flagsForLabel.length) {
+        setCurrentFlagIndex(nextIndex);
+      }
     }
   };
 
@@ -224,6 +302,7 @@ export function useWizardState() {
     selectedEvent,
     currentLabelId,
     flagsForLabel,
+    availableFlags,
     currentFlagIndex,
     handleCategorySelect,
     handleQuickEventSelect,
