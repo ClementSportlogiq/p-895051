@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnnotationLabel, EventCategory, AnnotationFlag } from '@/types/annotation';
 import { useLabels } from './useLabels';
 import { useFlags } from './useFlags';
@@ -28,8 +28,16 @@ export function useAnnotationLabels() {
     deleteFlag: deleteFlag_
   } = useFlags();
   
+  // Memoize the loadData function to prevent infinite re-renders
+  const loadData = useCallback(async () => {
+    const {
+      loadData: innerLoadData
+    } = useDataInitialization(setLabels, setFlags, setIsLoading, processLabels);
+    
+    return innerLoadData();
+  }, [setLabels, setFlags, setIsLoading, processLabels]);
+  
   const {
-    loadData,
     initializeDefaults,
     isInitialized
   } = useDataInitialization(setLabels, setFlags, setIsLoading, processLabels);
@@ -42,7 +50,7 @@ export function useAnnotationLabels() {
     if (!isLoading && !isInitialized) {
       initializeDefaults();
     }
-  }, [isLoading, isInitialized]);
+  }, [isLoading, isInitialized, initializeDefaults]);
 
   // Wrapper for deleteFlag to pass the current labels
   const deleteFlag = async (id: string) => {
