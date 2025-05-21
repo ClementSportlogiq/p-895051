@@ -1,8 +1,11 @@
 
-import { useEffect } from "react";
 import { useSoccer } from "@/context/SoccerContext";
-import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
+import { 
+  useEventValidation, 
+  useKeyboardShortcuts,
+  useSaveEvent,
+  useVideoTimeCapture
+} from "./eventActions";
 
 interface UseEventActionsProps {
   gameTime: string;
@@ -28,79 +31,48 @@ export function useEventActions({
     resetEventSelection
   } = useSoccer();
   
-  const { toast } = useToast();
-
-  // Update logged time when user selects an event category
-  useEffect(() => {
-    if (selectedEventCategory && !loggedVideoTime) {
-      setLoggedVideoTime(videoTime);
-    }
-  }, [selectedEventCategory, videoTime, loggedVideoTime, setLoggedVideoTime]);
-
-  // Handle save button and keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === "b" || e.key === "B") {
-        handleSaveEvent();
-      }
-      if (e.key === "Escape") {
-        handleCancelEvent();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPlayer, selectedTeam, selectedLocation, selectedEventType]);
+  // Use validation hook
+  const { validateEvent, toast } = useEventValidation();
+  
+  // Use event creation hook
+  const { createEventPayload } = useSaveEvent();
+  
+  // Capture video time when event category is selected
+  useVideoTimeCapture({
+    selectedEventCategory,
+    videoTime,
+    loggedVideoTime,
+    setLoggedVideoTime
+  });
 
   const handleSaveEvent = () => {
-    if (!selectedPlayer) {
-      toast({
-        variant: "destructive",
-        title: "Missing Player",
-        description: "Please select a player before saving the event"
-      });
+    // Validate event data
+    if (!validateEvent(selectedPlayer, selectedLocation, selectedEventType)) {
       return;
     }
 
-    if (!selectedLocation) {
-      toast({
-        variant: "destructive",
-        title: "Missing Location",
-        description: "Please select a field location before saving the event"
-      });
-      return;
-    }
-
-    if (!selectedEventType) {
-      toast({
-        variant: "destructive",
-        title: "Missing Event",
-        description: "Please select an event before saving"
-      });
-      return;
-    }
-
-    const displayName = `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})`;
-    
-    addEvent({
-      id: uuidv4(),
+    // Create event payload
+    const eventPayload = createEventPayload(
       gameTime,
-      videoTime: loggedVideoTime || videoTime,
-      player: selectedPlayer,
-      team: selectedTeam,
-      location: selectedLocation,
-      eventName: displayName,
-      eventDetails: selectedEventType,
-      category: selectedEventCategory,
-      additionalDetails: selectedEventDetails || undefined
-    });
+      loggedVideoTime,
+      videoTime,
+      selectedPlayer,
+      selectedTeam,
+      selectedLocation,
+      selectedEventCategory,
+      selectedEventType,
+      selectedEventDetails
+    );
+    
+    // Add the event
+    addEvent(eventPayload);
 
     // Reset the logged video time after adding event
     setLoggedVideoTime("");
 
     toast({
       title: "Event Saved",
-      description: `${displayName} event has been saved`
+      description: `${eventPayload.eventName} event has been saved`
     });
   };
 
@@ -112,6 +84,12 @@ export function useEventActions({
       description: "The event creation has been cancelled"
     });
   };
+
+  // Setup keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: handleSaveEvent,
+    onCancel: handleCancelEvent
+  });
 
   return {
     handleSaveEvent,
