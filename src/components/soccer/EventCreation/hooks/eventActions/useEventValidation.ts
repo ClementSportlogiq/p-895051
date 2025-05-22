@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 export function useEventValidation() {
   const { toast } = useToast();
   
-  const validateEvent = (selectedPlayer: any, selectedLocation: any, selectedEventType: any) => {
+  const validateEvent = (selectedPlayer: any, selectedLocation: any) => {
     if (!selectedPlayer) {
       toast({
         variant: "destructive",
@@ -19,15 +19,6 @@ export function useEventValidation() {
         variant: "destructive",
         title: "Missing Location",
         description: "Please select a field location before saving the event"
-      });
-      return false;
-    }
-
-    if (!selectedEventType) {
-      toast({
-        variant: "destructive",
-        title: "Missing Event",
-        description: "Please select an event before saving"
       });
       return false;
     }

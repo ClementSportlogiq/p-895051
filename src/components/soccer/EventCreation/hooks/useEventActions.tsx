@@ -43,7 +43,7 @@ export function useEventActions({
   
   // Capture video time when event type is selected (changed from category to type)
   useVideoTimeCapture({
-    selectedEventType, // Changed from selectedEventCategory
+    selectedEventType,
     videoTime,
     loggedVideoTime,
     setLoggedVideoTime
@@ -51,8 +51,8 @@ export function useEventActions({
 
   const handleSaveEvent = () => {
     console.log("Saving event...");
-    // Validate event data
-    if (!validateEvent(selectedPlayer, selectedLocation, selectedEventType)) {
+    // Validate event data - removed selectedEventType check
+    if (!validateEvent(selectedPlayer, selectedLocation)) {
       console.log("Event validation failed");
       return;
     }
@@ -63,7 +63,7 @@ export function useEventActions({
       loggedVideoTime,
       videoTime,
       selectedPlayer,
-      selectedTeam as TeamType, // Ensure it's cast to TeamType
+      selectedTeam as TeamType,
       selectedLocation,
       selectedEventCategory,
       selectedEventType,
