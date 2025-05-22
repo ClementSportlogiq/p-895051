@@ -24,7 +24,8 @@ export function useEventActions({
   const sockerContext = useSoccer();
   
   // Get access to wizard state for proper reset
-  const { resetWizard, selection, flagLogic } = useWizardState();
+  const wizardState = useWizardState();
+  const { resetWizard, selection, flagLogic } = wizardState;
   
   // Use the unified event completion hook
   const { completeEventCreation } = useEventCompletion({

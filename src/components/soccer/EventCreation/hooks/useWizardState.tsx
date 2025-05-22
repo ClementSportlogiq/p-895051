@@ -38,7 +38,7 @@ export function useWizardState(): WizardStateContextValue {
     setLoggedVideoTime
   });
 
-  // Return the public API
+  // Return the public API that matches WizardStateContextValue interface
   return {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
@@ -57,6 +57,7 @@ export function useWizardState(): WizardStateContextValue {
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
     resetWizard: handlers.resetWizard,
+    // Include the state objects in the return value to match the updated interface
     selection,
     flagLogic
   };
