@@ -38,14 +38,31 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
   // Reset wizard state - thorough reset of all state variables
   const resetState = () => {
     try {
-      // Reset selection state
+      // Reset selection state with verbose logging for debugging
       if (selection) {
+        console.log("Resetting selection state", {
+          before: {
+            category: selection.selectedCategory,
+            event: selection.selectedEvent,
+            currentStep: selection.currentStep
+          }
+        });
+        
+        // Reset all selection states
+        selection.setCurrentStep("default");
         selection.setSelectedCategory(null);
         selection.setSelectedEvent(null);
         selection.setSelectedEventName(null);
         selection.setSelectedPressure(null);
         selection.setSelectedBodyPart(null);
-        selection.setFlagConditions([]);  // Add this to reset flag conditions
+        selection.setFlagConditions([]);
+        
+        // Log after reset for verification
+        console.log("Selection state after reset:", {
+          category: selection.selectedCategory,
+          event: selection.selectedEvent,
+          currentStep: selection.currentStep
+        });
       }
       
       // Reset flag state - be thorough
@@ -65,17 +82,9 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
 
   // Reset wizard - exposed publicly for the WizardStateContextValue
   const resetWizard = () => {
+    console.log("resetWizard called - resetting all wizard state");
+    // Reset all internal state first
     resetState();
-    
-    // Reset to default view - with safety check
-    if (selection) {
-      selection.setCurrentStep("default");
-    }
-    
-    // Clear any selected category to ensure we return to the initial view
-    if (sockerContext && sockerContext.resetEventSelection) {
-      sockerContext.resetEventSelection();
-    }
   };
 
   return {

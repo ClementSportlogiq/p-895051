@@ -2,14 +2,19 @@
 import React, { useEffect } from "react";
 import EventWizard from "./EventWizard";
 import { useSoccer } from "@/context/SoccerContext";
+import { useWizardState } from "./hooks/useWizardState";
 
 export const EventTree: React.FC = () => {
   const { resetEventSelection } = useSoccer();
+  const { resetWizard } = useWizardState();
   
   // Listen for cancel event to reset the event tree
   useEffect(() => {
     const handleCancelEvent = () => {
-      console.log("Cancel event detected in EventTree, resetting");
+      console.log("Cancel event detected in EventTree, resetting wizard state");
+      // First reset the wizard state to ensure UI is properly reset
+      resetWizard();
+      // Then reset the soccer context
       resetEventSelection();
     };
     
@@ -18,7 +23,7 @@ export const EventTree: React.FC = () => {
     return () => {
       window.removeEventListener("cancelEvent", handleCancelEvent);
     };
-  }, [resetEventSelection]);
+  }, [resetEventSelection, resetWizard]);
 
   return <EventWizard />;
 };

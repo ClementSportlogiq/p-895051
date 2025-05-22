@@ -43,7 +43,7 @@ export function useEventActions({
   
   // Capture video time when event type is selected (changed from category to type)
   useVideoTimeCapture({
-    selectedEventType, // Changed from selectedEventCategory
+    selectedEventType,
     videoTime,
     loggedVideoTime,
     setLoggedVideoTime
@@ -63,7 +63,7 @@ export function useEventActions({
       loggedVideoTime,
       videoTime,
       selectedPlayer,
-      selectedTeam as TeamType, // Ensure it's cast to TeamType
+      selectedTeam as TeamType,
       selectedLocation,
       selectedEventCategory,
       selectedEventType,
@@ -77,7 +77,8 @@ export function useEventActions({
     // Reset the logged video time after adding event
     setLoggedVideoTime("");
     
-    // Reset wizard state completely
+    // Reset wizard state completely - do this first to ensure UI resets
+    console.log("Calling resetWizard from handleSaveEvent");
     resetWizard();
 
     toast({
@@ -89,14 +90,16 @@ export function useEventActions({
   };
 
   const handleCancelEvent = () => {
-    // Reset soccer context state
-    resetEventSelection();
-    
-    // Reset wizard state to ensure UI returns to initial state
-    resetWizard(); 
-    
+    console.log("Cancel event handler called directly");
     // Clear any logged video time
     setLoggedVideoTime("");
+    
+    // Reset wizard state first to ensure UI returns to initial state
+    console.log("Calling resetWizard from handleCancelEvent");
+    resetWizard(); 
+    
+    // Reset soccer context state after wizard reset
+    resetEventSelection();
     
     toast({
       title: "Event cancelled",
