@@ -1,5 +1,6 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export type TeamType = "MTL" | "ATL";
 export type Player = {
@@ -112,7 +113,46 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const removeEvent = (id: string) => {
-    setEvents((prev) => prev.filter(event => event.id !== id));
+    if (!id) {
+      console.error("Cannot remove event: Invalid event ID");
+      toast({
+        title: "Error",
+        description: "Failed to remove event: Invalid event ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log(`Attempting to remove event with ID: ${id}`);
+    
+    setEvents((prev) => {
+      // Find event to confirm it exists before removal
+      const eventToRemove = prev.find(event => event.id === id);
+      
+      if (!eventToRemove) {
+        console.warn(`No event found with ID: ${id}`);
+        toast({
+          title: "Warning",
+          description: "Event not found",
+          variant: "destructive"
+        });
+        return prev;
+      }
+      
+      console.log(`Removing event: ${eventToRemove.eventName}`);
+      
+      // Filter out the event with the given ID
+      const updatedEvents = prev.filter(event => event.id !== id);
+      
+      // Provide visual confirmation of success
+      toast({
+        title: "Success",
+        description: "Event removed successfully"
+      });
+      
+      console.log(`Events after removal: ${updatedEvents.length}`);
+      return updatedEvents;
+    });
   };
 
   return (

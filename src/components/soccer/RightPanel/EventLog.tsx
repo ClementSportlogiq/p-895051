@@ -1,7 +1,7 @@
-
 import React from "react";
 import { useSoccer, GameEvent } from "@/context/SoccerContext";
 import { Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export const EventLog: React.FC = () => {
   const { events, removeEvent } = useSoccer();
@@ -26,7 +26,9 @@ export const EventLog: React.FC = () => {
 
   return (
     <div className="border w-full overflow-hidden font-normal flex-1 mt-6 border-black border-solid max-md:max-w-full">
+      {/* Header area */}
       <div className="border flex w-full items-center gap-2 flex-wrap p-2 border-black border-solid max-md:max-w-full">
+        {/* ... keep existing code (Teams dropdown and button controls) */}
         <div className="self-stretch whitespace-nowrap grow shrink w-[78px] my-auto">
           <div className="text-[rgba(34,34,34,1)] text-xs">Teams</div>
           <div className="rounded bg-[rgba(137,150,159,1)] flex min-h-8 w-full items-center gap-2 text-base text-white pl-2 pr-1 py-1">
@@ -52,6 +54,7 @@ export const EventLog: React.FC = () => {
           Batch Delete
         </div>
       </div>
+      {/* Column headers */}
       <div className="flex w-full text-base text-black whitespace-nowrap flex-wrap max-md:max-w-full">
         <div className="self-stretch border min-h-10 gap-4 w-[190px] px-4 py-2.5 border-black border-solid">
           Time
@@ -60,22 +63,27 @@ export const EventLog: React.FC = () => {
           Event
         </div>
       </div>
+      {/* Event list content */}
       <div className="w-full text-base text-black flex-1 max-h-[360px] overflow-y-auto max-md:max-w-full">
         <EventLogItem isHalfMarker type="start" />
         
         {/* Display user events in chronological order */}
-        {sortedEvents.map(event => (
-          <EventLogItem 
-            key={event.id}
-            id={event.id}
-            gameTime={event.gameTime}
-            videoTime={event.videoTime}
-            eventName={event.eventName}
-            eventDetails={event.eventDetails}
-            team={event.team}
-            onDelete={removeEvent}
-          />
-        ))}
+        {sortedEvents.length > 0 ? (
+          sortedEvents.map(event => (
+            <EventLogItem 
+              key={event.id}
+              id={event.id}
+              gameTime={event.gameTime}
+              videoTime={event.videoTime}
+              eventName={event.eventName}
+              eventDetails={event.eventDetails}
+              team={event.team}
+              onDelete={removeEvent}
+            />
+          ))
+        ) : (
+          <div className="p-4 text-center text-gray-500">No events recorded yet</div>
+        )}
         
         <EventLogItem isHalfMarker type="end" />
       </div>
@@ -99,10 +107,10 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
   isHalfMarker, 
   type,
   id,
-  gameTime = "Game Time",
-  videoTime = "Video Time",
-  eventName = "Event Name",
-  eventDetails = "Event Details",
+  gameTime = "",
+  videoTime = "",
+  eventName = "",
+  eventDetails = "",
   team,
   onDelete
 }) => {
@@ -115,8 +123,27 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
   }
 
   const handleDelete = () => {
-    if (id && onDelete) {
+    if (!id || !onDelete) {
+      console.error("Cannot delete event: Missing ID or delete handler");
+      toast({
+        title: "Error",
+        description: "Could not delete event",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    console.log(`Delete button clicked for event ID: ${id}`);
+    
+    try {
       onDelete(id);
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive"
+      });
     }
   };
 
@@ -149,14 +176,17 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
                       className="w-5 h-5 object-contain"
                     />
                   )}
-                  {eventName}
+                  {eventName || "No event name"}
                 </div>
-                <div className="max-md:max-w-full">{eventDetails}</div>
+                <div className="max-md:max-w-full">{eventDetails || "No details"}</div>
               </div>
             </div>
             <button 
               onClick={handleDelete}
-              className="cursor-pointer"
+              className="cursor-pointer p-2 rounded-md hover:bg-red-100 transition-colors duration-200 flex items-center justify-center"
+              aria-label="Delete event"
+              title="Delete this event"
+              data-event-id={id}
             >
               <Trash2 className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
             </button>
