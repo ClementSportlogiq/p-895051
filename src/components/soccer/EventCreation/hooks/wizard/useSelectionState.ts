@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { EventCategory } from "@/types/annotation";
+import { EventCategory, FlagCondition } from "@/types/annotation";
 
 export function useSelectionState() {
   // Main wizard state
@@ -10,6 +10,7 @@ export function useSelectionState() {
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [selectedPressure, setSelectedPressure] = useState<string | null>(null);
   const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
+  const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]); // Add flag conditions state
   
   return {
     currentStep,
@@ -23,6 +24,8 @@ export function useSelectionState() {
     selectedPressure,
     setSelectedPressure,
     selectedBodyPart,
-    setSelectedBodyPart
+    setSelectedBodyPart,
+    flagConditions,
+    setFlagConditions
   };
 }

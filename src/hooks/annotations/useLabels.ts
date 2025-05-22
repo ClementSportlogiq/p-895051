@@ -53,7 +53,7 @@ export function useLabels() {
     return labels.filter(label => label.category === category);
   };
 
-  // Save label to database
+  // Save label to database, ensuring flag conditions are properly persisted
   const saveLabel = async (label: AnnotationLabel) => {
     try {
       // Extract flag IDs for storage

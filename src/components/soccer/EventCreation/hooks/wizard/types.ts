@@ -4,7 +4,8 @@ import {
   EventCategory, 
   AnnotationLabel, 
   AnnotationFlag, 
-  FlagValue
+  FlagValue,
+  FlagCondition
 } from "@/types/annotation";
 
 export interface WizardStateContextValue {
@@ -16,6 +17,7 @@ export interface WizardStateContextValue {
   flagsForLabel: AnnotationFlag[];
   availableFlags: AnnotationFlag[];
   currentFlagIndex: number;
+  flagConditions: FlagCondition[]; // Add flag conditions to context
   handleCategorySelect: (category: EventCategory) => void;
   handleQuickEventSelect: (eventId: string) => void;
   handleEventSelect: (event: AnnotationLabel) => void;

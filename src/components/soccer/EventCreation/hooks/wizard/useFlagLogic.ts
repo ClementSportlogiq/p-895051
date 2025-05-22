@@ -1,69 +1,78 @@
 
 import { useState, useEffect } from "react";
-import { 
-  AnnotationFlag, 
-  AnnotationLabel,
-  FlagCondition
-} from "@/types/annotation";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { AnnotationFlag, FlagCondition } from "@/types/annotation";
 
 export function useFlagLogic() {
-  // Flag handling state
+  const { flags } = useAnnotationLabels();
   const [currentLabelId, setCurrentLabelId] = useState<string | null>(null);
   const [flagsForLabel, setFlagsForLabel] = useState<AnnotationFlag[]>([]);
+  const [availableFlags, setAvailableFlags] = useState<AnnotationFlag[]>([]);
   const [currentFlagIndex, setCurrentFlagIndex] = useState<number>(0);
   const [flagValues, setFlagValues] = useState<Record<string, string>>({});
-  const [availableFlags, setAvailableFlags] = useState<AnnotationFlag[]>([]);
+  const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
 
-  // Modified helper function to hide specific flags based on conditions
-  const determineAvailableFlags = (label: AnnotationLabel, currentValues: Record<string, string>) => {
-    if (!label.flags) {
-      return [];
+  // Reset flag values when changing label
+  const resetFlagValues = () => {
+    setFlagValues({});
+    setCurrentFlagIndex(0);
+  };
+
+  // Update available flags based on current selections and flag conditions
+  useEffect(() => {
+    if (flagsForLabel.length === 0) {
+      setAvailableFlags([]);
+      return;
     }
-    
-    // Start with all flags (the base set)
-    let flags = [...label.flags];
-    
-    // Create a set of flag IDs that should be hidden based on conditions
-    const flagsToHideSet = new Set<string>();
-    
-    // Check each flag condition if available
-    if (label.flag_conditions) {
-      label.flag_conditions.forEach((condition: FlagCondition) => {
-        // Get the selected value for the flag in the condition
-        const selectedValue = currentValues[getFlagNameById(flags, condition.flagId)];
-        
-        // If the selected value matches this condition, then hide the specified flags
-        if (selectedValue === condition.value && condition.flagsToHideIds) {
-          // Add each flag ID in the flagsToHideIds array to the hidden set
-          condition.flagsToHideIds.forEach(flagId => {
-            flagsToHideSet.add(flagId);
-          });
+
+    // Start with all flags for the label
+    let newAvailableFlags = [...flagsForLabel];
+
+    // If we have flag values and conditions, filter out flags that should be hidden
+    if (Object.keys(flagValues).length > 0 && flagConditions.length > 0) {
+      // For each selected flag value
+      Object.entries(flagValues).forEach(([flagId, value]) => {
+        // Find conditions that match this flag and value
+        const matchingConditions = flagConditions.filter(
+          condition => condition.flagId === flagId && condition.value === value
+        );
+
+        // Get all flags to hide based on matching conditions
+        const flagsToHide = matchingConditions.flatMap(
+          condition => condition.flagsToHideIds || []
+        );
+
+        // Filter out flags that should be hidden
+        if (flagsToHide.length > 0) {
+          newAvailableFlags = newAvailableFlags.filter(
+            flag => !flagsToHide.includes(flag.id)
+          );
         }
       });
     }
-    
-    // Return only the flags that should be available (not hidden)
-    return flags.filter(flag => !flagsToHideSet.has(flag.id));
-  };
-  
-  // Helper to get flag name from ID
-  const getFlagNameById = (flags: AnnotationFlag[], flagId: string): string => {
-    const flag = flags.find(f => f.id === flagId);
-    return flag ? flag.name : '';
-  };
+
+    setAvailableFlags(newAvailableFlags);
+  }, [flagsForLabel, flagValues, flagConditions]);
+
+  // Get the current flag
+  const currentFlag = availableFlags.length > 0 && currentFlagIndex < availableFlags.length
+    ? availableFlags[currentFlagIndex]
+    : null;
 
   return {
     currentLabelId,
     setCurrentLabelId,
     flagsForLabel,
     setFlagsForLabel,
+    availableFlags,
+    setAvailableFlags,
     currentFlagIndex,
     setCurrentFlagIndex,
     flagValues,
     setFlagValues,
-    availableFlags,
-    setAvailableFlags,
-    determineAvailableFlags,
-    getFlagNameById
+    resetFlagValues,
+    currentFlag,
+    flagConditions,
+    setFlagConditions
   };
 }

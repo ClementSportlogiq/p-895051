@@ -35,12 +35,13 @@ export function useWizardState(): WizardStateContextValue {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
     selectedEvent: selection.selectedEvent,
-    selectedEventName: selection.selectedEventName, // Add this line
+    selectedEventName: selection.selectedEventName,
     currentLabelId: flagLogic.currentLabelId,
     flagsForLabel: flagLogic.flagsForLabel,
     availableFlags: flagLogic.availableFlags,
     currentFlagIndex: flagLogic.currentFlagIndex,
+    flagConditions: flagLogic.flagConditions, // Add flag conditions to the context
     ...handlers,
-    resetWizard: handlers.resetWizard // Explicitly include resetWizard
+    resetWizard: handlers.resetWizard
   };
 }
