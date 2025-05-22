@@ -11,16 +11,19 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onCancel }
   const { resetWizard } = useWizardState();
   
   const handleCancel = () => {
-    console.log("Cancel button clicked, triggering cancel event");
+    console.log("Cancel button clicked, performing full reset sequence");
     
-    // Reset wizard state directly to ensure UI resets
+    // Reset wizard state first to ensure UI resets immediately
     resetWizard();
     
-    // Dispatch a custom event for other components that may listen
-    window.dispatchEvent(new CustomEvent("cancelEvent"));
-    
-    // Call the original onCancel function
-    onCancel();
+    // Then dispatch the custom event for other components
+    setTimeout(() => {
+      console.log("Dispatching cancelEvent after wizard reset");
+      window.dispatchEvent(new CustomEvent("cancelEvent"));
+      
+      // Finally call the original onCancel function
+      onCancel();
+    }, 0);
   };
 
   return (

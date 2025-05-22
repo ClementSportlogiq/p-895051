@@ -74,12 +74,18 @@ export function useEventActions({
     addEvent(eventPayload);
     console.log("Event added:", eventPayload);
 
-    // Reset the logged video time after adding event
+    // Reset the logged video time
     setLoggedVideoTime("");
     
-    // Reset wizard state completely - do this first to ensure UI resets
+    // Reset wizard state first to ensure UI resets immediately
     console.log("Calling resetWizard from handleSaveEvent");
     resetWizard();
+    
+    // Then reset the soccer context
+    setTimeout(() => {
+      resetEventSelection();
+      console.log("Soccer context reset completed after wizard reset");
+    }, 0);
 
     toast({
       title: "Event Saved",
@@ -91,15 +97,19 @@ export function useEventActions({
 
   const handleCancelEvent = () => {
     console.log("Cancel event handler called directly");
+    
     // Clear any logged video time
     setLoggedVideoTime("");
     
-    // Reset wizard state first to ensure UI returns to initial state
+    // Reset wizard state first to ensure UI resets immediately
     console.log("Calling resetWizard from handleCancelEvent");
     resetWizard(); 
     
     // Reset soccer context state after wizard reset
-    resetEventSelection();
+    setTimeout(() => {
+      resetEventSelection();
+      console.log("Soccer context reset completed after wizard reset");
+    }, 0);
     
     toast({
       title: "Event cancelled",

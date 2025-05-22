@@ -24,7 +24,7 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
       try {
         sockerContext.addEvent(eventData);
         
-        // Reset after adding - call resetWizard instead of resetState
+        // Reset after adding
         resetWizard();
         console.log("Event created and wizard reset");
       } catch (error) {
@@ -35,21 +35,20 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     }
   };
 
-  // Reset wizard state - thorough reset of all state variables
-  const resetState = () => {
+  // Reset all wizard state - thorough reset of all state variables
+  const resetWizard = () => {
+    console.log("resetWizard called - forcing complete wizard state reset");
+    
     try {
-      // Reset selection state with verbose logging for debugging
+      // Reset selection state - order matters for UI update
+      // First reset the currentStep to ensure view changes immediately
       if (selection) {
-        console.log("Resetting selection state", {
-          before: {
-            category: selection.selectedCategory,
-            event: selection.selectedEvent,
-            currentStep: selection.currentStep
-          }
-        });
+        console.log("Before reset - currentStep:", selection.currentStep, "selectedCategory:", selection.selectedCategory);
         
-        // Reset all selection states
+        // Reset step first to trigger UI update
         selection.setCurrentStep("default");
+        
+        // Then reset all other selection states
         selection.setSelectedCategory(null);
         selection.setSelectedEvent(null);
         selection.setSelectedEventName(null);
@@ -57,15 +56,10 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
         selection.setSelectedBodyPart(null);
         selection.setFlagConditions([]);
         
-        // Log after reset for verification
-        console.log("Selection state after reset:", {
-          category: selection.selectedCategory,
-          event: selection.selectedEvent,
-          currentStep: selection.currentStep
-        });
+        console.log("After reset - currentStep:", "default", "selectedCategory:", null);
       }
       
-      // Reset flag state - be thorough
+      // Reset flag state
       if (flagLogic) {
         flagLogic.setCurrentLabelId("");
         flagLogic.setFlagsForLabel([]);
@@ -74,17 +68,23 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
         flagLogic.setAvailableFlags([]);
       }
       
-      console.log("Wizard state fully reset");
+      // Force a UI update with a small delay if needed
+      setTimeout(() => {
+        console.log("Verifying reset state - currentStep should be 'default'");
+        if (selection) {
+          console.log("Verification - currentStep:", selection.currentStep, "selectedCategory:", selection.selectedCategory);
+        }
+      }, 0);
+      
     } catch (error) {
-      console.error("Error in resetState:", error);
+      console.error("Error in resetWizard:", error);
     }
   };
 
-  // Reset wizard - exposed publicly for the WizardStateContextValue
-  const resetWizard = () => {
-    console.log("resetWizard called - resetting all wizard state");
-    // Reset all internal state first
-    resetState();
+  // Legacy method - now just calls resetWizard for backwards compatibility
+  const resetState = () => {
+    console.log("resetState called - redirecting to centralized resetWizard");
+    resetWizard();
   };
 
   return {

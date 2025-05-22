@@ -12,10 +12,15 @@ export const EventTree: React.FC = () => {
   useEffect(() => {
     const handleCancelEvent = () => {
       console.log("Cancel event detected in EventTree, resetting wizard state");
+      
       // First reset the wizard state to ensure UI is properly reset
       resetWizard();
+      
       // Then reset the soccer context
-      resetEventSelection();
+      setTimeout(() => {
+        resetEventSelection();
+        console.log("EventTree: Soccer context reset completed after wizard reset");
+      }, 0);
     };
     
     window.addEventListener("cancelEvent", handleCancelEvent);
