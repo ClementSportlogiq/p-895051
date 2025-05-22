@@ -11,6 +11,7 @@ export interface WizardStateContextValue {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
   selectedEvent: string | null;
+  selectedEventName: string | null;
   currentLabelId: string | null;
   flagsForLabel: AnnotationFlag[];
   availableFlags: AnnotationFlag[];
