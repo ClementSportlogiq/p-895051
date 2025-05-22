@@ -6,6 +6,7 @@ import {
   useSaveEvent,
   useVideoTimeCapture
 } from "./eventActions";
+import { useWizardState } from "./useWizardState";
 
 interface UseEventActionsProps {
   gameTime: string;
@@ -31,6 +32,9 @@ export function useEventActions({
     resetEventSelection
   } = useSoccer();
   
+  // Get access to wizard state for proper reset
+  const { resetWizard } = useWizardState();
+  
   // Use validation hook
   const { validateEvent, toast } = useEventValidation();
   
@@ -46,8 +50,10 @@ export function useEventActions({
   });
 
   const handleSaveEvent = () => {
+    console.log("Saving event...");
     // Validate event data
     if (!validateEvent(selectedPlayer, selectedLocation, selectedEventType)) {
+      console.log("Event validation failed");
       return;
     }
 
@@ -66,23 +72,31 @@ export function useEventActions({
     
     // Add the event
     addEvent(eventPayload);
+    console.log("Event added:", eventPayload);
 
     // Reset the logged video time after adding event
     setLoggedVideoTime("");
+    
+    // Reset wizard state completely
+    resetWizard();
 
     toast({
       title: "Event Saved",
       description: `${eventPayload.eventName} event has been saved`
     });
+    
+    console.log("Event saved successfully, state reset");
   };
 
   const handleCancelEvent = () => {
     resetEventSelection();
+    resetWizard(); // Ensure wizard state is also reset
     setLoggedVideoTime("");
     toast({
       title: "Event cancelled",
       description: "The event creation has been cancelled"
     });
+    console.log("Event creation cancelled, state reset");
   };
 
   // Setup keyboard shortcuts

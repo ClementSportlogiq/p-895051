@@ -6,6 +6,13 @@ export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
   if (!flagsData || !Array.isArray(flagsData)) return [];
   
   return flagsData.map((flag: any) => {
+    if (!flag) return {
+      id: '',
+      name: 'Unknown Flag',
+      values: [],
+      order_priority: 0
+    };
+    
     let values: (string | FlagValue)[] = [];
     
     // Handle different data formats
@@ -13,7 +20,8 @@ export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
       values = flag.values;
     } else if (typeof flag.values === 'string') {
       try {
-        values = JSON.parse(flag.values);
+        const parsed = JSON.parse(flag.values);
+        values = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         values = [];
         console.error('Error parsing flag values', e);
@@ -34,7 +42,7 @@ export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
       } else {
         // Unexpected format - create a placeholder
         return {
-          value: String(val),
+          value: String(val || ''),
           hotkey: String.fromCharCode(81 + index)
         };
       }

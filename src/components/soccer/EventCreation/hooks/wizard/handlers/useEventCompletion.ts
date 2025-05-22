@@ -2,6 +2,8 @@
 export function useEventCompletion({ selection, sockerContext, flagLogic }) {
   // Complete the event creation
   const completeEventCreation = () => {
+    console.log("Completing event creation with flags:", flagLogic.flagValues);
+    
     // Save event to context
     const eventData = {
       category: selection.selectedCategory,
@@ -15,8 +17,9 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     if (sockerContext.addEvent && eventData.eventId) {
       sockerContext.addEvent(eventData);
       
-      // Reset after adding
-      resetState();
+      // Reset after adding - call resetWizard instead of resetState
+      resetWizard();
+      console.log("Event created and wizard reset");
     }
   };
 
@@ -32,6 +35,9 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     flagLogic.setCurrentFlagIndex(0);
     flagLogic.setFlagValues({});
     flagLogic.setAvailableFlags([]);
+    // Also reset flag conditions to prevent issues with subsequent events
+    flagLogic.setFlagConditions([]);
+    console.log("Wizard state fully reset");
   };
 
   // Reset wizard - exposed publicly for the WizardStateContextValue
