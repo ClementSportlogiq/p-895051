@@ -41,9 +41,9 @@ export function useEventActions({
   // Use event creation hook
   const { createEventPayload } = useSaveEvent();
   
-  // Capture video time when event category is selected
+  // Capture video time when event type is selected (changed from category to type)
   useVideoTimeCapture({
-    selectedEventCategory,
+    selectedEventType, // Changed from selectedEventCategory
     videoTime,
     loggedVideoTime,
     setLoggedVideoTime

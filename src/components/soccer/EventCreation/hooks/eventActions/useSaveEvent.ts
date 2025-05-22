@@ -24,10 +24,14 @@ export function useSaveEvent() {
       selectedEventType.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') : 
       selectedEventType;
       
+    // Use logged video time if available, otherwise use current video time
+    const videoTimeToUse = loggedVideoTime || videoTime;
+    console.log("Using video time for event:", videoTimeToUse, "Logged time was:", loggedVideoTime);
+      
     return {
       id: uuidv4(),
       gameTime,
-      videoTime: loggedVideoTime || videoTime,
+      videoTime: videoTimeToUse,
       player: selectedPlayer,
       team: selectedTeam,
       location: selectedLocation,

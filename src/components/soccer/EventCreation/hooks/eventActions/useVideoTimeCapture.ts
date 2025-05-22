@@ -2,24 +2,25 @@
 import { useEffect } from "react";
 
 interface UseVideoTimeCaptureProps {
-  selectedEventCategory: any;
+  selectedEventType: string;  // Changed from selectedEventCategory to selectedEventType
   videoTime: string;
   loggedVideoTime: string;
   setLoggedVideoTime: (time: string) => void;
 }
 
 export function useVideoTimeCapture({
-  selectedEventCategory,
+  selectedEventType,  // Changed parameter name
   videoTime,
   loggedVideoTime,
   setLoggedVideoTime
 }: UseVideoTimeCaptureProps) {
-  // Update logged time when user selects an event category
+  // Update logged time when user selects an event type (annotation label)
   useEffect(() => {
-    if (selectedEventCategory && !loggedVideoTime) {
+    if (selectedEventType && !loggedVideoTime) {
+      console.log("Event type selected, capturing video time:", videoTime);
       setLoggedVideoTime(videoTime);
     }
-  }, [selectedEventCategory, videoTime, loggedVideoTime, setLoggedVideoTime]);
+  }, [selectedEventType, videoTime, loggedVideoTime, setLoggedVideoTime]);
 }
 
 export default useVideoTimeCapture;
