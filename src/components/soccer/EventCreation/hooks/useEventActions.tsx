@@ -89,13 +89,20 @@ export function useEventActions({
   };
 
   const handleCancelEvent = () => {
+    // Reset soccer context state
     resetEventSelection();
-    resetWizard(); // Ensure wizard state is also reset
+    
+    // Reset wizard state to ensure UI returns to initial state
+    resetWizard(); 
+    
+    // Clear any logged video time
     setLoggedVideoTime("");
+    
     toast({
       title: "Event cancelled",
       description: "The event creation has been cancelled"
     });
+    
     console.log("Event creation cancelled, state reset");
   };
 
