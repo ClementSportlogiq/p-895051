@@ -7,22 +7,26 @@ export const EventLog: React.FC = () => {
   const { events, removeEvent } = useSoccer();
   
   // Sort events by game time to ensure chronological order
-  const sortedEvents = [...events].sort((a, b) => {
-    // Convert game time (mm:ss) to seconds for comparison
-    const timeToSeconds = (timeStr: string) => {
-      if (!timeStr || typeof timeStr !== 'string') return 0;
-      
-      try {
-        const [minutes, seconds] = timeStr.split(':').map(Number);
-        return (minutes || 0) * 60 + (seconds || 0);
-      } catch (error) {
-        console.error("Error parsing time:", timeStr, error);
-        return 0;
-      }
-    };
+  const sortedEvents = React.useMemo(() => {
+    if (!events || events.length === 0) return [];
     
-    return timeToSeconds(a.gameTime) - timeToSeconds(b.gameTime);
-  });
+    return [...events].sort((a, b) => {
+      // Convert game time (mm:ss) to seconds for comparison
+      const timeToSeconds = (timeStr: string) => {
+        if (!timeStr || typeof timeStr !== 'string') return 0;
+        
+        try {
+          const [minutes, seconds] = timeStr.split(':').map(Number);
+          return (minutes || 0) * 60 + (seconds || 0);
+        } catch (error) {
+          console.error("Error parsing time:", timeStr, error);
+          return 0;
+        }
+      };
+      
+      return timeToSeconds(a.gameTime) - timeToSeconds(b.gameTime);
+    });
+  }, [events]);
 
   return (
     <div className="border w-full overflow-hidden font-normal flex-1 mt-6 border-black border-solid max-md:max-w-full">
@@ -116,6 +120,7 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
 
   const handleDelete = () => {
     if (id && onDelete) {
+      console.log("Deleting event with ID:", id);
       onDelete(id);
     }
   };
@@ -154,12 +159,15 @@ const EventLogItem: React.FC<EventLogItemProps> = ({
                 <div className="max-md:max-w-full">{eventDetails}</div>
               </div>
             </div>
-            <button 
-              onClick={handleDelete}
-              className="cursor-pointer"
-            >
-              <Trash2 className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
-            </button>
+            {id && onDelete && (
+              <button 
+                onClick={handleDelete}
+                className="cursor-pointer hover:bg-red-100 p-1 rounded-full transition-colors"
+                aria-label="Delete event"
+              >
+                <Trash2 className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
+              </button>
+            )}
           </>
         ) : (
           type === "start" ? "Half Start" : "Half End"
