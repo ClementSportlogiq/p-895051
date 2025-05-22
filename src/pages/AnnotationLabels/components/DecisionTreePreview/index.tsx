@@ -14,13 +14,15 @@ export const DecisionTreePreview: React.FC<DecisionTreePreviewProps> = ({
   flags,
   selectedFlags,
 }) => {
-  // Get flag name from ID
+  // Get flag name from ID, with additional null/undefined checking
   const getFlagName = (flagId: string): string => {
+    if (!flagId) return 'Unknown Flag';
     const flag = flags.find(f => f.id === flagId);
     return flag ? flag.name : 'Unknown Flag';
   };
 
-  if (flagConditions.length === 0) {
+  // Safe array check
+  if (!flagConditions || flagConditions.length === 0) {
     return null;
   }
 
@@ -38,14 +40,19 @@ export const DecisionTreePreview: React.FC<DecisionTreePreviewProps> = ({
           <div className="h-5 border-l"></div>
           <div className="flex flex-wrap justify-center gap-3">
             {flagConditions
-              .filter(c => selectedFlags && selectedFlags[0] && c.flagId === selectedFlags[0].id)
+              .filter(c => selectedFlags && 
+                       selectedFlags[0] && 
+                       c && 
+                       c.flagId === selectedFlags[0].id)
               .map((condition, idx) => (
                 <div key={idx} className="flex flex-col items-center">
-                  <Badge>{condition.value}</Badge>
+                  <Badge>{condition.value || "N/A"}</Badge>
                   <div className="h-5 border-l"></div>
                   <div className="p-2 border rounded bg-white">
                     <div className="text-xs">
-                      Hidden flags: {condition.flagsToHideIds.map(id => getFlagName(id)).join(", ")}
+                      Hidden flags: {(condition.flagsToHideIds || [])
+                        .map(id => getFlagName(id))
+                        .join(", ") || "None"}
                     </div>
                   </div>
                 </div>

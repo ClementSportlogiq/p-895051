@@ -34,7 +34,7 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
       };
       
       // Add the new condition
-      const updatedConditions = [...flagConditions, newCondition];
+      const updatedConditions = [...(flagConditions || []), newCondition];
       
       // Notify parent component about the change
       onConditionsChange(updatedConditions);
@@ -48,6 +48,7 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
 
   // Delete a condition
   const handleDeleteCondition = (index: number) => {
+    if (!flagConditions) return;
     const updatedConditions = flagConditions.filter((_, i) => i !== index);
     onConditionsChange(updatedConditions);
   };
@@ -63,19 +64,26 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
 
   // Get flag name from ID
   const getFlagName = (flagId: string): string => {
+    if (!flagId || !flags) return 'Unknown Flag';
     const flag = flags.find(f => f.id === flagId);
     return flag ? flag.name : 'Unknown Flag';
   };
 
   // Get value options for a selected flag
   const getFlagValues = (flagId: string): {value: string, label: string}[] => {
+    if (!flagId || !flags) return [];
     const flag = flags.find(f => f.id === flagId);
     if (!flag || !flag.values) return [];
     
-    return flag.values.map(v => ({
-      value: typeof v === 'string' ? v : v.value,
-      label: typeof v === 'string' ? v : v.value
-    }));
+    return flag.values.map(v => {
+      if (typeof v === 'string') {
+        return { value: v, label: v };
+      }
+      if (v && typeof v === 'object' && 'value' in v) {
+        return { value: v.value, label: v.value };
+      }
+      return { value: 'N/A', label: 'N/A' };
+    });
   };
 
   // Handle change of selected flag
@@ -84,6 +92,9 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
     setSelectedFlagValue(null); // Reset value when flag changes
     setFlagsToHide([]); // Reset flags to hide when flag changes
   };
+
+  // Safely ensure flagConditions is always an array
+  const safeConditions = flagConditions || [];
 
   return (
     <div className="border p-3 rounded-md bg-white">
@@ -103,7 +114,7 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
                 <SelectValue placeholder="Select flag" />
               </SelectTrigger>
               <SelectContent>
-                {selectedFlags.map(flag => (
+                {(selectedFlags || []).map(flag => (
                   <SelectItem key={flag.id} value={flag.id}>
                     {flag.name}
                   </SelectItem>
@@ -138,7 +149,7 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
           <div>
             <label className="text-xs text-gray-500">Then hide these flags:</label>
             <div className="max-h-32 overflow-y-auto border rounded-md p-2 mt-1">
-              {selectedFlags
+              {(selectedFlags || [])
                 .filter(f => f.id !== selectedFlagId)
                 .map(flag => (
                   <div key={flag.id} className="flex items-center space-x-2 py-1">
@@ -174,22 +185,22 @@ export const FlagConditionBuilder: React.FC<FlagConditionBuilderProps> = ({
       </div>
       
       {/* Display the flag conditions */}
-      {flagConditions.length > 0 && (
+      {safeConditions.length > 0 && (
         <div className="mt-3 border-t pt-3">
           <h4 className="text-sm font-medium mb-2">Defined Conditions:</h4>
           <div className="space-y-2">
-            {flagConditions.map((condition, index) => (
+            {safeConditions.map((condition, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
                     <span className="font-medium">{getFlagName(condition.flagId)}</span>
                     <span className="text-gray-500">=</span>
-                    <Badge variant="outline">{condition.value}</Badge>
+                    <Badge variant="outline">{condition.value || 'N/A'}</Badge>
                     <ArrowRight className="h-3 w-3 mx-1 text-gray-400" />
                     <span>Hide:</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-1 ml-6">
-                    {condition.flagsToHideIds?.map(flagId => (
+                    {(condition.flagsToHideIds || []).map(flagId => (
                       <Badge key={flagId} variant="secondary" className="text-xs">
                         {getFlagName(flagId)}
                       </Badge>

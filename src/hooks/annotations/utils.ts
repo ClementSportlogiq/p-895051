@@ -3,6 +3,8 @@ import { AnnotationFlag, FlagCondition, FlagValue } from '@/types/annotation';
 
 // Process flags: convert values from JSON to array if needed and ensure correct structure
 export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
+  if (!flagsData || !Array.isArray(flagsData)) return [];
+  
   return flagsData.map((flag: any) => {
     let values: (string | FlagValue)[] = [];
     
@@ -48,17 +50,29 @@ export const processFlags = (flagsData: any[]): AnnotationFlag[] => {
 
 // Process flag conditions: convert legacy nextFlagId to flagsToHideIds array if needed
 export const processConditions = (conditions: any[]): FlagCondition[] => {
-  if (!conditions) return [];
+  if (!conditions || !Array.isArray(conditions)) return [];
   
   return conditions.map(condition => {
+    if (!condition) return {
+      flagId: '',
+      value: '',
+      flagsToHideIds: []
+    };
+    
     // Handle legacy format with nextFlagId
     if ('nextFlagId' in condition && !('flagsToHideIds' in condition)) {
       return {
-        flagId: condition.flagId,
-        value: condition.value,
+        flagId: condition.flagId || '',
+        value: condition.value || '',
         flagsToHideIds: condition.nextFlagId ? [condition.nextFlagId] : []
       };
     }
-    return condition;
+    
+    // Ensure all properties exist even if undefined in source
+    return {
+      flagId: condition.flagId || '',
+      value: condition.value || '',
+      flagsToHideIds: Array.isArray(condition.flagsToHideIds) ? condition.flagsToHideIds : []
+    };
   });
 };
