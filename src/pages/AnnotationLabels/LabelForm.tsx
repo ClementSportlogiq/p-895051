@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +20,7 @@ interface LabelFormProps {
   onFlagCheckboxChange: (flagId: string, checked: boolean) => void;
   onAddLabel: () => Promise<void>;
   onCancelEdit: () => void;
+  onFlagConditionsChange?: (conditions: FlagCondition[]) => void; // New prop for flag conditions changes
 }
 
 export const LabelForm: React.FC<LabelFormProps> = ({
@@ -32,6 +32,7 @@ export const LabelForm: React.FC<LabelFormProps> = ({
   onFlagCheckboxChange,
   onAddLabel,
   onCancelEdit,
+  onFlagConditionsChange,
 }) => {
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [selectedFlagValue, setSelectedFlagValue] = useState<string | null>(null);
@@ -39,6 +40,11 @@ export const LabelForm: React.FC<LabelFormProps> = ({
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>(
     newLabel.flag_conditions || []
   );
+
+  // Update local flagConditions when prop changes
+  useEffect(() => {
+    setFlagConditions(newLabel.flag_conditions || []);
+  }, [newLabel.flag_conditions]);
 
   // Save flag condition relationship
   const handleSaveCondition = () => {
@@ -53,14 +59,9 @@ export const LabelForm: React.FC<LabelFormProps> = ({
       const updatedConditions = [...flagConditions, newCondition];
       setFlagConditions(updatedConditions);
       
-      // Update the parent component's state
-      if (newLabel && typeof newLabel === 'object') {
-        const updatedLabel = {
-          ...newLabel,
-          flag_conditions: updatedConditions
-        };
-        // Use a custom handler to update the parent component
-        handleUpdateFlagConditions(updatedConditions);
+      // Notify parent component about the change
+      if (onFlagConditionsChange) {
+        onFlagConditionsChange(updatedConditions);
       }
       
       // Reset form
@@ -74,26 +75,11 @@ export const LabelForm: React.FC<LabelFormProps> = ({
   const handleDeleteCondition = (index: number) => {
     const updatedConditions = flagConditions.filter((_, i) => i !== index);
     setFlagConditions(updatedConditions);
-    handleUpdateFlagConditions(updatedConditions);
-  };
-
-  // Update parent component with new flag conditions
-  const handleUpdateFlagConditions = (conditions: FlagCondition[]) => {
-    // This function assumes the parent component passes a handler to update flagConditions
-    // For now, we'll update our local state
-    setFlagConditions(conditions);
     
-    // Also update the newLabel object with the updated conditions
-    const updatedLabel = {
-      ...newLabel,
-      flag_conditions: conditions
-    };
-    
-    // Since we don't have a direct handler, we need to set the new label state
-    // You would need to add this handler to the props and implement it in the parent
-    
-    // For now, just update the local state
-    // In a real implementation, this would need to pass back to the parent
+    // Notify parent component about the change
+    if (onFlagConditionsChange) {
+      onFlagConditionsChange(updatedConditions);
+    }
   };
 
   // Toggle a flag in the flags to hide array

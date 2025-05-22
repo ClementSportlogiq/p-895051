@@ -42,6 +42,11 @@ const AnnotationLabels: React.FC = () => {
     setNewLabel(prev => ({ ...prev, category: value as EventCategory }));
   };
 
+  // Add a handler for flag condition changes
+  const handleFlagConditionsChange = (conditions: FlagCondition[]) => {
+    setNewLabel(prev => ({ ...prev, flag_conditions: conditions }));
+  };
+
   const handleAddLabel = async () => {
     if (newLabel.name && newLabel.hotkey) {
       const labelToSave: AnnotationLabel = {
@@ -161,6 +166,7 @@ const AnnotationLabels: React.FC = () => {
             onFlagCheckboxChange={handleFlagCheckboxChange}
             onAddLabel={handleAddLabel}
             onCancelEdit={cancelEdit}
+            onFlagConditionsChange={handleFlagConditionsChange} // Add the new handler
           />
 
           {/* Labels list */}
