@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import DefaultView from "./DefaultView";
 import OffenseEvents from "./OffenseEvents";
 import PressureStep from "./PressureStep";
@@ -9,7 +9,6 @@ import { useWizardState } from "./hooks/useWizardState";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { pressureOptions, bodyPartOptions } from "./eventData";
-import { toast } from "@/components/ui/use-toast";
 
 export const EventWizard: React.FC = () => {
   const {
@@ -29,19 +28,6 @@ export const EventWizard: React.FC = () => {
 
   const { getLabelsByCategory, getQuickEvents } = useAnnotationLabels();
 
-  // Validate flag data
-  useEffect(() => {
-    if (currentStep === "flag" && (!flagsForLabel || flagsForLabel.length === 0)) {
-      console.error("Flag step active but no flags available");
-      toast({
-        title: "Warning",
-        description: "No flags available for this event. Please select another event.",
-        variant: "destructive"
-      });
-      handleBack();
-    }
-  }, [currentStep, flagsForLabel]);
-
   // Setup keyboard event handlers
   useEventTreeKeyboard({
     currentStep,
@@ -52,62 +38,41 @@ export const EventWizard: React.FC = () => {
     handleQuickEventSelect,
     handleCategorySelect,
     handleEventSelect: (eventId) => {
-      try {
-        // Find event in the appropriate category
-        if (selectedCategory) {
-          const events = getLabelsByCategory(selectedCategory);
-          const event = events.find(evt => evt.id === eventId);
-          if (event) {
-            handleEventSelect(event);
-            return;
-          }
+      // Find event in the appropriate category
+      if (selectedCategory) {
+        const events = getLabelsByCategory(selectedCategory);
+        const event = events.find(evt => evt.id === eventId);
+        if (event) {
+          handleEventSelect(event);
+          return;
         }
-        
-        // Try in quick events if not found in category
-        const quickEvent = getQuickEvents().find(evt => evt.id === eventId);
-        if (quickEvent) {
-          handleEventSelect(quickEvent);
-        }
-      } catch (error) {
-        console.error("Error handling event selection:", error);
+      }
+      
+      // Try in quick events if not found in category
+      const quickEvent = getQuickEvents().find(evt => evt.id === eventId);
+      if (quickEvent) {
+        handleEventSelect(quickEvent);
       }
     },
     handlePressureSelect: (pressureId) => {
-      try {
-        const pressure = pressureOptions.find(p => p.id === pressureId);
-        if (pressure) {
-          handlePressureSelect(pressure);
-        }
-      } catch (error) {
-        console.error("Error handling pressure selection:", error);
+      const pressure = pressureOptions.find(p => p.id === pressureId);
+      if (pressure) {
+        handlePressureSelect(pressure);
       }
     },
     handleBodyPartSelect: (bodyPartId) => {
-      try {
-        const bodyPart = bodyPartOptions.find(bp => bp.id === bodyPartId);
-        if (bodyPart) {
-          handleBodyPartSelect(bodyPart);
-        }
-      } catch (error) {
-        console.error("Error handling body part selection:", error);
+      const bodyPart = bodyPartOptions.find(bp => bp.id === bodyPartId);
+      if (bodyPart) {
+        handleBodyPartSelect(bodyPart);
       }
     },
     handleFlagValueSelect
   });
 
-  // Get current flag to display with safety checks
-  let currentFlag = null;
-  try {
-    currentFlag = flagsForLabel && flagsForLabel[currentFlagIndex];
-  } catch (error) {
-    console.error("Error accessing current flag:", error);
-  }
-
+  // Get current flag to display
+  const currentFlag = flagsForLabel[currentFlagIndex];
   // Check if the current flag should be displayed based on available flags
-  const shouldDisplayFlag = currentFlag && 
-                            availableFlags && 
-                            Array.isArray(availableFlags) && 
-                            availableFlags.some(f => f && f.id === currentFlag.id);
+  const shouldDisplayFlag = currentFlag && availableFlags.some(f => f.id === currentFlag.id);
 
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
@@ -145,8 +110,8 @@ export const EventWizard: React.FC = () => {
         <BodyPartStep onBodyPartSelect={handleBodyPartSelect} />
       )}
       
-      {/* Flag Selection - only show flags that aren't hidden by conditions and with safety checks */}
-      {currentStep === "flag" && shouldDisplayFlag && currentFlag && (
+      {/* Flag Selection - only show flags that aren't hidden by conditions */}
+      {currentStep === "flag" && shouldDisplayFlag && (
         <FlagStep 
           flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 

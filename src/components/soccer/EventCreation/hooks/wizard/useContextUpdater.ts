@@ -5,7 +5,6 @@ import { useSoccer } from "@/context/SoccerContext";
 
 interface ContextUpdaterProps {
   selectedEvent: string | null;
-  selectedEventName: string | null;
   selectedPressure: string | null;
   selectedBodyPart: string | null;
   selectedCategory: any;
@@ -14,7 +13,6 @@ interface ContextUpdaterProps {
 
 export function useContextUpdater({
   selectedEvent,
-  selectedEventName,
   selectedPressure,
   selectedBodyPart,
   selectedCategory,
@@ -32,8 +30,8 @@ export function useContextUpdater({
     
     // Set event details based on selection steps
     let details = "";
-    if (selectedEvent && selectedEventName) {
-      details = selectedEventName;
+    if (selectedEvent) {
+      details = selectedEvent;
       if (selectedPressure) {
         details += ` (${selectedPressure})`;
       }
@@ -70,7 +68,6 @@ export function useContextUpdater({
     });
   }, [
     selectedEvent, 
-    selectedEventName,
     selectedPressure, 
     selectedBodyPart, 
     selectedCategory, 

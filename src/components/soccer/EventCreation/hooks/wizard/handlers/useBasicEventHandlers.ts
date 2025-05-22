@@ -1,5 +1,5 @@
 
-import { EventCategory, AnnotationLabel } from "@/types/annotation";
+import { EventCategory } from "@/types/annotation";
 
 export function useBasicEventHandlers({ selection, sockerContext }) {
   // Handle category selection
@@ -23,7 +23,6 @@ export function useBasicEventHandlers({ selection, sockerContext }) {
   // Handle event selection
   const handleEventSelect = (event: any) => {
     selection.setSelectedEvent(event.id);
-    selection.setSelectedEventName(event.name);
     return event;
   };
 

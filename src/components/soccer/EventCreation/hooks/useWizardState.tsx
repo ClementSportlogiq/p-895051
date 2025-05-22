@@ -16,7 +16,6 @@ export function useWizardState(): WizardStateContextValue {
   // Update context based on current selections
   useContextUpdater({
     selectedEvent: selection.selectedEvent,
-    selectedEventName: selection.selectedEventName,
     selectedPressure: selection.selectedPressure,
     selectedBodyPart: selection.selectedBodyPart,
     selectedCategory: selection.selectedCategory,
@@ -35,7 +34,6 @@ export function useWizardState(): WizardStateContextValue {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
     selectedEvent: selection.selectedEvent,
-    selectedEventName: selection.selectedEventName, // Add this line
     currentLabelId: flagLogic.currentLabelId,
     flagsForLabel: flagLogic.flagsForLabel,
     availableFlags: flagLogic.availableFlags,

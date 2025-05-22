@@ -7,7 +7,6 @@ export function useSelectionState() {
   const [currentStep, setCurrentStep] = useState<"default" | "pressure" | "bodyPart" | "flag">("default");
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
-  const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [selectedPressure, setSelectedPressure] = useState<string | null>(null);
   const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
   
@@ -18,8 +17,6 @@ export function useSelectionState() {
     setSelectedCategory,
     selectedEvent,
     setSelectedEvent,
-    selectedEventName,
-    setSelectedEventName,
     selectedPressure,
     setSelectedPressure,
     selectedBodyPart,

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AnnotationFlag, FlagValue } from "@/types/annotation";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FlagForm } from "./FlagForm";
 import { FlagList } from "./FlagList";
 import { v4 as uuidv4 } from "uuid";
@@ -20,6 +21,7 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   onDeleteFlag,
   onSaveFlag,
 }) => {
+  const [showFlagsPanel, setShowFlagsPanel] = useState(false);
   const [isAddingFlag, setIsAddingFlag] = useState(false);
   const [newFlag, setNewFlag] = useState<{
     name: string;
@@ -123,9 +125,26 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
   };
 
   return (
-    <div className="bg-gray-50 p-4 rounded-md">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold">Flag Management</h2>
+    <Collapsible
+      open={showFlagsPanel}
+      onOpenChange={setShowFlagsPanel}
+      className="bg-gray-50 p-4 rounded-md"
+    >
+      <div className="flex items-center justify-between">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="flex gap-2 p-0">
+            <h2 className="text-lg font-semibold">Flag Management</h2>
+            {showFlagsPanel ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 10L8 6L4 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </Button>
+        </CollapsibleTrigger>
         {!isAddingFlag && (
           <Button onClick={() => setIsAddingFlag(true)} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-1" />
@@ -134,7 +153,7 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
         )}
       </div>
       
-      <div className="mt-2">
+      <CollapsibleContent className="mt-4">
         {isAddingFlag ? (
           <FlagForm
             newFlag={newFlag}
@@ -158,8 +177,8 @@ export const FlagManagement: React.FC<FlagManagementProps> = ({
           onEditFlag={handleEditFlag}
           onDeleteFlag={onDeleteFlag}
         />
-      </div>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 

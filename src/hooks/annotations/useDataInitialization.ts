@@ -1,20 +1,15 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { defaultQuickEvents } from './constants';
 import { processFlags } from './utils';
 
-export function useDataInitialization(
-  setLabels: (labels: any[]) => void, 
-  setFlags: (flags: any[]) => void, 
-  setIsLoading: (isLoading: boolean) => void, 
-  processLabels: any
-) {
+export function useDataInitialization(setLabels: (labels: any[]) => void, setFlags: (flags: any[]) => void, setIsLoading: (isLoading: boolean) => void, processLabels: any) {
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data from Supabase - memoize to prevent unnecessary re-renders
-  const loadData = useCallback(async () => {
+  // Load data from Supabase
+  const loadData = async () => {
     setIsLoading(true);
     
     try {
@@ -45,11 +40,6 @@ export function useDataInitialization(
       setLabels(processedLabels.length > 0 ? processedLabels : defaultQuickEvents);
       setFlags(processedFlags);
       setIsInitialized(true);
-      
-      console.log('Data loaded successfully', {
-        labels: processedLabels.length,
-        flags: processedFlags.length
-      });
     } catch (error) {
       console.error('Error loading annotation data:', error);
       toast({
@@ -63,10 +53,10 @@ export function useDataInitialization(
     } finally {
       setIsLoading(false);
     }
-  }, [setLabels, setFlags, setIsLoading, processLabels]);
+  };
 
   // Initialize database with default values if empty
-  const initializeDefaults = useCallback(async () => {
+  const initializeDefaults = async () => {
     if (isInitialized) return;
     
     try {
@@ -79,7 +69,6 @@ export function useDataInitialization(
 
       // If no labels exist, populate with defaults
       if (labelCount === 0) {
-        console.log('No labels found, adding defaults');
         // Add default labels
         for (const label of defaultQuickEvents) {
           const { error } = await supabase
@@ -102,7 +91,7 @@ export function useDataInitialization(
     } catch (error) {
       console.error('Error initializing default data:', error);
     }
-  }, [isInitialized, loadData]);
+  };
 
   return {
     loadData,

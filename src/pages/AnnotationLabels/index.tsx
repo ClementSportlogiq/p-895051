@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Database } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
 import { AnnotationLabel, EventCategory, AnnotationFlag, FlagCondition } from "@/types/annotation";
@@ -147,14 +148,6 @@ const AnnotationLabels: React.FC = () => {
             </Link>
           </Button>
           <h1 className="text-2xl font-bold">Annotation Labels</h1>
-          
-          {/* Add Database Maintenance Link */}
-          <Button variant="outline" asChild className="ml-auto">
-            <Link to="/db-maintenance">
-              <Database className="mr-1" size={16} />
-              Database Maintenance
-            </Link>
-          </Button>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

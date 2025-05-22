@@ -24,7 +24,6 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
   const resetState = () => {
     selection.setSelectedCategory(null);
     selection.setSelectedEvent(null);
-    selection.setSelectedEventName(null);
     selection.setSelectedPressure(null);
     selection.setSelectedBodyPart(null);
     flagLogic.setCurrentLabelId("");
