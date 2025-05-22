@@ -41,14 +41,21 @@ export function useContextUpdater({
         details += ` - ${selectedBodyPart}`;
       }
       
-      // Add flag values to details if available
+      // Add flag values to details if available, but clean any UUID patterns
       const flagDetails = Object.entries(flagValues);
       if (flagDetails.length > 0) {
         flagDetails.forEach(([flagName, value]) => {
-          details += ` | ${flagName}: ${value}`;
+          // Ensure we're not adding UUID patterns to details
+          const cleanValue = value ? 
+            String(value).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') : 
+            value;
+          details += ` | ${flagName}: ${cleanValue}`;
         });
       }
     }
+    
+    // Clean final details string of any UUID patterns
+    details = details.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
     
     setSelectedEventType(details);
     

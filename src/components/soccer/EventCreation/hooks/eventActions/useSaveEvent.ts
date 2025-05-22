@@ -14,8 +14,16 @@ export function useSaveEvent() {
     selectedEventType: string,
     selectedEventDetails: Record<string, string | null> | null
   ): GameEvent => {
-    const displayName = `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})`;
+    // Create a clean display name without UUID information
+    const displayName = selectedPlayer ? 
+      `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})` : 
+      `${selectedTeam} Event`;
     
+    // Ensure event details doesn't contain any UUID patterns
+    const cleanedEventType = selectedEventType ? 
+      selectedEventType.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') : 
+      selectedEventType;
+      
     return {
       id: uuidv4(),
       gameTime,
@@ -24,7 +32,7 @@ export function useSaveEvent() {
       team: selectedTeam,
       location: selectedLocation,
       eventName: displayName,
-      eventDetails: selectedEventType,
+      eventDetails: cleanedEventType,
       category: selectedEventCategory,
       additionalDetails: selectedEventDetails || undefined
     };

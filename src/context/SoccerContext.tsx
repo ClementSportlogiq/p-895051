@@ -107,8 +107,17 @@ export const SoccerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const addEvent = (event: GameEvent) => {
+    // Ensure the event ID doesn't appear in the visible event details
+    if (event.eventDetails && event.eventDetails.includes(event.id)) {
+      event.eventDetails = event.eventDetails.replace(event.id, '').trim();
+    }
+    
+    // Remove any UUID patterns from event details
+    if (event.eventDetails) {
+      event.eventDetails = event.eventDetails.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '').trim();
+    }
+    
     setEvents((prev) => [...prev, event]);
-    // Reset state after adding an event
     resetEventSelection();
   };
 

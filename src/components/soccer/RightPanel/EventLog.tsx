@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useSoccer, GameEvent } from "@/context/SoccerContext";
 import { Trash2 } from "lucide-react";
@@ -69,18 +70,25 @@ export const EventLog: React.FC = () => {
         
         {/* Display user events in chronological order */}
         {sortedEvents.length > 0 ? (
-          sortedEvents.map(event => (
-            <EventLogItem 
-              key={event.id}
-              id={event.id}
-              gameTime={event.gameTime}
-              videoTime={event.videoTime}
-              eventName={event.eventName}
-              eventDetails={event.eventDetails}
-              team={event.team}
-              onDelete={removeEvent}
-            />
-          ))
+          sortedEvents.map(event => {
+            // Clean eventDetails of any UUID patterns
+            const cleanEventDetails = event.eventDetails ? 
+              event.eventDetails.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') : 
+              event.eventDetails;
+            
+            return (
+              <EventLogItem 
+                key={event.id}
+                id={event.id}
+                gameTime={event.gameTime}
+                videoTime={event.videoTime}
+                eventName={event.eventName}
+                eventDetails={cleanEventDetails}
+                team={event.team}
+                onDelete={removeEvent}
+              />
+            );
+          })
         ) : (
           <div className="p-4 text-center text-gray-500">No events recorded yet</div>
         )}
