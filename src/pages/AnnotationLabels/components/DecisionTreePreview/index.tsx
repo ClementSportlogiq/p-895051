@@ -17,12 +17,14 @@ export const DecisionTreePreview: React.FC<DecisionTreePreviewProps> = ({
   // Get flag name from ID, with additional null/undefined checking
   const getFlagName = (flagId: string): string => {
     if (!flagId) return 'Unknown Flag';
-    const flag = flags.find(f => f.id === flagId);
+    if (!flags || !Array.isArray(flags)) return 'Unknown Flag';
+    
+    const flag = flags.find(f => f && f.id === flagId);
     return flag ? flag.name : 'Unknown Flag';
   };
 
   // Safe array check
-  if (!flagConditions || flagConditions.length === 0) {
+  if (!flagConditions || !Array.isArray(flagConditions) || flagConditions.length === 0) {
     return null;
   }
 
@@ -57,6 +59,7 @@ export const DecisionTreePreview: React.FC<DecisionTreePreviewProps> = ({
                     <div className="text-xs">
                       Hidden flags: {Array.isArray(condition.flagsToHideIds) 
                         ? condition.flagsToHideIds
+                          .filter(id => id) // Filter out falsy values
                           .map(id => getFlagName(id))
                           .join(", ") || "None"
                         : "None"}

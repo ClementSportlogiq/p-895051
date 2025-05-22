@@ -17,29 +17,39 @@ export const FlagStep: React.FC<FlagStepProps> = ({ flag, onFlagValueSelect }) =
 
   // Convert flag values to the format expected by EventButtonRow
   const flagItems = Array.isArray(flag.values) ? flag.values.map((value, index) => {
-    // Handle both string values (legacy) and FlagValue objects
-    if (typeof value === 'string') {
+    try {
+      // Handle both string values (legacy) and FlagValue objects
+      if (typeof value === 'string') {
+        return {
+          id: `${flag.id}-${index}`,
+          name: value,
+          hotkey: String.fromCharCode(81 + index), // Start from Q (ASCII 81) as fallback
+          description: `${flag.name}: ${value}`
+        };
+      } else if (value && typeof value === 'object' && 'value' in value) {
+        return {
+          id: `${flag.id}-${index}`,
+          name: value.value,
+          hotkey: value.hotkey || String.fromCharCode(81 + index),
+          description: `${flag.name}: ${value.value}`
+        };
+      } else {
+        // Handle unexpected value format
+        console.warn("Unexpected flag value format", value);
+        return {
+          id: `${flag.id}-${index}`,
+          name: 'Unknown',
+          hotkey: String.fromCharCode(81 + index),
+          description: `${flag.name}: Unknown`
+        };
+      }
+    } catch (error) {
+      console.error("Error processing flag value", error);
       return {
         id: `${flag.id}-${index}`,
-        name: value,
-        hotkey: String.fromCharCode(81 + index), // Start from Q (ASCII 81) as fallback
-        description: `${flag.name}: ${value}`
-      };
-    } else if (value && typeof value === 'object' && 'value' in value) {
-      return {
-        id: `${flag.id}-${index}`,
-        name: value.value,
-        hotkey: value.hotkey || String.fromCharCode(81 + index),
-        description: `${flag.name}: ${value.value}`
-      };
-    } else {
-      // Handle unexpected value format
-      console.warn("Unexpected flag value format", value);
-      return {
-        id: `${flag.id}-${index}`,
-        name: 'Unknown',
+        name: 'Error',
         hotkey: String.fromCharCode(81 + index),
-        description: `${flag.name}: Unknown`
+        description: `${flag.name}: Error`
       };
     }
   }) : [];

@@ -10,8 +10,15 @@ export const EventLog: React.FC = () => {
   const sortedEvents = [...events].sort((a, b) => {
     // Convert game time (mm:ss) to seconds for comparison
     const timeToSeconds = (timeStr: string) => {
-      const [minutes, seconds] = timeStr.split(':').map(Number);
-      return minutes * 60 + seconds;
+      if (!timeStr || typeof timeStr !== 'string') return 0;
+      
+      try {
+        const [minutes, seconds] = timeStr.split(':').map(Number);
+        return (minutes || 0) * 60 + (seconds || 0);
+      } catch (error) {
+        console.error("Error parsing time:", timeStr, error);
+        return 0;
+      }
     };
     
     return timeToSeconds(a.gameTime) - timeToSeconds(b.gameTime);
