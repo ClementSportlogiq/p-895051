@@ -5,6 +5,7 @@ import { useBackHandler } from "./handlers/useBackHandler";
 import { useFlagHandlers } from "./handlers/useFlagHandlers";
 import { useEventNavigation } from "./handlers/useEventNavigation";
 import { useEventCompletion } from "./handlers/useEventCompletion";
+import { useSelectionHandlers } from "./handlers/useSelectionHandlers";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { AnnotationLabel } from "@/types/annotation";
 
@@ -17,6 +18,13 @@ interface UseWizardHandlersProps {
 export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWizardHandlersProps) {
   const { labels, getLabelsByCategory } = useAnnotationLabels();
   
+  // Event completion handler for passing to various hooks
+  const { completeEventCreation, resetWizard } = useEventCompletion({
+    selection,
+    flagLogic,
+    sockerContext
+  });
+  
   // Basic event handlers
   const basicHandlers = useBasicEventHandlers({
     selection,
@@ -26,7 +34,15 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   // Flag handlers
   const flagHandlers = useFlagHandlers({
     selection,
-    flagLogic
+    flagLogic,
+    completeAndMoveOn: completeEventCreation
+  });
+  
+  // Selection handlers (pressure and body part)
+  const selectionHandlers = useSelectionHandlers({
+    selection,
+    sockerContext,
+    completeEventCreation
   });
   
   // Back button handler
@@ -36,19 +52,16 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   });
   
   // Event navigation
-  const { handleEventSelect } = useEventNavigation({
+  const navigation = useEventNavigation({
     selection,
     flagLogic
   });
   
-  // Event completion handler
-  const { resetWizard } = useEventCompletion({
-    selection,
-    flagLogic
-  });
-  
-  // Define an enhanced event select handler that also loads flag conditions
-  const handleEventSelectWithConditions = (event: AnnotationLabel) => {
+  // Define a custom event select handler that incorporates navigation logic and flag conditions
+  const handleEventSelect = (event: AnnotationLabel) => {
+    // Call the basic handler first to set the selected event
+    basicHandlers.handleEventSelect(event);
+    
     // Update flag conditions from selected event
     if (event && event.flag_conditions) {
       flagLogic.setFlagConditions(event.flag_conditions);
@@ -56,15 +69,22 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
       flagLogic.setFlagConditions([]);
     }
     
-    // Call original handler
-    handleEventSelect(event);
+    // Determine and set the next step based on the selected event
+    navigation.determineNextStep(event);
+    
+    // Set flag-related state if needed
+    if (event.flags && event.flags.length > 0) {
+      flagLogic.setCurrentLabelId(event.id);
+      flagLogic.setFlagsForLabel(event.flags);
+    }
   };
   
   return {
     ...basicHandlers,
     ...flagHandlers,
+    ...selectionHandlers,
     handleBack,
-    handleEventSelect: handleEventSelectWithConditions,
+    handleEventSelect,
     resetWizard
   };
 }

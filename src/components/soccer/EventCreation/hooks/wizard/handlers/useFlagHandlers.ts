@@ -14,14 +14,16 @@ export function useFlagHandlers({ flagLogic, selection, completeAndMoveOn }) {
         });
         
         // Apply conditions based on selection
-        const conditionsForFlag = flagLogic.getFlagConditions(flagLogic.currentLabelId, currentFlag.id, value);
+        const conditionsForFlag = flagLogic.flagConditions.filter(
+          c => c.flagId === currentFlag.id && c.value === value
+        );
         
         if (conditionsForFlag && conditionsForFlag.length > 0) {
           // Update available flags based on conditions
-          const updatedAvailableFlags = flagLogic.determineAvailableFlags(
-            flagLogic.flagsForLabel,
-            flagLogic.getFlagConditions(flagLogic.currentLabelId)
+          const updatedAvailableFlags = flagLogic.availableFlags.filter(
+            af => !conditionsForFlag.some(c => c.flagsToHideIds.includes(af.id))
           );
+          
           flagLogic.setAvailableFlags(updatedAvailableFlags);
         }
         

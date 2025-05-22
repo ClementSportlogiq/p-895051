@@ -1,9 +1,18 @@
 
 import { AnnotationLabel } from "@/types/annotation";
 
-export function useEventNavigation({ selection, event, flagLogic }) {
+export function useEventNavigation({ selection, flagLogic }) {
   // Determine next step based on event selected
   const determineNextStep = (event: AnnotationLabel) => {
+    // Check if event has flags
+    const hasFlags = event.flags && event.flags.length > 0;
+    
+    // Set flags for the current label if available
+    if (hasFlags) {
+      flagLogic.setCurrentLabelId(event.id);
+      flagLogic.setFlagsForLabel(event.flags);
+    }
+    
     const goToFlag = hasAvailableFlags(event);
     const goToBodyPart = needsBodyPartSelection(event);
 
@@ -36,7 +45,7 @@ export function useEventNavigation({ selection, event, flagLogic }) {
 
   // Check if event has available flags
   const hasAvailableFlags = (event: AnnotationLabel) => {
-    return flagLogic.availableFlags.length > 0 && event.flags && event.flags.length > 0;
+    return event.flags && event.flags.length > 0;
   };
 
   return {

@@ -40,8 +40,14 @@ export function useWizardState(): WizardStateContextValue {
     flagsForLabel: flagLogic.flagsForLabel,
     availableFlags: flagLogic.availableFlags,
     currentFlagIndex: flagLogic.currentFlagIndex,
-    flagConditions: flagLogic.flagConditions, // Add flag conditions to the context
-    ...handlers,
+    flagConditions: selection.flagConditions,
+    handleCategorySelect: handlers.handleCategorySelect,
+    handleQuickEventSelect: handlers.handleQuickEventSelect,
+    handleEventSelect: handlers.handleEventSelect,
+    handlePressureSelect: handlers.handlePressureSelect,
+    handleBodyPartSelect: handlers.handleBodyPartSelect,
+    handleFlagValueSelect: handlers.handleFlagValueSelect,
+    handleBack: handlers.handleBack,
     resetWizard: handlers.resetWizard
   };
 }

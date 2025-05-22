@@ -7,7 +7,7 @@ export function useSelectionHandlers({
   completeEventCreation
 }) {
   // Handle pressure selection
-  const handlePressureSelect = (pressure: { id: string; name: string }) => {
+  const handlePressureSelect = (pressure: { id: string; name: string; hotkey: string }) => {
     selection.setSelectedPressure(pressure.id);
     
     // Check if body part selection is needed
@@ -27,7 +27,7 @@ export function useSelectionHandlers({
   };
 
   // Handle body part selection
-  const handleBodyPartSelect = (bodyPart: { id: string; name: string }) => {
+  const handleBodyPartSelect = (bodyPart: { id: string; name: string; hotkey: string }) => {
     selection.setSelectedBodyPart(bodyPart.id);
     selection.setCurrentStep("default");
     completeEventCreation();
