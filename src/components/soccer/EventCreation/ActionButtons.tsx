@@ -1,6 +1,5 @@
 
 import React from "react";
-import { useWizardState } from "./hooks/useWizardState";
 
 interface ActionButtonsProps {
   onSave: () => void;
@@ -8,22 +7,12 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onCancel }) => {
-  const { resetWizard } = useWizardState();
-  
   const handleCancel = () => {
-    console.log("Cancel button clicked, performing full reset sequence");
+    // Dispatch a custom event that EventTree can listen for
+    window.dispatchEvent(new CustomEvent("cancelEvent"));
     
-    // Reset wizard state first to ensure UI resets immediately
-    resetWizard();
-    
-    // Then dispatch the custom event for other components
-    setTimeout(() => {
-      console.log("Dispatching cancelEvent after wizard reset");
-      window.dispatchEvent(new CustomEvent("cancelEvent"));
-      
-      // Finally call the original onCancel function
-      onCancel();
-    }, 0);
+    // Call the original onCancel function
+    onCancel();
   };
 
   return (

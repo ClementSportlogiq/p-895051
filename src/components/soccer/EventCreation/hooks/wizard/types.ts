@@ -17,7 +17,7 @@ export interface WizardStateContextValue {
   flagsForLabel: AnnotationFlag[];
   availableFlags: AnnotationFlag[];
   currentFlagIndex: number;
-  flagConditions: FlagCondition[];
+  flagConditions: FlagCondition[]; // Add flag conditions to context
   handleCategorySelect: (category: EventCategory) => void;
   handleQuickEventSelect: (eventId: string) => void;
   handleEventSelect: (event: AnnotationLabel) => void;
@@ -26,7 +26,4 @@ export interface WizardStateContextValue {
   handleFlagValueSelect: (value: string) => void;
   handleBack: () => void;
   resetWizard: () => void;
-  // Add the missing properties to match implementation
-  selection: any; // State from useSelectionState
-  flagLogic: any; // State from useFlagLogic
 }

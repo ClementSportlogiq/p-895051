@@ -23,12 +23,11 @@ export function useEventValidation() {
       return false;
     }
 
-    // Updated check to be consistent with the main validation logic
     if (!selectedEventType) {
       toast({
         variant: "destructive",
-        title: "Missing Event Type",
-        description: "Please select an event type before saving"
+        title: "Missing Event",
+        description: "Please select an event before saving"
       });
       return false;
     }

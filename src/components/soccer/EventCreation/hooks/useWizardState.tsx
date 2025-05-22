@@ -5,13 +5,9 @@ import { useFlagLogic } from "./wizard/useFlagLogic";
 import { useContextUpdater } from "./wizard/useContextUpdater";
 import { useWizardHandlers } from "./wizard/useWizardHandlers";
 import { WizardStateContextValue } from "./wizard/types";
-import { useVideoTime } from "./useVideoTime";
 
 export function useWizardState(): WizardStateContextValue {
   const sockerContext = useSoccer();
-  
-  // Get video time information
-  const { gameTime, videoTime, loggedVideoTime, setLoggedVideoTime } = useVideoTime();
   
   // Get state from modular hooks
   const selection = useSelectionState();
@@ -27,18 +23,14 @@ export function useWizardState(): WizardStateContextValue {
     flagValues: flagLogic.flagValues
   });
 
-  // Get handlers with time information
+  // Get handlers
   const handlers = useWizardHandlers({
     selection,
     flagLogic,
-    sockerContext,
-    gameTime,
-    videoTime,
-    loggedVideoTime,
-    setLoggedVideoTime
+    sockerContext
   });
 
-  // Return the public API that matches WizardStateContextValue interface
+  // Return the public API
   return {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
@@ -56,9 +48,6 @@ export function useWizardState(): WizardStateContextValue {
     handleBodyPartSelect: handlers.handleBodyPartSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
-    resetWizard: handlers.resetWizard,
-    // Include the state objects in the return value to match the updated interface
-    selection,
-    flagLogic
+    resetWizard: handlers.resetWizard
   };
 }

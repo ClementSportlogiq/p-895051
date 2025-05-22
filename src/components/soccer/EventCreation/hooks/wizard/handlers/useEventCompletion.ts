@@ -1,97 +1,81 @@
 
-import { useToast } from "@/hooks/use-toast";
-import { useEventValidation } from "./validation/useEventValidation";
-import { useEventPayload } from "./event/useEventPayload";
-import { useWizardReset } from "./reset/useWizardReset";
-import { TeamType, GameEvent, Player } from "@/context/SoccerContext";
-
-interface UseEventCompletionProps {
-  selection: any;
-  sockerContext: any;
-  flagLogic: any;
-  gameTime?: string;
-  videoTime?: string;
-  loggedVideoTime?: string;
-  setLoggedVideoTime?: (time: string) => void;
-}
-
-export function useEventCompletion({ 
-  selection, 
-  sockerContext, 
-  flagLogic,
-  gameTime = "",
-  videoTime = "",
-  loggedVideoTime = "",
-  setLoggedVideoTime
-}: UseEventCompletionProps) {
-  const { toast } = useToast();
-  
-  // Use extracted modules
-  const { validateEvent } = useEventValidation({ sockerContext });
-  const { createEventPayload } = useEventPayload({ 
-    sockerContext, 
-    gameTime, 
-    videoTime, 
-    loggedVideoTime 
-  });
-  const { resetWizard } = useWizardReset({ selection, flagLogic });
-
-  // Complete the event creation with all validation and proper event creation
+export function useEventCompletion({ selection, sockerContext, flagLogic }) {
+  // Complete the event creation
   const completeEventCreation = () => {
     console.log("Completing event creation with flags:", flagLogic.flagValues);
     
-    // Validate required fields first
-    if (!validateEvent()) {
-      console.log("Event validation failed during flag completion");
+    // Safety check for selection and sockerContext
+    if (!selection || !sockerContext) {
+      console.error("Missing selection or sockerContext in completeEventCreation");
       return;
     }
     
-    // Create the complete event payload
-    const eventPayload = createEventPayload();
-    if (!eventPayload) {
-      console.error("Failed to create event payload");
-      return;
-    }
+    // Save event to context
+    const eventData = {
+      category: selection.selectedCategory,
+      eventId: selection.selectedEvent,
+      pressure: selection.selectedPressure,
+      bodyPart: selection.selectedBodyPart,
+      flags: flagLogic?.flagValues || {}
+    };
     
-    // Add event to context
-    try {
-      sockerContext.addEvent(eventPayload);
-      console.log("Event added:", eventPayload);
-      
-      // Reset the logged video time if applicable
-      if (setLoggedVideoTime) {
-        setLoggedVideoTime("");
+    // Add to events list - with safety check
+    if (sockerContext.addEvent && eventData.eventId) {
+      try {
+        sockerContext.addEvent(eventData);
+        
+        // Reset after adding - call resetWizard instead of resetState
+        resetWizard();
+        console.log("Event created and wizard reset");
+      } catch (error) {
+        console.error("Error adding event:", error);
       }
-      
-      // Reset wizard state first to ensure UI resets immediately
-      resetWizard();
-      
-      // Then reset the soccer context
-      setTimeout(() => {
-        sockerContext.resetEventSelection();
-        console.log("Soccer context reset completed after wizard reset");
-      }, 0);
-      
-      // Show success toast
-      toast({
-        title: "Event Saved",
-        description: `${eventPayload.eventName} event has been saved`
-      });
-      
-    } catch (error) {
-      console.error("Error adding event:", error);
-      toast({
-        variant: "destructive",
-        title: "Error Saving Event",
-        description: "There was a problem saving your event"
-      });
+    } else {
+      console.warn("Could not add event: addEvent function or eventId is missing");
     }
   };
 
-  // Legacy method - now just calls resetWizard for backwards compatibility
+  // Reset wizard state - thorough reset of all state variables
   const resetState = () => {
-    console.log("resetState called - redirecting to centralized resetWizard");
-    resetWizard();
+    try {
+      // Reset selection state
+      if (selection) {
+        selection.setSelectedCategory(null);
+        selection.setSelectedEvent(null);
+        selection.setSelectedEventName(null);
+        selection.setSelectedPressure(null);
+        selection.setSelectedBodyPart(null);
+        selection.setFlagConditions([]);  // Add this to reset flag conditions
+      }
+      
+      // Reset flag state - be thorough
+      if (flagLogic) {
+        flagLogic.setCurrentLabelId("");
+        flagLogic.setFlagsForLabel([]);
+        flagLogic.setCurrentFlagIndex(0);
+        flagLogic.setFlagValues({});
+        flagLogic.setAvailableFlags([]);
+      }
+      
+      console.log("Wizard state fully reset");
+    } catch (error) {
+      console.error("Error in resetState:", error);
+    }
+  };
+
+  // Reset wizard - exposed publicly for the WizardStateContextValue
+  const resetWizard = () => {
+    resetState();
+    
+    // Reset to default view - with safety check
+    if (selection) {
+      selection.setCurrentStep("default");
+    }
+    
+    // Clear any selected category to ensure we return to the initial view
+    if (sockerContext && sockerContext.resetEventSelection) {
+      sockerContext.resetEventSelection();
+    }
   };
 
   return {

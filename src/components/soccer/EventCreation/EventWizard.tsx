@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import DefaultView from "./DefaultView";
 import OffenseEvents from "./OffenseEvents";
 import PressureStep from "./PressureStep";
@@ -25,11 +25,6 @@ export const EventWizard: React.FC = () => {
     handleFlagValueSelect,
     handleBack
   } = useWizardState();
-  
-  // Add effect to log state changes for debugging
-  useEffect(() => {
-    console.log("EventWizard rendering with currentStep:", currentStep, "selectedCategory:", selectedCategory);
-  }, [currentStep, selectedCategory]);
 
   const { getLabelsByCategory, getQuickEvents } = useAnnotationLabels();
 
@@ -78,20 +73,6 @@ export const EventWizard: React.FC = () => {
   const currentFlag = flagsForLabel[currentFlagIndex];
   // Check if the current flag should be displayed based on available flags
   const shouldDisplayFlag = currentFlag && availableFlags.some(f => f.id === currentFlag.id);
-
-  // Force render the default view when currentStep is "default" and no category is selected
-  if (currentStep === "default" && !selectedCategory) {
-    return (
-      <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
-        {/* Back button would not appear in initial state */}
-        <DefaultView 
-          selectedCategory={null} 
-          onCategorySelect={handleCategorySelect}
-          onEventSelect={handleEventSelect}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">

@@ -13,32 +13,16 @@ interface UseWizardHandlersProps {
   selection: any;
   flagLogic: any;
   sockerContext: any;
-  gameTime?: string;
-  videoTime?: string;
-  loggedVideoTime?: string;
-  setLoggedVideoTime?: (time: string) => void;
 }
 
-export function useWizardHandlers({ 
-  selection, 
-  flagLogic, 
-  sockerContext,
-  gameTime = "",
-  videoTime = "",
-  loggedVideoTime = "",
-  setLoggedVideoTime
-}: UseWizardHandlersProps) {
+export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWizardHandlersProps) {
   const { labels, getLabelsByCategory } = useAnnotationLabels();
   
   // Event completion handler for passing to various hooks
   const { completeEventCreation, resetWizard } = useEventCompletion({
     selection,
     flagLogic,
-    sockerContext,
-    gameTime,
-    videoTime,
-    loggedVideoTime,
-    setLoggedVideoTime
+    sockerContext
   });
   
   // Basic event handlers
