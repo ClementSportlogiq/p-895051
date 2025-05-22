@@ -26,7 +26,7 @@ export function useEventCompletion({
   
   // Validate all required event components
   const validateEvent = () => {
-    const { selectedPlayer, selectedLocation, selectedEvent } = sockerContext;
+    const { selectedPlayer, selectedLocation, selectedEventType } = sockerContext;
     
     if (!selectedPlayer) {
       toast({
@@ -46,11 +46,12 @@ export function useEventCompletion({
       return false;
     }
 
-    if (!selectedEvent) {
+    // Fixed: Check for selectedEventType instead of selectedEvent
+    if (!selectedEventType) {
       toast({
         variant: "destructive",
-        title: "Missing Event",
-        description: "Please select an event before saving"
+        title: "Missing Event Type",
+        description: "Please select an event type before saving"
       });
       return false;
     }
