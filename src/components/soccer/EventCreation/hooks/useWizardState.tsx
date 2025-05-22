@@ -5,9 +5,13 @@ import { useFlagLogic } from "./wizard/useFlagLogic";
 import { useContextUpdater } from "./wizard/useContextUpdater";
 import { useWizardHandlers } from "./wizard/useWizardHandlers";
 import { WizardStateContextValue } from "./wizard/types";
+import { useVideoTime } from "./useVideoTime";
 
 export function useWizardState(): WizardStateContextValue {
   const sockerContext = useSoccer();
+  
+  // Get video time information
+  const { gameTime, videoTime, loggedVideoTime, setLoggedVideoTime } = useVideoTime();
   
   // Get state from modular hooks
   const selection = useSelectionState();
@@ -23,11 +27,15 @@ export function useWizardState(): WizardStateContextValue {
     flagValues: flagLogic.flagValues
   });
 
-  // Get handlers
+  // Get handlers with time information
   const handlers = useWizardHandlers({
     selection,
     flagLogic,
-    sockerContext
+    sockerContext,
+    gameTime,
+    videoTime,
+    loggedVideoTime,
+    setLoggedVideoTime
   });
 
   // Return the public API
@@ -48,6 +56,8 @@ export function useWizardState(): WizardStateContextValue {
     handleBodyPartSelect: handlers.handleBodyPartSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
-    resetWizard: handlers.resetWizard
+    resetWizard: handlers.resetWizard,
+    selection,
+    flagLogic
   };
 }

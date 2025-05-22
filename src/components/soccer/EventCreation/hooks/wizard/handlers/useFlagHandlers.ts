@@ -46,9 +46,12 @@ export function useFlagHandlers({ flagLogic, selection, completeAndMoveOn }) {
           
           // If all remaining flags are hidden, finish the process
           if (checkIndex >= flagLogic.flagsForLabel.length) {
+            console.log("All flags complete, calling completeAndMoveOn");
             completeAndMoveOn();
           }
         } else {
+          // This is the last flag, save the event
+          console.log("Last flag selected, calling completeAndMoveOn");
           completeAndMoveOn();
         }
       }

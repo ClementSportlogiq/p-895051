@@ -1,37 +1,156 @@
 
-export function useEventCompletion({ selection, sockerContext, flagLogic }) {
-  // Complete the event creation
+import { useToast } from "@/hooks/use-toast";
+import { TeamType, GameEvent, Player } from "@/context/SoccerContext";
+import { v4 as uuidv4 } from "uuid";
+
+interface UseEventCompletionProps {
+  selection: any;
+  sockerContext: any;
+  flagLogic: any;
+  gameTime?: string;
+  videoTime?: string;
+  loggedVideoTime?: string;
+  setLoggedVideoTime?: (time: string) => void;
+}
+
+export function useEventCompletion({ 
+  selection, 
+  sockerContext, 
+  flagLogic,
+  gameTime = "",
+  videoTime = "",
+  loggedVideoTime = "",
+  setLoggedVideoTime
+}: UseEventCompletionProps) {
+  const { toast } = useToast();
+  
+  // Validate all required event components
+  const validateEvent = () => {
+    const { selectedPlayer, selectedLocation, selectedEvent } = sockerContext;
+    
+    if (!selectedPlayer) {
+      toast({
+        variant: "destructive",
+        title: "Missing Player",
+        description: "Please select a player before saving the event"
+      });
+      return false;
+    }
+
+    if (!selectedLocation) {
+      toast({
+        variant: "destructive",
+        title: "Missing Location",
+        description: "Please select a field location before saving the event"
+      });
+      return false;
+    }
+
+    if (!selectedEvent) {
+      toast({
+        variant: "destructive",
+        title: "Missing Event",
+        description: "Please select an event before saving"
+      });
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Create event payload with consistent format
+  const createEventPayload = (): GameEvent | null => {
+    const { 
+      selectedPlayer, 
+      selectedTeam, 
+      selectedLocation, 
+      selectedEventCategory,
+      selectedEventType,
+      selectedEventDetails
+    } = sockerContext;
+    
+    if (!selectedPlayer || !selectedTeam || !selectedEventType) {
+      console.error("Missing required fields for event payload");
+      return null;
+    }
+    
+    // Create a clean display name without UUID information
+    const displayName = selectedPlayer ? 
+      `${selectedPlayer.number} ${selectedPlayer.name} (${selectedTeam})` : 
+      `${selectedTeam} Event`;
+    
+    // Ensure event details doesn't contain any UUID patterns
+    const cleanedEventType = selectedEventType ? 
+      selectedEventType.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') : 
+      selectedEventType;
+      
+    // Use logged video time if available, otherwise use current video time
+    const videoTimeToUse = loggedVideoTime || videoTime;
+    console.log("Using video time for event:", videoTimeToUse, "Logged time was:", loggedVideoTime);
+      
+    return {
+      id: uuidv4(),
+      gameTime,
+      videoTime: videoTimeToUse,
+      player: selectedPlayer,
+      team: selectedTeam,
+      location: selectedLocation,
+      eventName: displayName,
+      eventDetails: cleanedEventType,
+      category: selectedEventCategory,
+      additionalDetails: selectedEventDetails || undefined
+    };
+  };
+
+  // Complete the event creation with all validation and proper event creation
   const completeEventCreation = () => {
     console.log("Completing event creation with flags:", flagLogic.flagValues);
     
-    // Safety check for selection and sockerContext
-    if (!selection || !sockerContext) {
-      console.error("Missing selection or sockerContext in completeEventCreation");
+    // Validate required fields first
+    if (!validateEvent()) {
+      console.log("Event validation failed during flag completion");
       return;
     }
     
-    // Save event to context
-    const eventData = {
-      category: selection.selectedCategory,
-      eventId: selection.selectedEvent,
-      pressure: selection.selectedPressure,
-      bodyPart: selection.selectedBodyPart,
-      flags: flagLogic?.flagValues || {}
-    };
+    // Create the complete event payload
+    const eventPayload = createEventPayload();
+    if (!eventPayload) {
+      console.error("Failed to create event payload");
+      return;
+    }
     
-    // Add to events list - with safety check
-    if (sockerContext.addEvent && eventData.eventId) {
-      try {
-        sockerContext.addEvent(eventData);
-        
-        // Reset after adding
-        resetWizard();
-        console.log("Event created and wizard reset");
-      } catch (error) {
-        console.error("Error adding event:", error);
+    // Add event to context
+    try {
+      sockerContext.addEvent(eventPayload);
+      console.log("Event added:", eventPayload);
+      
+      // Reset the logged video time if applicable
+      if (setLoggedVideoTime) {
+        setLoggedVideoTime("");
       }
-    } else {
-      console.warn("Could not add event: addEvent function or eventId is missing");
+      
+      // Reset wizard state first to ensure UI resets immediately
+      resetWizard();
+      
+      // Then reset the soccer context
+      setTimeout(() => {
+        sockerContext.resetEventSelection();
+        console.log("Soccer context reset completed after wizard reset");
+      }, 0);
+      
+      // Show success toast
+      toast({
+        title: "Event Saved",
+        description: `${eventPayload.eventName} event has been saved`
+      });
+      
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast({
+        variant: "destructive",
+        title: "Error Saving Event",
+        description: "There was a problem saving your event"
+      });
     }
   };
 

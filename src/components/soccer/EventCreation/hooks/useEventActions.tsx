@@ -1,12 +1,12 @@
 
-import { useSoccer, TeamType } from "@/context/SoccerContext";
+import { useSoccer } from "@/context/SoccerContext";
 import { 
   useEventValidation, 
   useKeyboardShortcuts,
-  useSaveEvent,
   useVideoTimeCapture
 } from "./eventActions";
 import { useWizardState } from "./useWizardState";
+import { useEventCompletion } from "./wizard/handlers/useEventCompletion";
 
 interface UseEventActionsProps {
   gameTime: string;
@@ -21,78 +21,33 @@ export function useEventActions({
   loggedVideoTime, 
   setLoggedVideoTime 
 }: UseEventActionsProps) {
-  const { 
-    selectedPlayer, 
-    selectedTeam, 
-    selectedLocation, 
-    selectedEventCategory,
-    selectedEventType,
-    selectedEventDetails,
-    addEvent,
-    resetEventSelection
-  } = useSoccer();
+  const sockerContext = useSoccer();
   
   // Get access to wizard state for proper reset
-  const { resetWizard } = useWizardState();
+  const { resetWizard, selection, flagLogic } = useWizardState();
   
-  // Use validation hook
-  const { validateEvent, toast } = useEventValidation();
-  
-  // Use event creation hook
-  const { createEventPayload } = useSaveEvent();
+  // Use the unified event completion hook
+  const { completeEventCreation } = useEventCompletion({
+    selection,
+    sockerContext,
+    flagLogic,
+    gameTime,
+    videoTime,
+    loggedVideoTime,
+    setLoggedVideoTime
+  });
   
   // Capture video time when event type is selected (changed from category to type)
   useVideoTimeCapture({
-    selectedEventType,
+    selectedEventType: sockerContext.selectedEventType,
     videoTime,
     loggedVideoTime,
     setLoggedVideoTime
   });
 
   const handleSaveEvent = () => {
-    console.log("Saving event...");
-    // Validate event data
-    if (!validateEvent(selectedPlayer, selectedLocation, selectedEventType)) {
-      console.log("Event validation failed");
-      return;
-    }
-
-    // Create event payload
-    const eventPayload = createEventPayload(
-      gameTime,
-      loggedVideoTime,
-      videoTime,
-      selectedPlayer,
-      selectedTeam as TeamType,
-      selectedLocation,
-      selectedEventCategory,
-      selectedEventType,
-      selectedEventDetails
-    );
-    
-    // Add the event
-    addEvent(eventPayload);
-    console.log("Event added:", eventPayload);
-
-    // Reset the logged video time
-    setLoggedVideoTime("");
-    
-    // Reset wizard state first to ensure UI resets immediately
-    console.log("Calling resetWizard from handleSaveEvent");
-    resetWizard();
-    
-    // Then reset the soccer context
-    setTimeout(() => {
-      resetEventSelection();
-      console.log("Soccer context reset completed after wizard reset");
-    }, 0);
-
-    toast({
-      title: "Event Saved",
-      description: `${eventPayload.eventName} event has been saved`
-    });
-    
-    console.log("Event saved successfully, state reset");
+    console.log("Save button clicked, delegating to completeEventCreation");
+    completeEventCreation();
   };
 
   const handleCancelEvent = () => {
@@ -107,16 +62,9 @@ export function useEventActions({
     
     // Reset soccer context state after wizard reset
     setTimeout(() => {
-      resetEventSelection();
+      sockerContext.resetEventSelection();
       console.log("Soccer context reset completed after wizard reset");
     }, 0);
-    
-    toast({
-      title: "Event cancelled",
-      description: "The event creation has been cancelled"
-    });
-    
-    console.log("Event creation cancelled, state reset");
   };
 
   // Setup keyboard shortcuts

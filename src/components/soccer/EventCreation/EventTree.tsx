@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import EventWizard from "./EventWizard";
 import { useSoccer } from "@/context/SoccerContext";
 import { useWizardState } from "./hooks/useWizardState";
+import { Toaster } from "@/components/ui/toaster";
 
 export const EventTree: React.FC = () => {
   const { resetEventSelection } = useSoccer();
@@ -30,7 +31,12 @@ export const EventTree: React.FC = () => {
     };
   }, [resetEventSelection, resetWizard]);
 
-  return <EventWizard />;
+  return (
+    <>
+      <EventWizard />
+      <Toaster />
+    </>
+  );
 };
 
 export default EventTree;
