@@ -49,21 +49,6 @@ export function useEventActions({
     setLoggedVideoTime
   });
 
-  // Thorough state reset function similar to resetState in useEventCompletion
-  const performThoroughReset = () => {
-    try {
-      // Reset wizard state via the common resetWizard function
-      resetWizard();
-      
-      // Reset the logged video time
-      setLoggedVideoTime("");
-      
-      console.log("All state thoroughly reset in handleSaveEvent");
-    } catch (error) {
-      console.error("Error in performThoroughReset:", error);
-    }
-  };
-
   const handleSaveEvent = () => {
     console.log("Saving event...");
     // Validate event data - removed selectedEventType check
@@ -89,20 +74,32 @@ export function useEventActions({
     addEvent(eventPayload);
     console.log("Event added:", eventPayload);
 
-    // Perform thorough reset using the new function that includes resetState logic
-    performThoroughReset();
+    // Reset the logged video time after adding event
+    setLoggedVideoTime("");
+    
+    // Reset soccer context state
+    resetEventSelection();
+    
+    // Reset wizard state completely
+    resetWizard();
 
     toast({
       title: "Event Saved",
       description: `${eventPayload.eventName} event has been saved`
     });
     
-    console.log("Event saved successfully, state reset");
+    console.log("Event saved successfully, state fully reset");
   };
 
   const handleCancelEvent = () => {
-    // Perform thorough reset using the new function that includes resetState logic
-    performThoroughReset();
+    // Reset soccer context state
+    resetEventSelection();
+    
+    // Reset wizard state to ensure UI returns to initial state
+    resetWizard(); 
+    
+    // Clear any logged video time
+    setLoggedVideoTime("");
     
     toast({
       title: "Event cancelled",
