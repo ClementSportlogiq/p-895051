@@ -33,7 +33,7 @@ export function useEventActions({
   } = useSoccer();
   
   // Get access to wizard state for proper reset
-  const { resetWizard, resetState } = useWizardState();
+  const { resetWizard } = useWizardState();
   
   // Use validation hook
   const { validateEvent, toast } = useEventValidation();
@@ -49,26 +49,18 @@ export function useEventActions({
     setLoggedVideoTime
   });
 
-  // Function to perform a thorough reset of all state
+  // Thorough state reset function similar to resetState in useEventCompletion
   const performThoroughReset = () => {
-    console.log("Performing thorough reset of all state");
-    
     try {
-      // First reset the detailed wizard state (selections, flags, etc.)
-      resetState();
-      
-      // Reset the soccer context state
-      resetEventSelection();
-      
-      // Reset the wizard to default view (calls resetState internally too but better to be explicit)
+      // Reset wizard state via the common resetWizard function
       resetWizard();
       
-      // Reset logged video time
+      // Reset the logged video time
       setLoggedVideoTime("");
       
-      console.log("All state successfully reset");
+      console.log("All state thoroughly reset in handleSaveEvent");
     } catch (error) {
-      console.error("Error during state reset:", error);
+      console.error("Error in performThoroughReset:", error);
     }
   };
 
@@ -97,7 +89,7 @@ export function useEventActions({
     addEvent(eventPayload);
     console.log("Event added:", eventPayload);
 
-    // Perform thorough reset of all state
+    // Perform thorough reset using the new function that includes resetState logic
     performThoroughReset();
 
     toast({
@@ -105,11 +97,11 @@ export function useEventActions({
       description: `${eventPayload.eventName} event has been saved`
     });
     
-    console.log("Event saved successfully, state fully reset");
+    console.log("Event saved successfully, state reset");
   };
 
   const handleCancelEvent = () => {
-    // Perform thorough reset of all state
+    // Perform thorough reset using the new function that includes resetState logic
     performThoroughReset();
     
     toast({

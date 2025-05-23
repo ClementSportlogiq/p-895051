@@ -48,7 +48,6 @@ export function useWizardState(): WizardStateContextValue {
     handleBodyPartSelect: handlers.handleBodyPartSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
-    resetWizard: handlers.resetWizard,
-    resetState: handlers.resetState // Expose resetState
+    resetWizard: handlers.resetWizard
   };
 }
