@@ -11,7 +11,6 @@ export function useVideoTime() {
     const handleTimeUpdate = (e: CustomEvent) => {
       setGameTime(e.detail.gameTime);
       setVideoTime(e.detail.videoTime);
-      console.log("Video time updated:", e.detail.videoTime);
     };
 
     window.addEventListener("videoTimeUpdate", handleTimeUpdate as EventListener);
