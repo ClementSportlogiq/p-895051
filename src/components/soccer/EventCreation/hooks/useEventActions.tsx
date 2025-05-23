@@ -33,7 +33,7 @@ export function useEventActions({
   } = useSoccer();
   
   // Get access to wizard state for proper reset
-  const { resetWizard } = useWizardState();
+  const { resetWizard, resetState } = useWizardState();
   
   // Use validation hook
   const { validateEvent, toast } = useEventValidation();
@@ -48,6 +48,29 @@ export function useEventActions({
     loggedVideoTime,
     setLoggedVideoTime
   });
+
+  // Function to perform a thorough reset of all state
+  const performThoroughReset = () => {
+    console.log("Performing thorough reset of all state");
+    
+    try {
+      // First reset the detailed wizard state (selections, flags, etc.)
+      resetState();
+      
+      // Reset the soccer context state
+      resetEventSelection();
+      
+      // Reset the wizard to default view (calls resetState internally too but better to be explicit)
+      resetWizard();
+      
+      // Reset logged video time
+      setLoggedVideoTime("");
+      
+      console.log("All state successfully reset");
+    } catch (error) {
+      console.error("Error during state reset:", error);
+    }
+  };
 
   const handleSaveEvent = () => {
     console.log("Saving event...");
@@ -74,14 +97,8 @@ export function useEventActions({
     addEvent(eventPayload);
     console.log("Event added:", eventPayload);
 
-    // Reset the logged video time after adding event
-    setLoggedVideoTime("");
-    
-    // Reset soccer context state
-    resetEventSelection();
-    
-    // Reset wizard state completely
-    resetWizard();
+    // Perform thorough reset of all state
+    performThoroughReset();
 
     toast({
       title: "Event Saved",
@@ -92,14 +109,8 @@ export function useEventActions({
   };
 
   const handleCancelEvent = () => {
-    // Reset soccer context state
-    resetEventSelection();
-    
-    // Reset wizard state to ensure UI returns to initial state
-    resetWizard(); 
-    
-    // Clear any logged video time
-    setLoggedVideoTime("");
+    // Perform thorough reset of all state
+    performThoroughReset();
     
     toast({
       title: "Event cancelled",

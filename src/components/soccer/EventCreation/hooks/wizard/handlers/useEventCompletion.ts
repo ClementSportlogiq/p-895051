@@ -108,6 +108,7 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
 
   // Reset wizard - exposed publicly for the WizardStateContextValue
   const resetWizard = () => {
+    // Call resetState first for thorough cleanup
     resetState();
     
     // Reset to default view - with safety check
@@ -123,7 +124,7 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
 
   return {
     completeEventCreation,
-    resetState,
+    resetState, // Explicitly expose resetState
     resetWizard
   };
 }

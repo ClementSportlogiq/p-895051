@@ -19,7 +19,7 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   const { labels, getLabelsByCategory } = useAnnotationLabels();
   
   // Event completion handler for passing to various hooks
-  const { completeEventCreation, resetWizard } = useEventCompletion({
+  const { completeEventCreation, resetWizard, resetState } = useEventCompletion({
     selection,
     flagLogic,
     sockerContext
@@ -85,6 +85,7 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
     ...selectionHandlers,
     handleBack,
     handleEventSelect,
-    resetWizard
+    resetWizard,
+    resetState // Explicitly expose resetState
   };
 }
