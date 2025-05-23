@@ -1,9 +1,14 @@
 
 import { useEventValidation } from "../../eventActions/useEventValidation";
+import { useSaveEvent } from "../../eventActions/useSaveEvent";
+import { TeamType } from "@/context/SoccerContext";
 
 export function useEventCompletion({ selection, sockerContext, flagLogic }) {
   // Get access to the same validation function used by handleSaveEvent
   const { validateEvent, toast } = useEventValidation();
+  
+  // Get access to the same event creation function used by handleSaveEvent
+  const { createEventPayload } = useSaveEvent();
   
   // Complete the event creation
   const completeEventCreation = () => {
@@ -23,35 +28,53 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
       console.log("Event validation failed in completeEventCreation");
       return;
     }
+
+    // Get the current video and game time from context
+    const videoTime = sockerContext.selectedVideoTime || "";
+    const gameTime = sockerContext.selectedGameTime || "";
     
-    // Save event to context
-    const eventData = {
+    // Create consistent event details from wizard selections
+    const eventDetails = {
       category: selection.selectedCategory,
-      eventId: selection.selectedEvent,
+      eventType: selection.selectedEvent,
       pressure: selection.selectedPressure,
       bodyPart: selection.selectedBodyPart,
       flags: flagLogic?.flagValues || {}
     };
     
-    // Add to events list - with safety check
-    if (sockerContext.addEvent && eventData.eventId) {
-      try {
-        sockerContext.addEvent(eventData);
-        
-        // Reset after adding - call resetWizard instead of resetState
-        resetWizard();
-        console.log("Event created and wizard reset");
-        
-        // Show success toast
-        toast({
-          title: "Event Saved",
-          description: `${eventData.eventId} event has been saved`
-        });
-      } catch (error) {
-        console.error("Error adding event:", error);
-      }
-    } else {
-      console.warn("Could not add event: addEvent function or eventId is missing");
+    // Create event payload using the same function as handleSaveEvent
+    const eventPayload = createEventPayload(
+      gameTime,
+      videoTime, // Using current video time as logged time is not available in this context
+      videoTime,
+      selectedPlayer,
+      sockerContext.selectedTeam as TeamType,
+      selectedLocation,
+      selection.selectedCategory,
+      selection.selectedEventName || selection.selectedEvent, // Use event name if available, otherwise use event ID
+      eventDetails
+    );
+    
+    // Save event to context using the same addEvent function
+    try {
+      sockerContext.addEvent(eventPayload);
+      
+      // Reset after adding
+      resetWizard();
+      console.log("Event created using createEventPayload and wizard reset");
+      
+      // Show success toast
+      toast({
+        title: "Event Saved",
+        description: `${selection.selectedEventName || selection.selectedEvent} event has been saved`
+      });
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save event"
+      });
     }
   };
 
