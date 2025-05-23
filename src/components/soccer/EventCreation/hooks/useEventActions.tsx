@@ -77,9 +77,6 @@ export function useEventActions({
     // Reset the logged video time after adding event
     setLoggedVideoTime("");
     
-    // Reset soccer context state
-    resetEventSelection();
-    
     // Reset wizard state completely
     resetWizard();
 
@@ -88,7 +85,7 @@ export function useEventActions({
       description: `${eventPayload.eventName} event has been saved`
     });
     
-    console.log("Event saved successfully, state fully reset");
+    console.log("Event saved successfully, state reset");
   };
 
   const handleCancelEvent = () => {
