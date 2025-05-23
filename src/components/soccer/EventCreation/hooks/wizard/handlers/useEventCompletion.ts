@@ -1,5 +1,10 @@
 
+import { useEventValidation } from "../../eventActions/useEventValidation";
+
 export function useEventCompletion({ selection, sockerContext, flagLogic }) {
+  // Get access to the same validation function used by handleSaveEvent
+  const { validateEvent, toast } = useEventValidation();
+  
   // Complete the event creation
   const completeEventCreation = () => {
     console.log("Completing event creation with flags:", flagLogic.flagValues);
@@ -7,6 +12,15 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     // Safety check for selection and sockerContext
     if (!selection || !sockerContext) {
       console.error("Missing selection or sockerContext in completeEventCreation");
+      return;
+    }
+    
+    // Validate selected player and location first - using the same validation as handleSaveEvent
+    const selectedPlayer = sockerContext.selectedPlayer;
+    const selectedLocation = sockerContext.selectedLocation;
+    
+    if (!validateEvent(selectedPlayer, selectedLocation)) {
+      console.log("Event validation failed in completeEventCreation");
       return;
     }
     
@@ -27,6 +41,12 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
         // Reset after adding - call resetWizard instead of resetState
         resetWizard();
         console.log("Event created and wizard reset");
+        
+        // Show success toast
+        toast({
+          title: "Event Saved",
+          description: `${eventData.eventId} event has been saved`
+        });
       } catch (error) {
         console.error("Error adding event:", error);
       }
