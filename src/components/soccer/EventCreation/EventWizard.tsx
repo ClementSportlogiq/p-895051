@@ -17,8 +17,6 @@ export const EventWizard: React.FC = () => {
     handleCategorySelect,
     handleQuickEventSelect,
     handleEventSelect,
-    handlePressureSelect,
-    handleBodyPartSelect,
     handleFlagValueSelect,
     handleBack
   } = useWizardState();
@@ -51,8 +49,6 @@ export const EventWizard: React.FC = () => {
         handleEventSelect(quickEvent);
       }
     },
-    handlePressureSelect,
-    handleBodyPartSelect,
     handleFlagValueSelect
   });
 

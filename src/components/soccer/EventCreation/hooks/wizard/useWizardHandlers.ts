@@ -70,25 +70,12 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
       flagLogic.setFlagsForLabel(event.flags);
     }
   };
-
-  // Legacy handlers for backward compatibility (no-op implementations)
-  const handlePressureSelect = (pressureId: string) => {
-    console.log("Legacy pressure selection:", pressureId);
-    // This is now handled via flags
-  };
-
-  const handleBodyPartSelect = (bodyPartId: string) => {
-    console.log("Legacy body part selection:", bodyPartId);
-    // This is now handled via flags
-  };
   
   return {
     ...basicHandlers,
     ...flagHandlers,
     handleBack,
     handleEventSelect,
-    handlePressureSelect,
-    handleBodyPartSelect,
     resetWizard
   };
 }

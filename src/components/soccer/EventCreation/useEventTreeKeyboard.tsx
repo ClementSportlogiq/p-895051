@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { WizardStep, EventCategory, AnnotationFlag } from "@/types/annotation";
-import { pressureOptions, bodyPartOptions } from "./eventData";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
@@ -13,8 +12,6 @@ interface UseEventTreeKeyboardProps {
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;
   handleEventSelect: (eventId: string) => void;
-  handlePressureSelect: (pressureId: string) => void;
-  handleBodyPartSelect: (bodyPartId: string) => void;
   handleFlagValueSelect: (value: string) => void;
 }
 
@@ -27,8 +24,6 @@ export const useEventTreeKeyboard = ({
   handleQuickEventSelect,
   handleCategorySelect,
   handleEventSelect,
-  handlePressureSelect,
-  handleBodyPartSelect,
   handleFlagValueSelect
 }: UseEventTreeKeyboardProps) => {
   const { getQuickEvents, getLabelsByCategory, categories } = useAnnotationLabels();
@@ -91,8 +86,6 @@ export const useEventTreeKeyboard = ({
     handleQuickEventSelect,
     handleCategorySelect,
     handleEventSelect,
-    handlePressureSelect,
-    handleBodyPartSelect,
     handleFlagValueSelect,
     getQuickEvents,
     getLabelsByCategory,

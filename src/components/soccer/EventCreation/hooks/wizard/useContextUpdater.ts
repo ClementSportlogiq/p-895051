@@ -36,8 +36,11 @@ export function useContextUpdater({
 
   // Update event details with flags object structure
   useEffect(() => {
-    setSelectedEventDetails({
+    // Convert the flagValues object to a properly formatted event details object
+    const eventDetails = {
       flags: flagValues
-    });
+    };
+    
+    setSelectedEventDetails(eventDetails);
   }, [flagValues, setSelectedEventDetails]);
 }
