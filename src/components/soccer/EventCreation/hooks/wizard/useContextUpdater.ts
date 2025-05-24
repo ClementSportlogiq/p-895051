@@ -34,13 +34,8 @@ export function useContextUpdater({
     }
   }, [selectedCategory, setSelectedEventCategory]);
 
-  // Update event details with flags object structure
+  // Update event details - pass the flagValues directly as the context expects Record<string, string>
   useEffect(() => {
-    // Convert the flagValues object to a properly formatted event details object
-    const eventDetails = {
-      flags: flagValues
-    };
-    
-    setSelectedEventDetails(eventDetails);
+    setSelectedEventDetails(flagValues);
   }, [flagValues, setSelectedEventDetails]);
 }
