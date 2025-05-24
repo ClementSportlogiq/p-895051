@@ -21,6 +21,8 @@ export interface WizardStateContextValue {
   handleCategorySelect: (category: EventCategory) => void;
   handleQuickEventSelect: (eventId: string) => void;
   handleEventSelect: (event: AnnotationLabel) => void;
+  handlePressureSelect: (pressureId: string) => void;
+  handleBodyPartSelect: (bodyPartId: string) => void;
   handleFlagValueSelect: (value: string) => void;
   handleBack: () => void;
   resetWizard: () => void;

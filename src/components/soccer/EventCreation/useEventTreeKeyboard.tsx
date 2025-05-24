@@ -54,20 +54,6 @@ export const useEventTreeKeyboard = ({
           handleCategorySelect(category.id);
         }
       } 
-      else if (currentStep === "pressure") {
-        // Pressure options
-        const pressure = pressureOptions.find(opt => opt.hotkey.toUpperCase() === key);
-        if (pressure) {
-          handlePressureSelect(pressure.id);
-        }
-      }
-      else if (currentStep === "bodyPart") {
-        // Body part options
-        const bodyPart = bodyPartOptions.find(opt => opt.hotkey.toUpperCase() === key);
-        if (bodyPart) {
-          handleBodyPartSelect(bodyPart.id);
-        }
-      }
       else if (currentStep === "flag") {
         // Flag value selection by hotkey - support the new FlagValue structure
         if (flagsForLabel.length > 0 && currentFlagIndex < flagsForLabel.length) {
