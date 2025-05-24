@@ -34,7 +34,7 @@ export function useContextUpdater({
     }
   }, [selectedCategory, setSelectedEventCategory]);
 
-  // Update event details with only flags
+  // Update event details with flags object structure
   useEffect(() => {
     setSelectedEventDetails({
       flags: flagValues

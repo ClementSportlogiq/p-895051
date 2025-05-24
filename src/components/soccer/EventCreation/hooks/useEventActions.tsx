@@ -1,11 +1,7 @@
 
-import { useSoccer, TeamType } from "@/context/SoccerContext";
-import { 
-  useEventValidation, 
-  useKeyboardShortcuts,
-  useSaveEvent,
-  useVideoTimeCapture
-} from "./eventActions";
+import { useSoccer } from "@/context/SoccerContext";
+import { useKeyboardShortcuts, useVideoTimeCapture } from "./eventActions";
+import { useUnifiedEventCompletion } from "./useUnifiedEventCompletion";
 import { useWizardState } from "./useWizardState";
 
 interface UseEventActionsProps {
@@ -22,26 +18,22 @@ export function useEventActions({
   setLoggedVideoTime 
 }: UseEventActionsProps) {
   const { 
-    selectedPlayer, 
-    selectedTeam, 
-    selectedLocation, 
-    selectedEventCategory,
     selectedEventType,
-    selectedEventDetails,
-    addEvent,
     resetEventSelection
   } = useSoccer();
   
   // Get access to wizard state for proper reset
   const { resetWizard } = useWizardState();
   
-  // Use validation hook
-  const { validateEvent, toast } = useEventValidation();
-  
-  // Use event creation hook
-  const { createEventPayload } = useSaveEvent();
-  
-  // Capture video time when event type is selected (changed from category to type)
+  // Get the unified completion system
+  const { completeEvent, cancelEvent } = useUnifiedEventCompletion({
+    gameTime,
+    videoTime,
+    loggedVideoTime,
+    setLoggedVideoTime
+  });
+
+  // Capture video time when event type is selected
   useVideoTimeCapture({
     selectedEventType,
     videoTime,
@@ -51,56 +43,22 @@ export function useEventActions({
 
   const handleSaveEvent = () => {
     console.log("Saving event...");
-    // Validate event data - removed selectedEventType check
-    if (!validateEvent(selectedPlayer, selectedLocation)) {
-      console.log("Event validation failed");
-      return;
-    }
-
-    // Create event payload
-    const eventPayload = createEventPayload(
-      gameTime,
-      loggedVideoTime,
-      videoTime,
-      selectedPlayer,
-      selectedTeam as TeamType,
-      selectedLocation,
-      selectedEventCategory,
-      selectedEventType,
-      selectedEventDetails
-    );
     
-    // Add the event
-    addEvent(eventPayload);
-    console.log("Event added:", eventPayload);
-
-    // Reset the logged video time after adding event
-    setLoggedVideoTime("");
-    
-    // Reset wizard state completely
-    resetWizard();
-
-    toast({
-      title: "Event Saved",
-      description: `${eventPayload.eventName} event has been saved`
+    // Use unified completion with custom reset that includes wizard reset
+    const success = completeEvent(() => {
+      resetWizard();
     });
     
-    console.log("Event saved successfully, state reset");
+    if (success) {
+      console.log("Event saved successfully, state reset");
+    }
   };
 
   const handleCancelEvent = () => {
-    // Reset soccer context state
-    resetEventSelection();
-    
-    // Reset wizard state to ensure UI returns to initial state
-    resetWizard(); 
-    
-    // Clear any logged video time
-    setLoggedVideoTime("");
-    
-    toast({
-      title: "Event cancelled",
-      description: "The event creation has been cancelled"
+    // Use unified cancellation with custom reset that includes wizard reset
+    cancelEvent(() => {
+      resetEventSelection();
+      resetWizard();
     });
     
     console.log("Event creation cancelled, state reset");

@@ -28,7 +28,7 @@ export function useWizardState(): WizardStateContextValue {
     sockerContext
   });
 
-  // Return the public API
+  // Return the public API with all required properties
   return {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
@@ -42,6 +42,8 @@ export function useWizardState(): WizardStateContextValue {
     handleCategorySelect: handlers.handleCategorySelect,
     handleQuickEventSelect: handlers.handleQuickEventSelect,
     handleEventSelect: handlers.handleEventSelect,
+    handlePressureSelect: handlers.handlePressureSelect,
+    handleBodyPartSelect: handlers.handleBodyPartSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
     resetWizard: handlers.resetWizard
