@@ -55,20 +55,6 @@ export const EventReceipt: React.FC<EventReceiptProps> = ({ loggedVideoTime }) =
         </div>
       )}
       
-      {/* Show Pressure pill in inactive state if not selected */}
-      {!selectedEventDetails?.pressure && selectedEventType && selectedEventType.includes("Pass") && (
-        <div className="border px-3 py-1 rounded-2xl border-[rgba(137,150,159,1)] text-[rgba(137,150,159,1)]">
-          Pressure
-        </div>
-      )}
-      
-      {/* Show Body Part pill in inactive state if not selected */}
-      {!selectedEventDetails?.bodyPart && selectedEventType && selectedEventType.includes("Pass") && (
-        <div className="border px-3 py-1 rounded-2xl border-[rgba(137,150,159,1)] text-[rgba(137,150,159,1)]">
-          Body Part
-        </div>
-      )}
-      
       {/* Show flag values as pills - ensure no UUIDs are displayed */}
       {selectedEventDetails?.flags && Object.entries(selectedEventDetails.flags).map(([flagName, value]) => {
         // Clean any UUID patterns from flag value

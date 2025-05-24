@@ -17,8 +17,6 @@ export function useWizardState(): WizardStateContextValue {
   useContextUpdater({
     selectedEvent: selection.selectedEvent,
     selectedEventName: selection.selectedEventName,
-    selectedPressure: selection.selectedPressure,
-    selectedBodyPart: selection.selectedBodyPart,
     selectedCategory: selection.selectedCategory,
     flagValues: flagLogic.flagValues
   });
@@ -44,8 +42,6 @@ export function useWizardState(): WizardStateContextValue {
     handleCategorySelect: handlers.handleCategorySelect,
     handleQuickEventSelect: handlers.handleQuickEventSelect,
     handleEventSelect: handlers.handleEventSelect,
-    handlePressureSelect: handlers.handlePressureSelect,
-    handleBodyPartSelect: handlers.handleBodyPartSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
     resetWizard: handlers.resetWizard

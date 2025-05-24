@@ -5,7 +5,6 @@ import { useBackHandler } from "./handlers/useBackHandler";
 import { useFlagHandlers } from "./handlers/useFlagHandlers";
 import { useEventNavigation } from "./handlers/useEventNavigation";
 import { useEventCompletion } from "./handlers/useEventCompletion";
-import { useSelectionHandlers } from "./handlers/useSelectionHandlers";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { AnnotationLabel } from "@/types/annotation";
 
@@ -36,13 +35,6 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
     selection,
     flagLogic,
     completeAndMoveOn: completeEventCreation
-  });
-  
-  // Selection handlers (pressure and body part)
-  const selectionHandlers = useSelectionHandlers({
-    selection,
-    sockerContext,
-    completeEventCreation
   });
   
   // Back button handler
@@ -82,7 +74,6 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   return {
     ...basicHandlers,
     ...flagHandlers,
-    ...selectionHandlers,
     handleBack,
     handleEventSelect,
     resetWizard

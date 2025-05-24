@@ -33,12 +33,8 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     const videoTime = sockerContext.selectedVideoTime || "";
     const gameTime = sockerContext.selectedGameTime || "";
     
-    // Create consistent event details from wizard selections
+    // Create simplified event details with only flags
     const eventDetails = {
-      category: selection.selectedCategory,
-      eventType: selection.selectedEvent,
-      pressure: selection.selectedPressure,
-      bodyPart: selection.selectedBodyPart,
       flags: flagLogic?.flagValues || {}
     };
     
@@ -78,7 +74,7 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
     }
   };
 
-  // Reset wizard state - thorough reset of all state variables
+  // Reset wizard state - simplified without pressure and body part
   const resetState = () => {
     try {
       // Reset selection state
@@ -86,12 +82,10 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
         selection.setSelectedCategory(null);
         selection.setSelectedEvent(null);
         selection.setSelectedEventName(null);
-        selection.setSelectedPressure(null);
-        selection.setSelectedBodyPart(null);
-        selection.setFlagConditions([]);  // Add this to reset flag conditions
+        selection.setFlagConditions([]);
       }
       
-      // Reset flag state - be thorough
+      // Reset flag state
       if (flagLogic) {
         flagLogic.setCurrentLabelId("");
         flagLogic.setFlagsForLabel([]);

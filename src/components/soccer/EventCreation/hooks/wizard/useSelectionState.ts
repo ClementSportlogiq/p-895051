@@ -4,13 +4,11 @@ import { EventCategory, FlagCondition } from "@/types/annotation";
 
 export function useSelectionState() {
   // Main wizard state
-  const [currentStep, setCurrentStep] = useState<"default" | "pressure" | "bodyPart" | "flag">("default");
+  const [currentStep, setCurrentStep] = useState<"default" | "flag">("default");
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
-  const [selectedPressure, setSelectedPressure] = useState<string | null>(null);
-  const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null);
-  const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]); // Add flag conditions state
+  const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
   
   return {
     currentStep,
@@ -21,10 +19,6 @@ export function useSelectionState() {
     setSelectedEvent,
     selectedEventName,
     setSelectedEventName,
-    selectedPressure,
-    setSelectedPressure,
-    selectedBodyPart,
-    setSelectedBodyPart,
     flagConditions,
     setFlagConditions
   };

@@ -2,13 +2,10 @@
 import React from "react";
 import DefaultView from "./DefaultView";
 import OffenseEvents from "./OffenseEvents";
-import PressureStep from "./PressureStep";
-import BodyPartStep from "./BodyPartStep";
 import FlagStep from "./FlagStep";
 import { useWizardState } from "./hooks/useWizardState";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import { pressureOptions, bodyPartOptions } from "./eventData";
 
 export const EventWizard: React.FC = () => {
   const {
@@ -20,8 +17,6 @@ export const EventWizard: React.FC = () => {
     handleCategorySelect,
     handleQuickEventSelect,
     handleEventSelect,
-    handlePressureSelect,
-    handleBodyPartSelect,
     handleFlagValueSelect,
     handleBack
   } = useWizardState();
@@ -52,18 +47,6 @@ export const EventWizard: React.FC = () => {
       const quickEvent = getQuickEvents().find(evt => evt.id === eventId);
       if (quickEvent) {
         handleEventSelect(quickEvent);
-      }
-    },
-    handlePressureSelect: (pressureId) => {
-      const pressure = pressureOptions.find(p => p.id === pressureId);
-      if (pressure) {
-        handlePressureSelect(pressure);
-      }
-    },
-    handleBodyPartSelect: (bodyPartId) => {
-      const bodyPart = bodyPartOptions.find(bp => bp.id === bodyPartId);
-      if (bodyPart) {
-        handleBodyPartSelect(bodyPart);
       }
     },
     handleFlagValueSelect
@@ -98,16 +81,6 @@ export const EventWizard: React.FC = () => {
       {/* Selected Category Events */}
       {selectedCategory === "offense" && currentStep === "default" && (
         <OffenseEvents onEventSelect={handleEventSelect} />
-      )}
-
-      {/* Pressure Selection */}
-      {currentStep === "pressure" && (
-        <PressureStep onPressureSelect={handlePressureSelect} />
-      )}
-
-      {/* Body Part Selection */}
-      {currentStep === "bodyPart" && (
-        <BodyPartStep onBodyPartSelect={handleBodyPartSelect} />
       )}
       
       {/* Flag Selection - only show flags that aren't hidden by conditions */}

@@ -38,11 +38,9 @@ export interface FlagCondition {
   flagsToHideIds: string[]; // Changed from nextFlagId to flagsToHideIds array
 }
 
-export type WizardStep = "default" | "pressure" | "bodyPart" | "flag";
+export type WizardStep = "default" | "flag";
 
-// Define EventDetails type to fix the typing issue
+// Simplified EventDetails type - only flags now
 export type EventDetails = {
-  pressure: string;
-  bodyPart: string;
   flags: Record<string, string>;
 };

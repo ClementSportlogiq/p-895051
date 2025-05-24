@@ -17,12 +17,10 @@ export interface WizardStateContextValue {
   flagsForLabel: AnnotationFlag[];
   availableFlags: AnnotationFlag[];
   currentFlagIndex: number;
-  flagConditions: FlagCondition[]; // Add flag conditions to context
+  flagConditions: FlagCondition[];
   handleCategorySelect: (category: EventCategory) => void;
   handleQuickEventSelect: (eventId: string) => void;
   handleEventSelect: (event: AnnotationLabel) => void;
-  handlePressureSelect: (pressure: {id: string; name: string; hotkey: string}) => void;
-  handleBodyPartSelect: (bodyPart: {id: string; name: string; hotkey: string}) => void;
   handleFlagValueSelect: (value: string) => void;
   handleBack: () => void;
   resetWizard: () => void;
