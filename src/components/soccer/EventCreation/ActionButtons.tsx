@@ -9,10 +9,10 @@ interface ActionButtonsProps {
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onCancel }) => {
   const handleCancel = () => {
     // Dispatch a custom event that EventTree can listen for
-    window.dispatchEvent(new CustomEvent("cancelEvent"));
+   // window.dispatchEvent(new CustomEvent("cancelEvent"));
     
     // Call the original onCancel function
-   // onCancel();
+    onCancel();
   };
 
   return (
