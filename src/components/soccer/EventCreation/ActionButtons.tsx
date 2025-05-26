@@ -12,7 +12,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onCancel }
     window.dispatchEvent(new CustomEvent("cancelEvent"));
     
     // Call the original onCancel function
-    onCancel();
+   // onCancel();
   };
 
   return (
