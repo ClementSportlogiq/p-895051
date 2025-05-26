@@ -21,15 +21,25 @@ export function useEventActions({
     selectedEventType
   } = useSoccer();
   
-  // Get access to wizard state for proper reset
-  const { resetWizard } = useWizardState();
+  // Get access to wizard state for reset functionality
+  const wizardState = useWizardState();
   
-  // Get the unified completion system
+  // Get the unified completion system with wizard integration
   const { completeEvent, cancelEvent } = useUnifiedEventCompletion({
     gameTime,
     videoTime,
     loggedVideoTime,
-    setLoggedVideoTime
+    setLoggedVideoTime,
+    wizardState: {
+      selection: {
+        setSelectedCategory: wizardState.handleCategorySelect ? () => wizardState.handleCategorySelect(null) : undefined,
+        setSelectedEvent: () => {}, // This will be handled by the wizard reset
+        setSelectedEventName: () => {}, // This will be handled by the wizard reset
+        setFlagConditions: () => {}, // This will be handled by the wizard reset
+        setCurrentStep: () => {} // This will be handled by the wizard reset
+      },
+      flagLogic: {} // Flag logic will be handled by the wizard reset
+    }
   });
 
   // Capture video time when event type is selected
@@ -43,8 +53,13 @@ export function useEventActions({
   const handleSaveEvent = () => {
     console.log("Saving event...");
     
-    // Use unified completion with the consolidated reset function
-    const success = completeEvent(resetWizard);
+    // Use unified completion with wizard reset
+    const success = completeEvent(() => {
+      // Use the wizard's own reset function for complete state cleanup
+      if (wizardState.resetWizard) {
+        wizardState.resetWizard();
+      }
+    });
     
     if (success) {
       console.log("Event saved successfully, state reset");
@@ -52,8 +67,13 @@ export function useEventActions({
   };
 
   const handleCancelEvent = () => {
-    // Use unified cancellation with the consolidated reset function
-    cancelEvent(resetWizard);
+    // Use unified cancellation with wizard reset
+    cancelEvent(() => {
+      // Use the wizard's own reset function for complete state cleanup
+      if (wizardState.resetWizard) {
+        wizardState.resetWizard();
+      }
+    });
     
     console.log("Event creation cancelled, state reset");
   };

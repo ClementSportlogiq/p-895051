@@ -17,6 +17,11 @@ interface UseUnifiedEventCompletionProps {
     selectedEventType?: string;
     selectedEventDetails?: any;
   };
+  // Optional wizard state for direct wizard resets
+  wizardState?: {
+    selection?: any;
+    flagLogic?: any;
+  };
 }
 
 export function useUnifiedEventCompletion({
@@ -24,7 +29,8 @@ export function useUnifiedEventCompletion({
   videoTime = "",
   loggedVideoTime = "",
   setLoggedVideoTime,
-  contextOverrides
+  contextOverrides,
+  wizardState
 }: UseUnifiedEventCompletionProps = {}) {
   const soccerContext = useSoccer();
   const { validateEvent, toast } = useEventValidation();
@@ -52,7 +58,45 @@ export function useUnifiedEventCompletion({
     };
   };
 
-  const completeEvent = (resetCallback?: () => void) => {
+  // Unified reset function that handles both wizard and non-wizard scenarios
+  const performReset = () => {
+    try {
+      // Reset wizard state if provided
+      if (wizardState) {
+        // Reset selection state
+        if (wizardState.selection) {
+          wizardState.selection.setSelectedCategory(null);
+          wizardState.selection.setSelectedEvent(null);
+          wizardState.selection.setSelectedEventName(null);
+          wizardState.selection.setFlagConditions([]);
+          wizardState.selection.setCurrentStep("default");
+        }
+        
+        // Reset flag state
+        if (wizardState.flagLogic) {
+          wizardState.flagLogic.setCurrentLabelId("");
+          wizardState.flagLogic.setFlagsForLabel([]);
+          wizardState.flagLogic.setCurrentFlagIndex(0);
+          wizardState.flagLogic.setFlagValues({});
+          wizardState.flagLogic.setAvailableFlags([]);
+        }
+      }
+      
+      // Always reset soccer context
+      soccerContext.resetEventSelection();
+      
+      // Reset logged video time if setter is provided
+      if (setLoggedVideoTime) {
+        setLoggedVideoTime("");
+      }
+      
+      console.log("Event state fully reset via unified system");
+    } catch (error) {
+      console.error("Error in unified reset:", error);
+    }
+  };
+
+  const completeEvent = (customResetCallback?: () => void) => {
     const context = getEffectiveContext();
     
     console.log("Completing event with unified system...");
@@ -84,17 +128,11 @@ export function useUnifiedEventCompletion({
       soccerContext.addEvent(eventPayload);
       console.log("Event added:", eventPayload);
 
-      // Reset logged video time if setter is provided
-      if (setLoggedVideoTime) {
-        setLoggedVideoTime("");
-      }
-      
-      // Call custom reset callback if provided
-      if (resetCallback) {
-        resetCallback();
+      // Use custom reset callback if provided, otherwise use unified reset
+      if (customResetCallback) {
+        customResetCallback();
       } else {
-        // Default reset behavior
-        soccerContext.resetEventSelection();
+        performReset();
       }
 
       // Show success toast
@@ -103,7 +141,7 @@ export function useUnifiedEventCompletion({
         description: `${context.selectedEventType || 'Event'} has been saved`
       });
       
-      console.log("Event completed successfully(TEST)");
+      console.log("Event completed successfully via unified system");
       return true;
     } catch (error) {
       console.error("Error completing event:", error);
@@ -116,18 +154,12 @@ export function useUnifiedEventCompletion({
     }
   };
 
-  const cancelEvent = (resetCallback?: () => void) => {
-    // Call custom reset callback if provided
-    if (resetCallback) {
-      resetCallback();
+  const cancelEvent = (customResetCallback?: () => void) => {
+    // Use custom reset callback if provided, otherwise use unified reset
+    if (customResetCallback) {
+      customResetCallback();
     } else {
-      // Default reset behavior
-      soccerContext.resetEventSelection();
-    }
-    
-    // Clear any logged video time if setter is provided
-    if (setLoggedVideoTime) {
-      setLoggedVideoTime("");
+      performReset();
     }
     
     toast({
@@ -135,12 +167,13 @@ export function useUnifiedEventCompletion({
       description: "The event creation has been cancelled"
     });
     
-    console.log("Event creation cancelled");
+    console.log("Event creation cancelled via unified system");
   };
 
   return {
     completeEvent,
     cancelEvent,
+    performReset,
     validateEvent,
     createEventPayload
   };

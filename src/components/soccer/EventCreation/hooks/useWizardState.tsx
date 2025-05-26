@@ -28,6 +28,32 @@ export function useWizardState(): WizardStateContextValue {
     sockerContext
   });
 
+  // Unified reset function that handles all wizard state
+  const resetWizard = () => {
+    try {
+      // Reset selection state
+      selection.setSelectedCategory(null);
+      selection.setSelectedEvent(null);
+      selection.setSelectedEventName(null);
+      selection.setFlagConditions([]);
+      selection.setCurrentStep("default");
+      
+      // Reset flag state
+      flagLogic.setCurrentLabelId("");
+      flagLogic.setFlagsForLabel([]);
+      flagLogic.setCurrentFlagIndex(0);
+      flagLogic.setFlagValues({});
+      flagLogic.setAvailableFlags([]);
+      
+      // Reset soccer context
+      sockerContext.resetEventSelection();
+      
+      console.log("Wizard state fully reset");
+    } catch (error) {
+      console.error("Error in wizard reset:", error);
+    }
+  };
+
   // Return the public API with all required properties
   return {
     currentStep: selection.currentStep,
@@ -44,6 +70,6 @@ export function useWizardState(): WizardStateContextValue {
     handleEventSelect: handlers.handleEventSelect,
     handleFlagValueSelect: handlers.handleFlagValueSelect,
     handleBack: handlers.handleBack,
-    resetWizard: handlers.resetWizard
+    resetWizard
   };
 }

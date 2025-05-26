@@ -2,8 +2,8 @@
 import { useUnifiedEventCompletion } from "../../useUnifiedEventCompletion";
 
 export function useEventCompletion({ selection, sockerContext, flagLogic }) {
-  // Get the unified completion system with wizard-specific context
-  const { completeEvent, cancelEvent } = useUnifiedEventCompletion({
+  // Get the unified completion system with wizard-specific context and state
+  const { completeEvent, cancelEvent, performReset } = useUnifiedEventCompletion({
     gameTime: sockerContext?.selectedGameTime || "",
     videoTime: sockerContext?.selectedVideoTime || "",
     contextOverrides: {
@@ -15,50 +15,27 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
       selectedEventDetails: {
         flags: flagLogic?.flagValues || {}
       }
+    },
+    wizardState: {
+      selection,
+      flagLogic
     }
   });
 
-  // Single comprehensive reset function for all wizard state
-  const resetWizard = () => {
-    try {
-      // Reset selection state
-      if (selection) {
-        selection.setSelectedCategory(null);
-        selection.setSelectedEvent(null);
-        selection.setSelectedEventName(null);
-        selection.setFlagConditions([]);
-        selection.setCurrentStep("default");
-      }
-      
-      // Reset flag state
-      if (flagLogic) {
-        flagLogic.setCurrentLabelId("");
-        flagLogic.setFlagsForLabel([]);
-        flagLogic.setCurrentFlagIndex(0);
-        flagLogic.setFlagValues({});
-        flagLogic.setAvailableFlags([]);
-      }
-      
-      // Reset soccer context
-      if (sockerContext && sockerContext.resetEventSelection) {
-        sockerContext.resetEventSelection();
-      }
-      
-      console.log("Wizard state fully reset");
-    } catch (error) {
-      console.error("Error in wizard reset:", error);
-    }
-  };
-
-  // Complete the event creation with wizard reset
+  // Complete the event creation using the unified system
   const completeEventCreation = () => {
     console.log("Completing event creation with flags:", flagLogic?.flagValues);
-    return completeEvent(resetWizard);
+    return completeEvent();
+  };
+
+  // Reset wizard using the unified system
+  const resetWizard = () => {
+    performReset();
   };
 
   return {
     completeEventCreation,
     resetWizard,
-    cancelEvent: () => cancelEvent(resetWizard)
+    cancelEvent: () => cancelEvent()
   };
 }
