@@ -18,8 +18,7 @@ export function useEventActions({
   setLoggedVideoTime 
 }: UseEventActionsProps) {
   const { 
-    selectedEventType,
-    resetEventSelection
+    selectedEventType
   } = useSoccer();
   
   // Get access to wizard state for proper reset
@@ -44,10 +43,8 @@ export function useEventActions({
   const handleSaveEvent = () => {
     console.log("Saving event...");
     
-    // Use unified completion with custom reset that includes wizard reset
-    const success = completeEvent(() => {
-      resetWizard();
-    });
+    // Use unified completion with the consolidated reset function
+    const success = completeEvent(resetWizard);
     
     if (success) {
       console.log("Event saved successfully, state reset");
@@ -55,11 +52,8 @@ export function useEventActions({
   };
 
   const handleCancelEvent = () => {
-    // Use unified cancellation with custom reset that includes wizard reset
-    cancelEvent(() => {
-      resetEventSelection();
-      resetWizard();
-    });
+    // Use unified cancellation with the consolidated reset function
+    cancelEvent(resetWizard);
     
     console.log("Event creation cancelled, state reset");
   };
