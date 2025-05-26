@@ -103,7 +103,7 @@ export function useUnifiedEventCompletion({
         description: `${context.selectedEventType || 'Event'} has been saved`
       });
       
-      console.log("Event completed successfully");
+      console.log("Event completed successfully(TEST)");
       return true;
     } catch (error) {
       console.error("Error completing event:", error);
