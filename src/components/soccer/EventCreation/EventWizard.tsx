@@ -1,7 +1,6 @@
 
 import React from "react";
 import DefaultView from "./DefaultView";
-import OffenseEvents from "./OffenseEvents";
 import FlagStep from "./FlagStep";
 import { useWizardState } from "./hooks/useWizardState";
 import useEventTreeKeyboard from "./useEventTreeKeyboard";
@@ -33,7 +32,7 @@ export const EventWizard: React.FC = () => {
     handleQuickEventSelect,
     handleCategorySelect,
     handleEventSelect: (eventId) => {
-      // Find event in the appropriate category
+      // Find event in the appropriate category or quick events
       if (selectedCategory) {
         const events = getLabelsByCategory(selectedCategory);
         const event = events.find(evt => evt.id === eventId);
@@ -69,18 +68,13 @@ export const EventWizard: React.FC = () => {
         </button>
       )}
 
-      {/* Default View */}
+      {/* Default View - handles both main view and category-specific views */}
       {currentStep === "default" && (
         <DefaultView 
           selectedCategory={selectedCategory} 
           onCategorySelect={handleCategorySelect}
           onEventSelect={handleEventSelect}
         />
-      )}
-
-      {/* Selected Category Events */}
-      {selectedCategory === "offense" && currentStep === "default" && (
-        <OffenseEvents onEventSelect={handleEventSelect} />
       )}
       
       {/* Flag Selection - only show flags that aren't hidden by conditions */}

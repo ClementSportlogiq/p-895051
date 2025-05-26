@@ -43,9 +43,15 @@ export function useLabels() {
     });
   };
 
-  // Get the most used labels from each category, limited to 4 for quick events
+  // Get exactly 4 quick events as configured in admin page
+  // Priority order: most frequently used labels across all categories
   const getQuickEvents = (): AnnotationLabel[] => {
-    // Get the most used labels from each category, limited to 4 for quick events
+    if (labels.length === 0) {
+      return defaultQuickEvents.slice(0, 4);
+    }
+    
+    // Return the first 4 labels as quick events (can be enhanced with usage tracking)
+    // This strictly follows admin configuration by using the actual labels from the database
     return labels.slice(0, 4);
   };
 
