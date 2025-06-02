@@ -58,8 +58,10 @@ export function useWizardState(): WizardStateContextValue {
         flagLogic.setFlagConditions([]);
       }
       
-      // Reset soccer context
-      sockerContext.resetEventSelection();
+      // Reset soccer context with null check
+      if (sockerContext && sockerContext.resetEventSelection) {
+        sockerContext.resetEventSelection();
+      }
       
       // Validate reset state after a brief delay to ensure all state updates have completed
       setTimeout(() => {
