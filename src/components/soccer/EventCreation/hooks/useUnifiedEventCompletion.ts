@@ -19,8 +19,7 @@ interface UseUnifiedEventCompletionProps {
   };
   // Optional wizard state for direct wizard resets
   wizardState?: {
-    selection?: any;
-    flagLogic?: any;
+    resetWizard?: () => void;
   };
 }
 
@@ -58,39 +57,28 @@ export function useUnifiedEventCompletion({
     };
   };
 
-  // Unified reset function that handles both wizard and non-wizard scenarios
+  // Enhanced unified reset function with comprehensive state clearing
   const performReset = () => {
     try {
-      // Reset wizard state if provided
-      if (wizardState) {
-        // Reset selection state
-        if (wizardState.selection) {
-          wizardState.selection.setSelectedCategory(null);
-          wizardState.selection.setSelectedEvent(null);
-          wizardState.selection.setSelectedEventName(null);
-          wizardState.selection.setFlagConditions([]);
-          wizardState.selection.setCurrentStep("default");
-        }
-        
-        // Reset flag state
-        if (wizardState.flagLogic) {
-          wizardState.flagLogic.setCurrentLabelId("");
-          wizardState.flagLogic.setFlagsForLabel([]);
-          wizardState.flagLogic.setCurrentFlagIndex(0);
-          wizardState.flagLogic.setFlagValues({});
-          wizardState.flagLogic.setAvailableFlags([]);
-        }
+      console.log("Starting unified reset process...");
+      
+      // Use wizard's own reset function if available (preferred method)
+      if (wizardState?.resetWizard) {
+        console.log("Using wizard's resetWizard function");
+        wizardState.resetWizard();
       }
       
-      // Always reset soccer context
+      // Always reset soccer context to ensure consistency
+      console.log("Resetting soccer context");
       soccerContext.resetEventSelection();
       
       // Reset logged video time if setter is provided
       if (setLoggedVideoTime) {
+        console.log("Resetting logged video time");
         setLoggedVideoTime("");
       }
       
-      console.log("Event state fully reset via unified system");
+      console.log("Unified reset process completed successfully");
     } catch (error) {
       console.error("Error in unified reset:", error);
     }
@@ -130,8 +118,10 @@ export function useUnifiedEventCompletion({
 
       // Use custom reset callback if provided, otherwise use unified reset
       if (customResetCallback) {
+        console.log("Using custom reset callback");
         customResetCallback();
       } else {
+        console.log("Using unified reset");
         performReset();
       }
 
@@ -155,10 +145,14 @@ export function useUnifiedEventCompletion({
   };
 
   const cancelEvent = (customResetCallback?: () => void) => {
+    console.log("Cancelling event via unified system...");
+    
     // Use custom reset callback if provided, otherwise use unified reset
     if (customResetCallback) {
+      console.log("Using custom reset callback for cancel");
       customResetCallback();
     } else {
+      console.log("Using unified reset for cancel");
       performReset();
     }
     

@@ -18,6 +18,27 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
+  // Enhanced comprehensive reset function with logging
+  const resetFlagLogic = () => {
+    console.log("Resetting flag logic - before:", {
+      currentLabelId,
+      flagsForLabel: flagsForLabel.length,
+      availableFlags: availableFlags.length,
+      currentFlagIndex,
+      flagValues: Object.keys(flagValues),
+      flagConditions: flagConditions.length
+    });
+    
+    setCurrentLabelId(null);
+    setFlagsForLabel([]);
+    setAvailableFlags([]);
+    setCurrentFlagIndex(0);
+    setFlagValues({});
+    setFlagConditions([]);
+    
+    console.log("Flag logic reset to defaults");
+  };
+
   // Update available flags based on current selections and flag conditions
   useEffect(() => {
     if (flagsForLabel.length === 0) {
@@ -71,6 +92,7 @@ export function useFlagLogic() {
     flagValues,
     setFlagValues,
     resetFlagValues,
+    resetFlagLogic,
     currentFlag,
     flagConditions,
     setFlagConditions

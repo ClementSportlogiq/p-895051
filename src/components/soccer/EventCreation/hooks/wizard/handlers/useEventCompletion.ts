@@ -17,8 +17,23 @@ export function useEventCompletion({ selection, sockerContext, flagLogic }) {
       }
     },
     wizardState: {
-      selection,
-      flagLogic
+      resetWizard: () => {
+        // Comprehensive wizard reset using individual state reset functions
+        console.log("Event completion triggering comprehensive wizard reset");
+        
+        if (selection?.resetSelectionState) {
+          selection.resetSelectionState();
+        }
+        
+        if (flagLogic?.resetFlagLogic) {
+          flagLogic.resetFlagLogic();
+        }
+        
+        // Reset soccer context
+        if (sockerContext?.resetEventSelection) {
+          sockerContext.resetEventSelection();
+        }
+      }
     }
   });
 

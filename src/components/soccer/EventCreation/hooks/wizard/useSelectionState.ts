@@ -10,6 +10,25 @@ export function useSelectionState() {
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
   
+  // Enhanced reset function with logging
+  const resetSelectionState = () => {
+    console.log("Resetting selection state - before:", {
+      currentStep,
+      selectedCategory,
+      selectedEvent,
+      selectedEventName,
+      flagConditions: flagConditions.length
+    });
+    
+    setCurrentStep("default");
+    setSelectedCategory(null);
+    setSelectedEvent(null);
+    setSelectedEventName(null);
+    setFlagConditions([]);
+    
+    console.log("Selection state reset to defaults");
+  };
+  
   return {
     currentStep,
     setCurrentStep,
@@ -20,6 +39,7 @@ export function useSelectionState() {
     selectedEventName,
     setSelectedEventName,
     flagConditions,
-    setFlagConditions
+    setFlagConditions,
+    resetSelectionState
   };
 }

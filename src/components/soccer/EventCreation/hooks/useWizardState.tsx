@@ -28,29 +28,92 @@ export function useWizardState(): WizardStateContextValue {
     sockerContext
   });
 
-  // Unified reset function that handles all wizard state
+  // Enhanced comprehensive reset function with state validation
   const resetWizard = () => {
     try {
-      // Reset selection state
-      selection.setSelectedCategory(null);
-      selection.setSelectedEvent(null);
-      selection.setSelectedEventName(null);
-      selection.setFlagConditions([]);
-      selection.setCurrentStep("default");
+      console.log("Starting comprehensive wizard reset...");
       
-      // Reset flag state
-      flagLogic.setCurrentLabelId("");
-      flagLogic.setFlagsForLabel([]);
-      flagLogic.setCurrentFlagIndex(0);
-      flagLogic.setFlagValues({});
-      flagLogic.setAvailableFlags([]);
+      // Reset selection state using its own reset function
+      if (selection.resetSelectionState) {
+        selection.resetSelectionState();
+      } else {
+        // Fallback to manual reset
+        selection.setSelectedCategory(null);
+        selection.setSelectedEvent(null);
+        selection.setSelectedEventName(null);
+        selection.setFlagConditions([]);
+        selection.setCurrentStep("default");
+      }
+      
+      // Reset flag state using its own reset function
+      if (flagLogic.resetFlagLogic) {
+        flagLogic.resetFlagLogic();
+      } else {
+        // Fallback to manual reset
+        flagLogic.setCurrentLabelId(null);
+        flagLogic.setFlagsForLabel([]);
+        flagLogic.setCurrentFlagIndex(0);
+        flagLogic.setFlagValues({});
+        flagLogic.setAvailableFlags([]);
+        flagLogic.setFlagConditions([]);
+      }
       
       // Reset soccer context
       sockerContext.resetEventSelection();
       
-      console.log("Wizard state fully reset");
+      // Validate reset state after a brief delay to ensure all state updates have completed
+      setTimeout(() => {
+        validateResetState();
+      }, 100);
+      
+      console.log("Wizard state comprehensive reset completed");
     } catch (error) {
       console.error("Error in wizard reset:", error);
+    }
+  };
+
+  // State validation function to ensure complete reset
+  const validateResetState = () => {
+    const validationResults = {
+      selection: {
+        currentStep: selection.currentStep === "default",
+        selectedCategory: selection.selectedCategory === null,
+        selectedEvent: selection.selectedEvent === null,
+        selectedEventName: selection.selectedEventName === null,
+        flagConditions: selection.flagConditions.length === 0
+      },
+      flagLogic: {
+        currentLabelId: flagLogic.currentLabelId === null,
+        flagsForLabel: flagLogic.flagsForLabel.length === 0,
+        availableFlags: flagLogic.availableFlags.length === 0,
+        currentFlagIndex: flagLogic.currentFlagIndex === 0,
+        flagValues: Object.keys(flagLogic.flagValues).length === 0
+      }
+    };
+    
+    const allValid = Object.values(validationResults.selection).every(Boolean) &&
+                    Object.values(validationResults.flagLogic).every(Boolean);
+    
+    if (allValid) {
+      console.log("✅ Wizard reset validation PASSED - all state properly reset");
+    } else {
+      console.warn("❌ Wizard reset validation FAILED:", validationResults);
+      console.warn("Current state values:", {
+        selection: {
+          currentStep: selection.currentStep,
+          selectedCategory: selection.selectedCategory,
+          selectedEvent: selection.selectedEvent,
+          selectedEventName: selection.selectedEventName,
+          flagConditions: selection.flagConditions
+        },
+        flagLogic: {
+          currentLabelId: flagLogic.currentLabelId,
+          flagsForLabel: flagLogic.flagsForLabel,
+          availableFlags: flagLogic.availableFlags,
+          currentFlagIndex: flagLogic.currentFlagIndex,
+          flagValues: flagLogic.flagValues
+        }
+      });
     }
   };
 
