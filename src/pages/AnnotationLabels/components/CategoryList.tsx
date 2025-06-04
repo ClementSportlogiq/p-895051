@@ -7,17 +7,22 @@ import { AnnotationCategory } from "@/types/annotation";
 
 interface CategoryListProps {
   categories: AnnotationCategory[];
-  getCategoryUsageCount: (categoryId: string) => number;
+  labels: Array<{ id: string; name: string; category: string }>;
   onEditCategory: (category: AnnotationCategory) => void;
   onDeleteCategory: (id: string) => void;
 }
 
 export const CategoryList: React.FC<CategoryListProps> = ({
   categories,
-  getCategoryUsageCount,
+  labels,
   onEditCategory,
   onDeleteCategory,
 }) => {
+  // Function to get usage count for a category
+  const getCategoryUsageCount = (categoryId: string): number => {
+    return labels.filter(label => label.category === categoryId).length;
+  };
+
   if (categories.length === 0) {
     return (
       <div className="text-center text-gray-500 py-8">

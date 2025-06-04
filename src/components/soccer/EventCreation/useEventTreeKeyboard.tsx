@@ -47,7 +47,8 @@ export const useEventTreeKeyboard = ({
         
         // Handle matrix-based categories (A, S, D, F, Z, X, C, V)
         if (['A', 'S', 'D', 'F', 'Z', 'X', 'C', 'V'].includes(key) && categoriesMatrix[key]) {
-          handleCategorySelect(categoriesMatrix[key].id);
+          // Cast the category ID to EventCategory since we know it's compatible
+          handleCategorySelect(categoriesMatrix[key].id as EventCategory);
           return;
         }
         
@@ -65,7 +66,8 @@ export const useEventTreeKeyboard = ({
         if (Object.keys(categoriesMatrix).length === 0) {
           const category = categories.find(cat => cat.hotkey.toUpperCase() === key);
           if (category) {
-            handleCategorySelect(category.id);
+            // Cast the category ID to EventCategory since we know it's compatible
+            handleCategorySelect(category.id as EventCategory);
             return;
           }
         }
