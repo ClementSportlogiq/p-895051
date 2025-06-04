@@ -1,13 +1,14 @@
 
 import { useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { useDefaultWizardConfig } from "@/hooks/useDefaultWizardConfig";
 import { WizardStep, EventCategory, AnnotationFlag } from "@/types/annotation";
 
 interface UseEventTreeKeyboardProps {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;
   flagsForLabel: AnnotationFlag[];
-  availableFlags?: AnnotationFlag[]; // Available flags that aren't hidden by conditions
+  availableFlags?: AnnotationFlag[];
   currentFlagIndex: number;
   handleQuickEventSelect: (eventId: string) => void;
   handleCategorySelect: (categoryId: EventCategory) => void;
@@ -27,14 +28,31 @@ export const useEventTreeKeyboard = ({
   handleFlagValueSelect
 }: UseEventTreeKeyboardProps) => {
   const { getQuickEvents, getLabelsByCategory, categories } = useAnnotationLabels();
+  const { getQuickEventsByMatrix, getCategoriesByMatrix } = useDefaultWizardConfig();
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase();
       
       if (currentStep === "default") {
-        // Quick events (check hotkeys)
-        if (!selectedCategory) {
+        // Get matrix-based assignments
+        const quickEventsMatrix = getQuickEventsByMatrix(getQuickEvents());
+        const categoriesMatrix = getCategoriesByMatrix(categories);
+        
+        // Handle matrix-based quick events (Q, W, E, R)
+        if (['Q', 'W', 'E', 'R'].includes(key) && quickEventsMatrix[key]) {
+          handleQuickEventSelect(quickEventsMatrix[key].id);
+          return;
+        }
+        
+        // Handle matrix-based categories (A, S, D, F, Z, X, C, V)
+        if (['A', 'S', 'D', 'F', 'Z', 'X', 'C', 'V'].includes(key) && categoriesMatrix[key]) {
+          handleCategorySelect(categoriesMatrix[key].id);
+          return;
+        }
+        
+        // Fallback to legacy hotkey system if no matrix assignments
+        if (Object.keys(quickEventsMatrix).length === 0 && !selectedCategory) {
           const quickEvents = getQuickEvents();
           const event = quickEvents.find(evt => evt.hotkey.toUpperCase() === key);
           if (event) {
@@ -43,10 +61,13 @@ export const useEventTreeKeyboard = ({
           }
         }
         
-        // Categories
-        const category = categories.find(cat => cat.hotkey.toUpperCase() === key);
-        if (category) {
-          handleCategorySelect(category.id);
+        // Legacy category selection if no matrix assignments
+        if (Object.keys(categoriesMatrix).length === 0) {
+          const category = categories.find(cat => cat.hotkey.toUpperCase() === key);
+          if (category) {
+            handleCategorySelect(category.id);
+            return;
+          }
         }
       } 
       else if (currentStep === "flag") {
@@ -89,7 +110,9 @@ export const useEventTreeKeyboard = ({
     handleFlagValueSelect,
     getQuickEvents,
     getLabelsByCategory,
-    categories
+    categories,
+    getQuickEventsByMatrix,
+    getCategoriesByMatrix
   ]);
 };
 

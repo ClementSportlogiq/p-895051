@@ -9,6 +9,8 @@ export interface WizardDefaultConfig {
   config_name: string;
   default_quick_events: string[];
   default_flag_definitions: string[];
+  quick_events_matrix_positions: Record<string, string>;
+  categories_matrix_positions: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
@@ -30,11 +32,13 @@ export function useDefaultWizardConfig() {
       if (error) throw error;
 
       if (data) {
-        // Cast the Json types to string arrays
+        // Cast the Json types to string arrays and objects
         const configData: WizardDefaultConfig = {
           ...data,
           default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
-          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : []
+          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : [],
+          quick_events_matrix_positions: data.quick_events_matrix_positions || {},
+          categories_matrix_positions: data.categories_matrix_positions || {}
         };
         setConfig(configData);
       } else {
@@ -52,27 +56,43 @@ export function useDefaultWizardConfig() {
     }
   };
 
-  // Save the default wizard configuration
-  const saveConfig = async (quickEventIds: string[], flagDefinitionIds: string[]) => {
+  // Save the default wizard configuration including matrix positions
+  const saveConfig = async (
+    quickEventIds: string[], 
+    flagDefinitionIds: string[],
+    quickEventsMatrix?: Record<string, string>,
+    categoriesMatrix?: Record<string, string>
+  ) => {
     try {
+      const updateData: any = {
+        config_name: 'default',
+        default_quick_events: quickEventIds,
+        default_flag_definitions: flagDefinitionIds
+      };
+
+      // Include matrix positions if provided
+      if (quickEventsMatrix !== undefined) {
+        updateData.quick_events_matrix_positions = quickEventsMatrix;
+      }
+      if (categoriesMatrix !== undefined) {
+        updateData.categories_matrix_positions = categoriesMatrix;
+      }
+
       const { data, error } = await supabase
         .from('wizard_default_config')
-        .upsert({
-          config_name: 'default',
-          default_quick_events: quickEventIds,
-          default_flag_definitions: flagDefinitionIds
-        })
+        .upsert(updateData)
         .select()
         .single();
 
       if (error) throw error;
 
       if (data) {
-        // Cast the Json types to string arrays
         const configData: WizardDefaultConfig = {
           ...data,
           default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
-          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : []
+          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : [],
+          quick_events_matrix_positions: data.quick_events_matrix_positions || {},
+          categories_matrix_positions: data.categories_matrix_positions || {}
         };
         setConfig(configData);
       }
@@ -93,13 +113,43 @@ export function useDefaultWizardConfig() {
     }
   };
 
-  // Get configured quick events from available labels
+  // Get configured quick events from available labels with matrix positions
   const getConfiguredQuickEvents = (allLabels: AnnotationLabel[]): AnnotationLabel[] => {
     if (!config || !config.default_quick_events) return [];
     
     return config.default_quick_events
       .map(eventId => allLabels.find(label => label.id === eventId))
       .filter(Boolean) as AnnotationLabel[];
+  };
+
+  // Get quick events by matrix position (Q, W, E, R)
+  const getQuickEventsByMatrix = (allLabels: AnnotationLabel[]): Record<string, AnnotationLabel> => {
+    if (!config || !config.quick_events_matrix_positions) return {};
+    
+    const result: Record<string, AnnotationLabel> = {};
+    Object.entries(config.quick_events_matrix_positions).forEach(([position, labelId]) => {
+      const label = allLabels.find(l => l.id === labelId);
+      if (label) {
+        result[position] = label;
+      }
+    });
+    
+    return result;
+  };
+
+  // Get categories by matrix position (A, S, D, F, Z, X, C, V)
+  const getCategoriesByMatrix = (allCategories: any[]): Record<string, any> => {
+    if (!config || !config.categories_matrix_positions) return {};
+    
+    const result: Record<string, any> = {};
+    Object.entries(config.categories_matrix_positions).forEach(([position, categoryId]) => {
+      const category = allCategories.find(c => c.id === categoryId);
+      if (category) {
+        result[position] = category;
+      }
+    });
+    
+    return result;
   };
 
   // Get configured flag definitions from available flags
@@ -138,6 +188,8 @@ export function useDefaultWizardConfig() {
     saveConfig,
     getConfiguredQuickEvents,
     getConfiguredFlagDefinitions,
+    getQuickEventsByMatrix,
+    getCategoriesByMatrix,
     loadConfig
   };
 }

@@ -13,16 +13,19 @@ export type Database = {
         Row: {
           hotkey: string
           id: string
+          matrix_position: string | null
           name: string
         }
         Insert: {
           hotkey: string
           id: string
+          matrix_position?: string | null
           name: string
         }
         Update: {
           hotkey?: string
           id?: string
+          matrix_position?: string | null
           name?: string
         }
         Relationships: []
@@ -59,6 +62,7 @@ export type Database = {
           flags: Json
           hotkey: string
           id: string
+          matrix_position: string | null
           name: string
         }
         Insert: {
@@ -68,6 +72,7 @@ export type Database = {
           flags?: Json
           hotkey: string
           id?: string
+          matrix_position?: string | null
           name: string
         }
         Update: {
@@ -77,6 +82,7 @@ export type Database = {
           flags?: Json
           hotkey?: string
           id?: string
+          matrix_position?: string | null
           name?: string
         }
         Relationships: [
@@ -91,27 +97,33 @@ export type Database = {
       }
       wizard_default_config: {
         Row: {
+          categories_matrix_positions: Json | null
           config_name: string
           created_at: string
           default_flag_definitions: Json
           default_quick_events: Json
           id: string
+          quick_events_matrix_positions: Json | null
           updated_at: string
         }
         Insert: {
+          categories_matrix_positions?: Json | null
           config_name?: string
           created_at?: string
           default_flag_definitions?: Json
           default_quick_events?: Json
           id?: string
+          quick_events_matrix_positions?: Json | null
           updated_at?: string
         }
         Update: {
+          categories_matrix_positions?: Json | null
           config_name?: string
           created_at?: string
           default_flag_definitions?: Json
           default_quick_events?: Json
           id?: string
+          quick_events_matrix_positions?: Json | null
           updated_at?: string
         }
         Relationships: []
