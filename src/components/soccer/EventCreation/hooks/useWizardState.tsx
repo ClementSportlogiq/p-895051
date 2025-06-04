@@ -5,9 +5,11 @@ import { useFlagLogic } from "./wizard/useFlagLogic";
 import { useContextUpdater } from "./wizard/useContextUpdater";
 import { useWizardHandlers } from "./wizard/useWizardHandlers";
 import { WizardStateContextValue } from "./wizard/types";
+import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 
 export function useWizardState(): WizardStateContextValue {
   const sockerContext = useSoccer();
+  const { flags } = useAnnotationLabels();
   
   // Get state from modular hooks
   const selection = useSelectionState();
@@ -51,7 +53,7 @@ export function useWizardState(): WizardStateContextValue {
       } else {
         // Fallback to manual reset
         flagLogic.setCurrentLabelId(null);
-        flagLogic.setFlagsForLabel([]);
+        flagLogic.setFlagsForLabel(flags || []);
         flagLogic.setCurrentFlagIndex(0);
         flagLogic.setFlagValues({});
         flagLogic.setAvailableFlags([]);
@@ -76,6 +78,8 @@ export function useWizardState(): WizardStateContextValue {
 
   // State validation function to ensure complete reset
   const validateResetState = () => {
+    const expectedFlagsCount = (flags || []).length;
+    
     const validationResults = {
       selection: {
         currentStep: selection.currentStep === "default",
@@ -86,10 +90,11 @@ export function useWizardState(): WizardStateContextValue {
       },
       flagLogic: {
         currentLabelId: flagLogic.currentLabelId === null,
-        flagsForLabel: flagLogic.flagsForLabel.length === 0,
-        availableFlags: flagLogic.availableFlags.length === 0,
+        flagsForLabel: flagLogic.flagsForLabel.length === expectedFlagsCount, // Should contain all available flags
+        availableFlags: flagLogic.availableFlags.length === 0, // Should be empty until a label is selected
         currentFlagIndex: flagLogic.currentFlagIndex === 0,
-        flagValues: Object.keys(flagLogic.flagValues).length === 0
+        flagValues: Object.keys(flagLogic.flagValues).length === 0,
+        flagConditions: flagLogic.flagConditions.length === 0 // Event-specific conditions should be empty
       }
     };
     
@@ -98,6 +103,7 @@ export function useWizardState(): WizardStateContextValue {
     
     if (allValid) {
       console.log("✅ Wizard reset validation PASSED - all state properly reset");
+      console.log(`flagsForLabel correctly contains ${flagLogic.flagsForLabel.length} default flags`);
     } else {
       console.warn("❌ Wizard reset validation FAILED:", validationResults);
       console.warn("Current state values:", {
@@ -110,10 +116,11 @@ export function useWizardState(): WizardStateContextValue {
         },
         flagLogic: {
           currentLabelId: flagLogic.currentLabelId,
-          flagsForLabel: flagLogic.flagsForLabel,
-          availableFlags: flagLogic.availableFlags,
+          flagsForLabel: `${flagLogic.flagsForLabel.length} flags (expected: ${expectedFlagsCount})`,
+          availableFlags: flagLogic.availableFlags.length,
           currentFlagIndex: flagLogic.currentFlagIndex,
-          flagValues: flagLogic.flagValues
+          flagValues: flagLogic.flagValues,
+          flagConditions: flagLogic.flagConditions.length
         }
       });
     }

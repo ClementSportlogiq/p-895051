@@ -18,7 +18,7 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
-  // Enhanced comprehensive reset function with logging
+  // Enhanced comprehensive reset function with correct default state restoration
   const resetFlagLogic = () => {
     console.log("Resetting flag logic - before:", {
       currentLabelId,
@@ -30,13 +30,16 @@ export function useFlagLogic() {
     });
     
     setCurrentLabelId(null);
-    setFlagsForLabel([]);
+    // Reset flagsForLabel and flagConditions to their default populated state
+    // These should contain the complete available flags from the annotation system
+    setFlagsForLabel(flags || []); // Reset to all available flags from the system
     setAvailableFlags([]);
     setCurrentFlagIndex(0);
     setFlagValues({});
+    // flagConditions should reset to empty since these are event-specific conditions
     setFlagConditions([]);
     
-    console.log("Flag logic reset to defaults");
+    console.log("Flag logic reset - flagsForLabel restored to default flags:", (flags || []).length);
   };
 
   // Update available flags based on current selections and flag conditions
