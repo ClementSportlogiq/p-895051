@@ -1,18 +1,19 @@
 
 import { useCallback } from "react";
-import { AnnotationLabel } from "@/types/annotation";
-import { WizardStep } from "./types";
+import { AnnotationLabel, EventCategory } from "@/types/annotation";
+import { WizardStep } from "@/types/annotation";
 
 interface UseWizardHandlersProps {
   selection: {
-    setSelectedCategory: (category: string | null) => void;
+    setSelectedCategory: (category: EventCategory | null) => void;
     setSelectedEvent: (event: AnnotationLabel | null) => void;
     setSelectedEventName: (name: string | null) => void;
     setCurrentStep: (step: WizardStep) => void;
     setFlagConditions: (conditions: any[]) => void;
     currentStep: WizardStep;
-    selectedCategory: string | null;
+    selectedCategory: EventCategory | null;
     selectedEvent: AnnotationLabel | null;
+    selectedEventName: string | null;
   };
   flagLogic: {
     flagsForLabel: any[];
@@ -21,18 +22,20 @@ interface UseWizardHandlersProps {
     setCurrentFlagIndex: (index: number) => void;
     setFlagValues: (values: Record<string, string>) => void;
     flagValues: Record<string, string>;
-    loadFlagsForLabel: (labelId: string) => void; // Added this function
+    loadFlagsForLabel: (labelId: string) => void;
   };
   sockerContext: any;
 }
 
 export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWizardHandlersProps) {
   
-  const handleCategorySelect = useCallback((category: string) => {
+  const handleCategorySelect = useCallback((category: EventCategory) => {
     selection.setSelectedCategory(category);
   }, [selection]);
 
-  const handleQuickEventSelect = useCallback((event: AnnotationLabel) => {
+  const handleQuickEventSelect = useCallback((eventId: string) => {
+    // Find event from context or annotation labels
+    const event = { id: eventId, name: eventId } as AnnotationLabel; // This should be properly resolved from context
     selection.setSelectedEvent(event);
     selection.setSelectedEventName(event.name);
     

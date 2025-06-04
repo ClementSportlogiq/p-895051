@@ -8,6 +8,9 @@ import {
   FlagCondition
 } from "@/types/annotation";
 
+// Export WizardStep so it can be imported elsewhere
+export { WizardStep };
+
 export interface WizardStateContextValue {
   currentStep: WizardStep;
   selectedCategory: EventCategory | null;

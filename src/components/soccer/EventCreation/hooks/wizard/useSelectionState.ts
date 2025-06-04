@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { EventCategory, FlagCondition } from "@/types/annotation";
+import { EventCategory, FlagCondition, AnnotationLabel } from "@/types/annotation";
+import { WizardStep } from "@/types/annotation";
 
 export function useSelectionState() {
   // Main wizard state
-  const [currentStep, setCurrentStep] = useState<"default" | "flag">("default");
+  const [currentStep, setCurrentStep] = useState<WizardStep>("default");
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AnnotationLabel | null>(null);
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
   
