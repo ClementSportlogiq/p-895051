@@ -96,7 +96,7 @@ export function useWizardState(): WizardStateContextValue {
     }
   };
 
-  // State validation function to ensure complete reset while preserving team/player selections
+  // Comprehensive state validation function to ensure complete reset while preserving team/player selections
   const validateResetState = (expectedTeam?: any, expectedPlayer?: any) => {
     const expectedFlagsCount = (flags || []).length;
     // Calculate expected flag conditions count (all flag values combinations)
@@ -107,7 +107,7 @@ export function useWizardState(): WizardStateContextValue {
     const validationResults = {
       selection: {
         currentStep: selection.currentStep === "default",
-        selectedCategory: selection.selectedCategory === null,
+        selectedCategory: selection.selectedCategory === null, // CRITICAL: Must be null for visual reset
         selectedEvent: selection.selectedEvent === null,
         selectedEventName: selection.selectedEventName === null,
         flagConditions: selection.flagConditions.length === 0
@@ -133,6 +133,8 @@ export function useWizardState(): WizardStateContextValue {
     
     if (allValid) {
       console.log("✅ Wizard reset validation PASSED - all state properly reset");
+      console.log(`currentStep correctly set to: ${selection.currentStep}`);
+      console.log(`selectedCategory correctly reset to: ${selection.selectedCategory} (must be null for visual reset)`);
       console.log(`flagsForLabel correctly contains ${flagLogic.flagsForLabel.length} default flags`);
       console.log(`flagConditions correctly contains ${flagLogic.flagConditions.length} default conditions`);
       console.log(`selectedTeam correctly preserved: ${sockerContext.selectedTeam}`);
@@ -142,7 +144,7 @@ export function useWizardState(): WizardStateContextValue {
       console.warn("Current state values:", {
         selection: {
           currentStep: selection.currentStep,
-          selectedCategory: selection.selectedCategory,
+          selectedCategory: selection.selectedCategory, // This is key for visual issues
           selectedEvent: selection.selectedEvent,
           selectedEventName: selection.selectedEventName,
           flagConditions: selection.flagConditions

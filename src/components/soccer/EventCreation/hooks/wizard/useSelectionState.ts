@@ -10,7 +10,7 @@ export function useSelectionState() {
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
   
-  // Enhanced reset function with logging
+  // Enhanced reset function with logging and explicit null setting
   const resetSelectionState = () => {
     console.log("Resetting selection state - before:", {
       currentStep,
@@ -20,13 +20,14 @@ export function useSelectionState() {
       flagConditions: flagConditions.length
     });
     
+    // Explicitly reset all selection state to their default values
     setCurrentStep("default");
-    setSelectedCategory(null);
+    setSelectedCategory(null); // This is crucial for visual reset
     setSelectedEvent(null);
     setSelectedEventName(null);
     setFlagConditions([]);
     
-    console.log("Selection state reset to defaults");
+    console.log("Selection state reset - all selections cleared, currentStep set to default");
   };
   
   return {
