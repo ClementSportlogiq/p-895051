@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -67,7 +66,8 @@ export function useDefaultWizardConfig() {
       const updateData: any = {
         config_name: 'default',
         default_quick_events: quickEventIds,
-        default_flag_definitions: flagDefinitionIds
+        default_flag_definitions: flagDefinitionIds,
+        updated_at: new Date().toISOString()
       };
 
       // Include matrix positions if provided
@@ -78,15 +78,60 @@ export function useDefaultWizardConfig() {
         updateData.categories_matrix_positions = categoriesMatrix;
       }
 
+      // Use upsert with explicit conflict resolution
       const { data, error } = await supabase
         .from('wizard_default_config')
-        .upsert(updateData)
+        .upsert(updateData, {
+          onConflict: 'config_name',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Upsert failed, trying alternative approach:', error);
+        
+        // Fallback: Try to update first, then insert if no rows affected
+        const { data: updateResult, error: updateError } = await supabase
+          .from('wizard_default_config')
+          .update(updateData)
+          .eq('config_name', 'default')
+          .select()
+          .maybeSingle();
 
-      if (data) {
+        if (updateError) throw updateError;
+
+        if (!updateResult) {
+          // No existing record found, insert new one
+          const { data: insertResult, error: insertError } = await supabase
+            .from('wizard_default_config')
+            .insert(updateData)
+            .select()
+            .single();
+
+          if (insertError) throw insertError;
+          
+          if (insertResult) {
+            const configData: WizardDefaultConfig = {
+              ...insertResult,
+              default_quick_events: Array.isArray(insertResult.default_quick_events) ? insertResult.default_quick_events as string[] : [],
+              default_flag_definitions: Array.isArray(insertResult.default_flag_definitions) ? insertResult.default_flag_definitions as string[] : [],
+              quick_events_matrix_positions: (insertResult.quick_events_matrix_positions && typeof insertResult.quick_events_matrix_positions === 'object' && !Array.isArray(insertResult.quick_events_matrix_positions)) ? insertResult.quick_events_matrix_positions as Record<string, string> : {},
+              categories_matrix_positions: (insertResult.categories_matrix_positions && typeof insertResult.categories_matrix_positions === 'object' && !Array.isArray(insertResult.categories_matrix_positions)) ? insertResult.categories_matrix_positions as Record<string, string> : {}
+            };
+            setConfig(configData);
+          }
+        } else {
+          const configData: WizardDefaultConfig = {
+            ...updateResult,
+            default_quick_events: Array.isArray(updateResult.default_quick_events) ? updateResult.default_quick_events as string[] : [],
+            default_flag_definitions: Array.isArray(updateResult.default_flag_definitions) ? updateResult.default_flag_definitions as string[] : [],
+            quick_events_matrix_positions: (updateResult.quick_events_matrix_positions && typeof updateResult.quick_events_matrix_positions === 'object' && !Array.isArray(updateResult.quick_events_matrix_positions)) ? updateResult.quick_events_matrix_positions as Record<string, string> : {},
+            categories_matrix_positions: (updateResult.categories_matrix_positions && typeof updateResult.categories_matrix_positions === 'object' && !Array.isArray(updateResult.categories_matrix_positions)) ? updateResult.categories_matrix_positions as Record<string, string> : {}
+          };
+          setConfig(configData);
+        }
+      } else if (data) {
         const configData: WizardDefaultConfig = {
           ...data,
           default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
