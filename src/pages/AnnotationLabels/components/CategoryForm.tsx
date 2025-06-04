@@ -77,14 +77,14 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div>
           <Label htmlFor="category-matrix">Matrix Position (Optional)</Label>
           <Select
-            value={newCategory.matrix_position || ""}
-            onValueChange={(value) => onCategoryChange({ ...newCategory, matrix_position: value || undefined })}
+            value={newCategory.matrix_position || "none"}
+            onValueChange={(value) => onCategoryChange({ ...newCategory, matrix_position: value === "none" ? undefined : value })}
           >
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select position" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No matrix position</SelectItem>
+              <SelectItem value="none">No matrix position</SelectItem>
               {CATEGORY_MATRIX_POSITIONS.map((position) => (
                 <SelectItem 
                   key={position.value} 

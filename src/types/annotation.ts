@@ -12,9 +12,10 @@ export interface AnnotationLabel {
 export type EventCategory = "offense" | "defense" | "reception" | "goalkeeper" | "deadball" | "playerAction" | "infractions";
 
 export interface AnnotationCategory {
-  id: EventCategory;
+  id: string; // Changed from EventCategory to string to match database UUID
   name: string;
   hotkey: string;
+  matrix_position?: string; // Added matrix_position property
 }
 
 export interface AnnotationFlag {

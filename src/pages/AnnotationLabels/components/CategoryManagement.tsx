@@ -10,7 +10,7 @@ import { CategoryList } from "./CategoryList";
 
 interface CategoryManagementProps {
   categories: AnnotationCategory[];
-  labels: any[];
+  labels: Array<{ id: string; name: string; category: string }>;
   onSaveCategory: (category: AnnotationCategory) => Promise<boolean>;
   onDeleteCategory: (id: string) => Promise<boolean>;
 }
@@ -30,7 +30,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
   }>({
     name: "",
     hotkey: "",
-    matrix_position: ""
+    matrix_position: undefined
   });
 
   // Reset form when closing
@@ -38,7 +38,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     setNewCategory({
       name: "",
       hotkey: "",
-      matrix_position: ""
+      matrix_position: undefined
     });
     setIsAddingCategory(false);
     setEditingCategoryId(null);
@@ -49,7 +49,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     setNewCategory({
       name: category.name,
       hotkey: category.hotkey,
-      matrix_position: category.matrix_position || ""
+      matrix_position: category.matrix_position
     });
     setEditingCategoryId(category.id);
     setIsAddingCategory(true);
@@ -58,43 +58,12 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
   // Handle saving a category
   const handleSaveCategory = async () => {
     if (newCategory.name && newCategory.hotkey) {
-      // Check for duplicate hotkeys
-      const isDuplicateHotkey = categories.some(cat => 
-        cat.hotkey.toLowerCase() === newCategory.hotkey.toLowerCase() && 
-        cat.id !== editingCategoryId
-      );
-      
-      if (isDuplicateHotkey) {
-        toast({
-          title: "Validation error",
-          description: "This hotkey is already in use by another category.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Check for duplicate matrix position if provided
-      if (newCategory.matrix_position) {
-        const isDuplicateMatrix = categories.some(cat => 
-          cat.matrix_position === newCategory.matrix_position && 
-          cat.id !== editingCategoryId
-        );
-        
-        if (isDuplicateMatrix) {
-          toast({
-            title: "Validation error",
-            description: "This matrix position is already in use by another category.",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-
+      // Create the category object for saving
       const categoryToSave: AnnotationCategory = {
-        id: editingCategoryId || newCategory.name.toLowerCase().replace(/\s+/g, ''),
+        id: editingCategoryId || uuidv4(),
         name: newCategory.name,
         hotkey: newCategory.hotkey.toUpperCase(),
-        matrix_position: newCategory.matrix_position || undefined
+        matrix_position: newCategory.matrix_position
       };
 
       const success = await onSaveCategory(categoryToSave);
@@ -123,7 +92,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     if (labelsUsingCategory.length > 0) {
       toast({
         title: "Cannot delete category",
-        description: `This category is used by ${labelsUsingCategory.length} label(s). Please reassign or delete those labels first.`,
+        description: `This category is used by ${labelsUsingCategory.length} label(s). Please remove or reassign these labels first.`,
         variant: "destructive"
       });
       return;
@@ -138,11 +107,6 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
         });
       }
     }
-  };
-
-  // Get usage count for each category
-  const getCategoryUsageCount = (categoryId: string) => {
-    return labels.filter(label => label.category === categoryId).length;
   };
 
   return (
@@ -169,7 +133,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
       ) : (
         <CategoryList
           categories={categories}
-          getCategoryUsageCount={getCategoryUsageCount}
+          labels={labels}
           onEditCategory={handleEditCategory}
           onDeleteCategory={handleDeleteCategory}
         />
