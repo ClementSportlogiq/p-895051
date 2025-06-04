@@ -89,6 +89,33 @@ export type Database = {
           },
         ]
       }
+      wizard_default_config: {
+        Row: {
+          config_name: string
+          created_at: string
+          default_flag_definitions: Json
+          default_quick_events: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          config_name?: string
+          created_at?: string
+          default_flag_definitions?: Json
+          default_quick_events?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          config_name?: string
+          created_at?: string
+          default_flag_definitions?: Json
+          default_quick_events?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { AnnotationFlag, FlagCondition } from "@/types/annotation";
 
 export function useFlagLogic() {
-  const { flags } = useAnnotationLabels();
+  const { getDefaultFlagDefinitions } = useAnnotationLabels();
   const [currentLabelId, setCurrentLabelId] = useState<string | null>(null);
   const [flagsForLabel, setFlagsForLabel] = useState<AnnotationFlag[]>([]);
   const [availableFlags, setAvailableFlags] = useState<AnnotationFlag[]>([]);
@@ -17,7 +18,7 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
-  // Enhanced comprehensive reset function with correct default state restoration
+  // Enhanced comprehensive reset function using explicit default configuration
   const resetFlagLogic = () => {
     console.log("Resetting flag logic - before:", {
       currentLabelId,
@@ -29,17 +30,16 @@ export function useFlagLogic() {
     });
     
     setCurrentLabelId(null);
-    // Reset flagsForLabel to their default populated state
-    // These should contain the complete available flags from the annotation system
-    setFlagsForLabel(flags || []); // Reset to all available flags from the system
+    
+    // Get explicit default flag definitions from admin configuration
+    const defaultFlags = getDefaultFlagDefinitions();
+    setFlagsForLabel(defaultFlags); // Reset to explicitly configured default flags
     setAvailableFlags([]);
     setCurrentFlagIndex(0);
     setFlagValues({});
     
-    // Reset flagConditions to their default populated state
-    // These should contain the complete list of general flag definitions
-    // Extract all flag conditions from all available flags as the default set
-    const defaultFlagConditions: FlagCondition[] = (flags || []).flatMap(flag => 
+    // Reset flagConditions to default conditions from configured flags
+    const defaultFlagConditions: FlagCondition[] = defaultFlags.flatMap(flag => 
       flag.values?.flatMap(value => ({
         flagId: flag.id,
         value: value.value,
@@ -48,8 +48,8 @@ export function useFlagLogic() {
     );
     setFlagConditions(defaultFlagConditions);
     
-    console.log("Flag logic reset - flagsForLabel restored to default flags:", (flags || []).length);
-    console.log("Flag logic reset - flagConditions restored to default conditions:", defaultFlagConditions.length);
+    console.log("Flag logic reset - flagsForLabel restored to configured defaults:", defaultFlags.length);
+    console.log("Flag logic reset - flagConditions restored to configured defaults:", defaultFlagConditions.length);
   };
 
   // Update available flags based on current selections and flag conditions

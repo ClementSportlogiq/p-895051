@@ -5,6 +5,7 @@ import { useLabels } from './useLabels';
 import { useFlags } from './useFlags';
 import { useDataInitialization } from './useDataInitialization';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
+import { useDefaultWizardConfig } from '../useDefaultWizardConfig';
 import { defaultCategories } from './constants';
 
 export function useAnnotationLabels() {
@@ -14,7 +15,6 @@ export function useAnnotationLabels() {
     isLoading, 
     setIsLoading, 
     processLabels, 
-    getQuickEvents, 
     getLabelsByCategory,
     saveLabel,
     deleteLabel
@@ -27,6 +27,8 @@ export function useAnnotationLabels() {
     saveFlag,
     deleteFlag: deleteFlag_
   } = useFlags();
+
+  const { getConfiguredQuickEvents, getConfiguredFlagDefinitions } = useDefaultWizardConfig();
   
   const {
     loadData,
@@ -44,6 +46,32 @@ export function useAnnotationLabels() {
     }
   }, [isLoading, isInitialized]);
 
+  // Get quick events from explicit admin configuration
+  const getQuickEvents = (): AnnotationLabel[] => {
+    const configuredEvents = getConfiguredQuickEvents(labels);
+    
+    // Return configured events if available, otherwise fallback to first 4 labels
+    if (configuredEvents.length > 0) {
+      return configuredEvents.slice(0, 4);
+    }
+    
+    // Fallback to the first 4 labels if no explicit configuration
+    return labels.slice(0, 4);
+  };
+
+  // Get default flag definitions from explicit admin configuration
+  const getDefaultFlagDefinitions = (): AnnotationFlag[] => {
+    const configuredFlags = getConfiguredFlagDefinitions(flags);
+    
+    // Return configured flags if available, otherwise return all available flags
+    if (configuredFlags.length > 0) {
+      return configuredFlags;
+    }
+    
+    // Fallback to all flags if no explicit configuration
+    return flags || [];
+  };
+
   // Wrapper for deleteFlag to pass the current labels
   const deleteFlag = async (id: string) => {
     return deleteFlag_(id, labels);
@@ -56,6 +84,7 @@ export function useAnnotationLabels() {
     getQuickEvents,
     getLabelsByCategory,
     getFlagsByLabel,
+    getDefaultFlagDefinitions, // New method for explicit default flag definitions
     categories: defaultCategories,
     saveLabel,
     deleteLabel,

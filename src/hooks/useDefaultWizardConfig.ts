@@ -1,0 +1,124 @@
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
+import { AnnotationLabel, AnnotationFlag } from '@/types/annotation';
+
+export interface WizardDefaultConfig {
+  id: string;
+  config_name: string;
+  default_quick_events: string[];
+  default_flag_definitions: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export function useDefaultWizardConfig() {
+  const [config, setConfig] = useState<WizardDefaultConfig | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load the default wizard configuration
+  const loadConfig = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('wizard_default_config')
+        .select('*')
+        .eq('config_name', 'default')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setConfig(data);
+    } catch (error) {
+      console.error('Error loading wizard default config:', error);
+      toast({
+        title: "Error loading wizard configuration",
+        description: "Could not load default wizard settings.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Save the default wizard configuration
+  const saveConfig = async (quickEventIds: string[], flagDefinitionIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('wizard_default_config')
+        .upsert({
+          config_name: 'default',
+          default_quick_events: quickEventIds,
+          default_flag_definitions: flagDefinitionIds
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setConfig(data);
+      toast({
+        title: "Configuration saved",
+        description: "Default wizard settings have been updated successfully.",
+      });
+      return true;
+    } catch (error) {
+      console.error('Error saving wizard config:', error);
+      toast({
+        title: "Error saving configuration",
+        description: "Could not save default wizard settings.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Get configured quick events from available labels
+  const getConfiguredQuickEvents = (allLabels: AnnotationLabel[]): AnnotationLabel[] => {
+    if (!config || !config.default_quick_events) return [];
+    
+    return config.default_quick_events
+      .map(eventId => allLabels.find(label => label.id === eventId))
+      .filter(Boolean) as AnnotationLabel[];
+  };
+
+  // Get configured flag definitions from available flags
+  const getConfiguredFlagDefinitions = (allFlags: AnnotationFlag[]): AnnotationFlag[] => {
+    if (!config || !config.default_flag_definitions) return [];
+    
+    return config.default_flag_definitions
+      .map(flagId => allFlags.find(flag => flag.id === flagId))
+      .filter(Boolean) as AnnotationFlag[];
+  };
+
+  // Load configuration on mount
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  // Set up real-time subscription for configuration changes
+  useEffect(() => {
+    const subscription = supabase
+      .channel('wizard_config_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wizard_default_config' },
+        () => loadConfig()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
+  return {
+    config,
+    isLoading,
+    saveConfig,
+    getConfiguredQuickEvents,
+    getConfiguredFlagDefinitions,
+    loadConfig
+  };
+}
