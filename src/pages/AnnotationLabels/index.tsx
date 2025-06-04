@@ -1,13 +1,13 @@
 
 import React from "react";
-import { DefaultWizardConfig } from "./DefaultWizardConfig";
-import { FlagManagement } from "./FlagManagement";
-import { LabelManagement } from "./components/LabelManagement";
-import { CategoryManagement } from "./components/CategoryManagement";
-import { LoadingState } from "./LoadingState";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import LoadingState from "./LoadingState";
+import { LabelManagement } from "./components/LabelManagement";
+import { FlagManagement } from "./FlagManagement";
+import { CategoryManagement } from "./components/CategoryManagement";
+import DefaultWizardConfig from "./DefaultWizardConfig";
 
-const AnnotationLabelsPage = () => {
+export default function AnnotationLabels() {
   const { 
     labels, 
     flags, 
@@ -21,39 +21,44 @@ const AnnotationLabelsPage = () => {
     deleteCategory
   } = useAnnotationLabels();
 
-  // Handle editing a flag (passed to FlagManagement)
-  const handleEditFlag = (flag: any) => {
-    // This is handled by the FlagManagement component
-  };
-
   if (isLoading) {
     return <LoadingState />;
   }
 
+  // Convert labels to the format expected by CategoryManagement
+  const labelsForCategories = labels.map(label => ({
+    id: label.id,
+    name: label.name,
+    category: label.category
+  }));
+
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <h1 className="text-3xl font-bold mb-6">Annotation Labels Management</h1>
-      
-      {/* Default Wizard Configuration Section */}
-      <DefaultWizardConfig labels={labels} flags={flags} />
-      
-      {/* Category Management Section */}
+    <div className="container mx-auto py-8 space-y-8">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Annotation Configuration
+        </h1>
+        <p className="text-lg text-gray-600">
+          Manage your annotation labels, flags, categories, and wizard defaults
+        </p>
+      </div>
+
+      {/* Default Wizard Configuration */}
+      <DefaultWizardConfig 
+        labels={labels} 
+        flags={flags}
+        categories={categories}
+      />
+
+      {/* Category Management */}
       <CategoryManagement
         categories={categories}
-        labels={labels}
+        labels={labelsForCategories}
         onSaveCategory={saveCategory}
         onDeleteCategory={deleteCategory}
       />
-      
-      {/* Flag Management Section */}
-      <FlagManagement
-        flags={flags}
-        onEditFlag={handleEditFlag}
-        onDeleteFlag={deleteFlag}
-        onSaveFlag={saveFlag}
-      />
 
-      {/* Labels Management Section */}
+      {/* Label Management */}
       <LabelManagement
         labels={labels}
         flags={flags}
@@ -61,8 +66,14 @@ const AnnotationLabelsPage = () => {
         onSaveLabel={saveLabel}
         onDeleteLabel={deleteLabel}
       />
+
+      {/* Flag Management */}
+      <FlagManagement
+        flags={flags}
+        labels={labels}
+        onSaveFlag={saveFlag}
+        onDeleteFlag={deleteFlag}
+      />
     </div>
   );
-};
-
-export default AnnotationLabelsPage;
+}

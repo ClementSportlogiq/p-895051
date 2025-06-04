@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Settings, Save, Grid3X3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AnnotationLabel, AnnotationFlag } from "@/types/annotation";
+import { AnnotationLabel, AnnotationFlag, AnnotationCategory } from "@/types/annotation";
 import { useDefaultWizardConfig } from "@/hooks/useDefaultWizardConfig";
 import { MatrixConfiguration } from "./MatrixConfiguration";
 import { QuickEventsConfig } from "./components/QuickEventsConfig";
@@ -13,11 +13,13 @@ import { FlagDefinitionsConfig } from "./components/FlagDefinitionsConfig";
 interface DefaultWizardConfigProps {
   labels: AnnotationLabel[];
   flags: AnnotationFlag[];
+  categories: AnnotationCategory[];
 }
 
 export const DefaultWizardConfig: React.FC<DefaultWizardConfigProps> = ({
   labels,
   flags,
+  categories,
 }) => {
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [selectedQuickEvents, setSelectedQuickEvents] = useState<string[]>([]);
@@ -126,16 +128,7 @@ export const DefaultWizardConfig: React.FC<DefaultWizardConfigProps> = ({
           <TabsContent value="matrix" className="mt-6">
             <MatrixConfiguration 
               labels={labels}
-              categories={[
-                { id: 'offense', name: 'Offense', hotkey: 'O' },
-                { id: 'defense', name: 'Defense', hotkey: 'D' },
-                { id: 'transition', name: 'Transition', hotkey: 'T' },
-                { id: 'set_piece', name: 'Set Piece', hotkey: 'S' },
-                { id: 'general', name: 'General', hotkey: 'G' },
-                { id: 'stoppage', name: 'Stoppage', hotkey: 'P' },
-                { id: 'disciplinary', name: 'Disciplinary', hotkey: 'I' },
-                { id: 'substitution', name: 'Substitution', hotkey: 'U' }
-              ]}
+              categories={categories}
             />
           </TabsContent>
 
