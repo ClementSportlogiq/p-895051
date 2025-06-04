@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import EventButtonRow from "./EventButtonRow";
 import { AnnotationFlag, FlagValue } from "@/types/annotation";
 
@@ -9,6 +9,23 @@ interface FlagStepProps {
 }
 
 export const FlagStep: React.FC<FlagStepProps> = ({ flag, onFlagValueSelect }) => {
+  // ADDED: Component lifecycle logging to verify proper mounting
+  useEffect(() => {
+    console.log("🔄 FlagStep mounted/re-mounted", { 
+      flagId: flag?.id,
+      timestamp: new Date().toISOString() 
+    });
+    
+    return () => {
+      console.log("🔄 FlagStep unmounting", { flagId: flag?.id });
+    };
+  }, []); // Empty dependency array to log only on mount/unmount
+
+  // ADDED: Log when flag prop changes
+  useEffect(() => {
+    console.log("📍 FlagStep flag changed:", { flagId: flag?.id, flagName: flag?.name });
+  }, [flag]);
+
   // Safety check for missing flag
   if (!flag || !flag.values) {
     console.error("Missing or invalid flag data in FlagStep", flag);

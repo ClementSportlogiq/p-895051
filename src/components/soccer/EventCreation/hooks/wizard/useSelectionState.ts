@@ -11,6 +11,9 @@ export function useSelectionState() {
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [flagConditions, setFlagConditions] = useState<FlagCondition[]>([]);
   
+  // ADDED: Reset counter to force component re-mounting on reset
+  const [resetCounter, setResetCounter] = useState<number>(0);
+  
   // Enhanced reset function with logging and explicit null setting
   const resetSelectionState = () => {
     console.log("Resetting selection state - before:", {
@@ -18,7 +21,8 @@ export function useSelectionState() {
       selectedCategory,
       selectedEvent,
       selectedEventName,
-      flagConditions: flagConditions.length
+      flagConditions: flagConditions.length,
+      resetCounter
     });
     
     // Explicitly reset all selection state to their default values
@@ -28,7 +32,10 @@ export function useSelectionState() {
     setSelectedEventName(null);
     setFlagConditions([]);
     
-    console.log("Selection state reset - all selections cleared, currentStep set to default");
+    // CRITICAL: Increment reset counter to force component re-mounting
+    setResetCounter(prev => prev + 1);
+    
+    console.log("Selection state reset - all selections cleared, currentStep set to default, resetCounter incremented");
   };
   
   return {
@@ -42,6 +49,7 @@ export function useSelectionState() {
     setSelectedEventName,
     flagConditions,
     setFlagConditions,
+    resetCounter, // ADDED: Expose reset counter
     resetSelectionState
   };
 }

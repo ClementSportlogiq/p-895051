@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import EventButtonRow from "./EventButtonRow";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { useDefaultWizardConfig } from "@/hooks/useDefaultWizardConfig";
@@ -19,6 +19,23 @@ export const DefaultView: React.FC<DefaultViewProps> = ({
 }) => {
   const { getQuickEvents, categories, getLabelsByCategory } = useAnnotationLabels();
   const { getQuickEventsByMatrix, getCategoriesByMatrix } = useDefaultWizardConfig();
+  
+  // ADDED: Component lifecycle logging to verify proper mounting
+  useEffect(() => {
+    console.log("🔄 DefaultView mounted/re-mounted", { 
+      selectedCategory,
+      timestamp: new Date().toISOString() 
+    });
+    
+    return () => {
+      console.log("🔄 DefaultView unmounting", { selectedCategory });
+    };
+  }, []); // Empty dependency array to log only on mount/unmount
+  
+  // ADDED: Log when selectedCategory changes
+  useEffect(() => {
+    console.log("📍 DefaultView selectedCategory changed:", { selectedCategory });
+  }, [selectedCategory]);
   
   // Get matrix-based assignments
   const quickEventsMatrix = getQuickEventsByMatrix(getQuickEvents());
@@ -67,6 +84,11 @@ export const DefaultView: React.FC<DefaultViewProps> = ({
       type: 'category'
     };
   });
+
+  // ADDED: Defensive check to ensure proper prop handling
+  if (selectedCategory === undefined) {
+    console.warn("⚠️ DefaultView received undefined selectedCategory, treating as null");
+  }
 
   // If no category is selected, show the main default view
   if (!selectedCategory) {

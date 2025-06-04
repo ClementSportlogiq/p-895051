@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import DefaultView from "./DefaultView";
 import FlagStep from "./FlagStep";
 import { useWizardState } from "./hooks/useWizardState";
@@ -13,6 +13,7 @@ export const EventWizard: React.FC = () => {
     flagsForLabel,
     availableFlags,
     currentFlagIndex,
+    resetCounter, // ADDED: Get reset counter for forcing re-mounts
     handleCategorySelect,
     handleQuickEventSelect,
     handleEventSelect,
@@ -21,6 +22,20 @@ export const EventWizard: React.FC = () => {
   } = useWizardState();
 
   const { getLabelsByCategory, getQuickEvents } = useAnnotationLabels();
+
+  // ADDED: Component lifecycle logging to verify proper mounting
+  useEffect(() => {
+    console.log("🔄 EventWizard mounted/re-mounted", { 
+      currentStep, 
+      selectedCategory, 
+      resetCounter,
+      timestamp: new Date().toISOString() 
+    });
+    
+    return () => {
+      console.log("🔄 EventWizard unmounting", { resetCounter });
+    };
+  }, [resetCounter]); // Depend on resetCounter to log on forced re-mounts
 
   // Setup keyboard event handlers
   useEventTreeKeyboard({
@@ -69,14 +84,20 @@ export const EventWizard: React.FC = () => {
     currentFlag: currentFlag?.id || 'none',
     availableFlagsCount: availableFlags.length,
     shouldDisplayFlag,
+    resetCounter,
     renderingComponent: currentStep === "default" ? "DefaultView" : shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
   });
+
+  // CRITICAL: Generate dynamic keys for conditional components to force re-mounting
+  const defaultViewKey = `default-${resetCounter}-${selectedCategory || 'main'}`;
+  const flagStepKey = `flag-${resetCounter}-${currentFlag?.id || 'none'}`;
 
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
       {/* Back button (appears after first selection) */}
       {(currentStep !== "default" || selectedCategory) && (
         <button 
+          key={`back-${resetCounter}`} // ADDED: Dynamic key for back button
           onClick={handleBack}
           className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 mb-3 hover:bg-[#6b7883] transition-colors"
         >
@@ -84,9 +105,10 @@ export const EventWizard: React.FC = () => {
         </button>
       )}
 
-      {/* FIXED: Enhanced conditional rendering with explicit priority for currentStep */}
+      {/* FIXED: Enhanced conditional rendering with explicit priority for currentStep and dynamic keys */}
       {currentStep === "default" && (
         <DefaultView 
+          key={defaultViewKey} // CRITICAL: Dynamic key forces re-mount on reset
           selectedCategory={selectedCategory} 
           onCategorySelect={handleCategorySelect}
           onEventSelect={handleEventSelect}
@@ -96,6 +118,7 @@ export const EventWizard: React.FC = () => {
       {/* FIXED: Only show FlagStep when explicitly in flag step AND all conditions are met */}
       {currentStep === "flag" && shouldDisplayFlag && (
         <FlagStep 
+          key={flagStepKey} // CRITICAL: Dynamic key forces re-mount on reset
           flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 
         />
@@ -104,6 +127,7 @@ export const EventWizard: React.FC = () => {
       {/* FIXED: Fallback to DefaultView if currentStep is not explicitly handled */}
       {currentStep !== "default" && currentStep !== "flag" && (
         <DefaultView 
+          key={`fallback-${resetCounter}`} // CRITICAL: Dynamic key for fallback
           selectedCategory={selectedCategory} 
           onCategorySelect={handleCategorySelect}
           onEventSelect={handleEventSelect}

@@ -178,6 +178,7 @@ export function useWizardState(): WizardStateContextValue {
     availableFlags: flagLogic.availableFlags,
     currentFlagIndex: flagLogic.currentFlagIndex,
     flagConditions: selection.flagConditions,
+    resetCounter: selection.resetCounter, // ADDED: Expose reset counter
     handleCategorySelect: handlers.handleCategorySelect,
     handleQuickEventSelect: handlers.handleQuickEventSelect,
     handleEventSelect: handlers.handleEventSelect,

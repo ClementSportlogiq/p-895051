@@ -21,6 +21,7 @@ export interface WizardStateContextValue {
   availableFlags: AnnotationFlag[];
   currentFlagIndex: number;
   flagConditions: FlagCondition[];
+  resetCounter: number; // ADDED: Reset counter for forcing re-mounts
   handleCategorySelect: (category: EventCategory) => void;
   handleQuickEventSelect: (eventId: string) => void;
   handleEventSelect: (event: AnnotationLabel) => void;
