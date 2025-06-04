@@ -1,81 +1,135 @@
 
-import { useMemo } from "react";
-import { useBasicEventHandlers } from "./handlers/useBasicEventHandlers";
-import { useBackHandler } from "./handlers/useBackHandler";
-import { useFlagHandlers } from "./handlers/useFlagHandlers";
-import { useEventNavigation } from "./handlers/useEventNavigation";
-import { useEventCompletion } from "./handlers/useEventCompletion";
-import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
+import { useCallback } from "react";
 import { AnnotationLabel } from "@/types/annotation";
+import { WizardStep } from "./types";
 
 interface UseWizardHandlersProps {
-  selection: any;
-  flagLogic: any;
+  selection: {
+    setSelectedCategory: (category: string | null) => void;
+    setSelectedEvent: (event: AnnotationLabel | null) => void;
+    setSelectedEventName: (name: string | null) => void;
+    setCurrentStep: (step: WizardStep) => void;
+    setFlagConditions: (conditions: any[]) => void;
+    currentStep: WizardStep;
+    selectedCategory: string | null;
+    selectedEvent: AnnotationLabel | null;
+  };
+  flagLogic: {
+    flagsForLabel: any[];
+    availableFlags: any[];
+    currentFlagIndex: number;
+    setCurrentFlagIndex: (index: number) => void;
+    setFlagValues: (values: Record<string, string>) => void;
+    flagValues: Record<string, string>;
+    loadFlagsForLabel: (labelId: string) => void; // Added this function
+  };
   sockerContext: any;
 }
 
 export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWizardHandlersProps) {
-  const { labels, getLabelsByCategory } = useAnnotationLabels();
   
-  // Event completion handler for passing to various hooks
-  const { completeEventCreation, resetWizard } = useEventCompletion({
-    selection,
-    flagLogic,
-    sockerContext
-  });
-  
-  // Basic event handlers
-  const basicHandlers = useBasicEventHandlers({
-    selection,
-    sockerContext
-  });
-  
-  // Flag handlers
-  const flagHandlers = useFlagHandlers({
-    selection,
-    flagLogic,
-    completeAndMoveOn: completeEventCreation
-  });
-  
-  // Back button handler
-  const { handleBack } = useBackHandler({
-    selection,
-    flagLogic
-  });
-  
-  // Event navigation
-  const navigation = useEventNavigation({
-    selection,
-    flagLogic
-  });
-  
-  // Define a custom event select handler that incorporates navigation logic and flag conditions
-  const handleEventSelect = (event: AnnotationLabel) => {
-    // Call the basic handler first to set the selected event
-    basicHandlers.handleEventSelect(event);
+  const handleCategorySelect = useCallback((category: string) => {
+    selection.setSelectedCategory(category);
+  }, [selection]);
+
+  const handleQuickEventSelect = useCallback((event: AnnotationLabel) => {
+    selection.setSelectedEvent(event);
+    selection.setSelectedEventName(event.name);
     
-    // Update flag conditions from selected event
-    if (event && event.flag_conditions) {
-      flagLogic.setFlagConditions(event.flag_conditions);
-    } else {
-      flagLogic.setFlagConditions([]);
-    }
-    
-    // Determine and set the next step based on the selected event
-    navigation.determineNextStep(event);
-    
-    // Set flag-related state if needed
+    // Load flags for this specific event/label
     if (event.flags && event.flags.length > 0) {
-      flagLogic.setCurrentLabelId(event.id);
-      flagLogic.setFlagsForLabel(event.flags);
+      flagLogic.loadFlagsForLabel(event.id);
+      selection.setCurrentStep("flag");
+    } else {
+      // Complete event immediately if no flags
+      sockerContext?.setSelectedEvent?.(event.name);
+      selection.setCurrentStep("default");
     }
-  };
-  
+  }, [selection, flagLogic, sockerContext]);
+
+  const handleEventSelect = useCallback((event: AnnotationLabel) => {
+    selection.setSelectedEvent(event);
+    selection.setSelectedEventName(event.name);
+    
+    // Set flag conditions from the event
+    if (event.flag_conditions) {
+      selection.setFlagConditions(event.flag_conditions);
+    }
+    
+    // Load flags for this specific event/label
+    if (event.flags && event.flags.length > 0) {
+      flagLogic.loadFlagsForLabel(event.id);
+      selection.setCurrentStep("flag");
+    } else {
+      // Complete event immediately if no flags
+      sockerContext?.setSelectedEvent?.(event.name);
+      selection.setCurrentStep("default");
+    }
+  }, [selection, flagLogic, sockerContext]);
+
+  const handleFlagValueSelect = useCallback((value: string) => {
+    const currentFlag = flagLogic.availableFlags[flagLogic.currentFlagIndex];
+    if (!currentFlag) return;
+
+    // Update flag values
+    const newFlagValues = {
+      ...flagLogic.flagValues,
+      [currentFlag.id]: value
+    };
+    flagLogic.setFlagValues(newFlagValues);
+
+    // Move to next flag or complete
+    const nextFlagIndex = flagLogic.currentFlagIndex + 1;
+    if (nextFlagIndex < flagLogic.availableFlags.length) {
+      flagLogic.setCurrentFlagIndex(nextFlagIndex);
+    } else {
+      // All flags completed - finish the event
+      const eventName = selection.selectedEventName || 'Unknown Event';
+      const flagString = Object.entries(newFlagValues)
+        .map(([flagId, flagValue]) => {
+          const flag = flagLogic.availableFlags.find(f => f.id === flagId);
+          return flag ? `${flag.name}: ${flagValue}` : `${flagId}: ${flagValue}`;
+        })
+        .join(', ');
+      
+      const fullEventName = flagString ? `${eventName} (${flagString})` : eventName;
+      sockerContext?.setSelectedEvent?.(fullEventName);
+      
+      // Reset to default state
+      selection.setCurrentStep("default");
+      selection.setSelectedCategory(null);
+      selection.setSelectedEvent(null);
+      selection.setSelectedEventName(null);
+      flagLogic.setFlagValues({});
+      flagLogic.setCurrentFlagIndex(0);
+    }
+  }, [flagLogic, selection, sockerContext]);
+
+  const handleBack = useCallback(() => {
+    if (selection.currentStep === "flag") {
+      if (flagLogic.currentFlagIndex > 0) {
+        // Go back to previous flag
+        flagLogic.setCurrentFlagIndex(flagLogic.currentFlagIndex - 1);
+      } else {
+        // Go back to event selection
+        if (selection.selectedCategory) {
+          selection.setCurrentStep("default");
+        } else {
+          selection.setCurrentStep("default");
+          selection.setSelectedCategory(null);
+        }
+      }
+    } else if (selection.selectedCategory) {
+      // Go back to main categories
+      selection.setSelectedCategory(null);
+    }
+  }, [selection, flagLogic]);
+
   return {
-    ...basicHandlers,
-    ...flagHandlers,
-    handleBack,
+    handleCategorySelect,
+    handleQuickEventSelect,
     handleEventSelect,
-    resetWizard
+    handleFlagValueSelect,
+    handleBack
   };
 }

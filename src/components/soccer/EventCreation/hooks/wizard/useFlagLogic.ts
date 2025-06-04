@@ -18,7 +18,7 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
-  // Enhanced comprehensive reset function using explicit default configuration
+  // Fixed comprehensive reset function - ensures proper empty initial state
   const resetFlagLogic = () => {
     console.log("Resetting flag logic - before:", {
       currentLabelId,
@@ -31,25 +31,39 @@ export function useFlagLogic() {
     
     setCurrentLabelId(null);
     
-    // Get explicit default flag definitions from admin configuration
-    const defaultFlags = getDefaultFlagDefinitions();
-    setFlagsForLabel(defaultFlags); // Reset to explicitly configured default flags
+    // CRITICAL FIX: Set flagsForLabel to empty array during reset
+    // This ensures the wizard starts with no flags loaded, matching the working completion pathway
+    // Default flags should only be loaded when a specific event/label is selected
+    setFlagsForLabel([]); // Changed from getDefaultFlagDefinitions() to []
     setAvailableFlags([]);
     setCurrentFlagIndex(0);
     setFlagValues({});
     
-    // Reset flagConditions to default conditions from configured flags
+    // Reset flagConditions to empty array - no default conditions without flags
+    setFlagConditions([]);
+    
+    console.log("Flag logic reset - flagsForLabel set to empty array for correct initial state");
+  };
+
+  // Load default flags when a label is selected (not during reset)
+  const loadFlagsForLabel = (labelId: string) => {
+    setCurrentLabelId(labelId);
+    
+    // Now load the default flags for this specific label
+    const defaultFlags = getDefaultFlagDefinitions();
+    setFlagsForLabel(defaultFlags);
+    
+    // Generate default flag conditions from the loaded flags
     const defaultFlagConditions: FlagCondition[] = defaultFlags.flatMap(flag => 
       flag.values?.flatMap(value => ({
         flagId: flag.id,
         value: value.value,
-        flagsToHideIds: [] // Default to no flags hidden
+        flagsToHideIds: []
       })) || []
     );
     setFlagConditions(defaultFlagConditions);
     
-    console.log("Flag logic reset - flagsForLabel restored to configured defaults:", defaultFlags.length);
-    console.log("Flag logic reset - flagConditions restored to configured defaults:", defaultFlagConditions.length);
+    console.log(`Loaded ${defaultFlags.length} flags for label ${labelId}`);
   };
 
   // Update available flags based on current selections and flag conditions
@@ -106,6 +120,7 @@ export function useFlagLogic() {
     setFlagValues,
     resetFlagValues,
     resetFlagLogic,
+    loadFlagsForLabel, // New function to load flags when a label is selected
     currentFlag,
     flagConditions,
     setFlagConditions
