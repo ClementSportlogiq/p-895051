@@ -13,8 +13,8 @@ interface MatrixConfigurationProps {
 }
 
 export const MatrixConfiguration: React.FC<MatrixConfigurationProps> = ({
-  labels,
-  categories
+  labels = [],
+  categories = []
 }) => {
   const { config, saveConfig, getQuickEventsByMatrix, getCategoriesByMatrix } = useDefaultWizardConfig();
   const [quickEventsMatrix, setQuickEventsMatrix] = useState<Record<string, string>>({});
@@ -92,7 +92,7 @@ export const MatrixConfiguration: React.FC<MatrixConfigurationProps> = ({
   
   // Add quick events to assignments
   Object.entries(quickEventsMatrix).forEach(([position, labelId]) => {
-    const label = labels.find(l => l.id === labelId);
+    const label = labels?.find(l => l.id === labelId);
     if (label) {
       matrixAssignments[position] = {
         id: label.id,
@@ -104,7 +104,7 @@ export const MatrixConfiguration: React.FC<MatrixConfigurationProps> = ({
   
   // Add categories to assignments
   Object.entries(categoriesMatrix).forEach(([position, categoryId]) => {
-    const category = categories.find(c => c.id === categoryId);
+    const category = categories?.find(c => c.id === categoryId);
     if (category) {
       matrixAssignments[position] = {
         id: category.id,
@@ -118,7 +118,7 @@ export const MatrixConfiguration: React.FC<MatrixConfigurationProps> = ({
     JSON.stringify(quickEventsMatrix) !== JSON.stringify(config?.quick_events_matrix_positions || {}) ||
     JSON.stringify(categoriesMatrix) !== JSON.stringify(config?.categories_matrix_positions || {});
 
-  const availableItems = assignmentType === 'quick-event' ? labels : categories;
+  const availableItems = assignmentType === 'quick-event' ? (labels || []) : (categories || []);
   const usedItems = assignmentType === 'quick-event' 
     ? Object.values(quickEventsMatrix)
     : Object.values(categoriesMatrix);
