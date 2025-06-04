@@ -18,7 +18,7 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
-  // Fixed comprehensive reset function - ensures proper empty initial state
+  // ENHANCED: Comprehensive reset function with immediate state clearing
   const resetFlagLogic = () => {
     console.log("Resetting flag logic - before:", {
       currentLabelId,
@@ -29,24 +29,20 @@ export function useFlagLogic() {
       flagConditions: flagConditions.length
     });
     
+    // CRITICAL: Immediately clear all flag-related state to prevent UI persistence
     setCurrentLabelId(null);
-    
-    // CRITICAL FIX: Set flagsForLabel to empty array during reset
-    // This ensures the wizard starts with no flags loaded, matching the working completion pathway
-    // Default flags should only be loaded when a specific event/label is selected
-    setFlagsForLabel([]); // Changed from getDefaultFlagDefinitions() to []
+    setFlagsForLabel([]);
     setAvailableFlags([]);
     setCurrentFlagIndex(0);
     setFlagValues({});
-    
-    // Reset flagConditions to empty array - no default conditions without flags
     setFlagConditions([]);
     
-    console.log("Flag logic reset - flagsForLabel set to empty array for correct initial state");
+    console.log("Flag logic reset - all flag state cleared for correct visual reset");
   };
 
   // Load default flags when a label is selected (not during reset)
   const loadFlagsForLabel = (labelId: string) => {
+    console.log(`Loading flags for label: ${labelId}`);
     setCurrentLabelId(labelId);
     
     // Now load the default flags for this specific label
@@ -120,7 +116,7 @@ export function useFlagLogic() {
     setFlagValues,
     resetFlagValues,
     resetFlagLogic,
-    loadFlagsForLabel, // New function to load flags when a label is selected
+    loadFlagsForLabel,
     currentFlag,
     flagConditions,
     setFlagConditions

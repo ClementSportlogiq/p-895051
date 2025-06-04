@@ -51,10 +51,26 @@ export const EventWizard: React.FC = () => {
     handleFlagValueSelect
   });
 
-  // Get current flag to display
+  // Get current flag to display - with enhanced defensive checks
   const currentFlag = flagsForLabel[currentFlagIndex];
-  // Check if the current flag should be displayed based on available flags
-  const shouldDisplayFlag = currentFlag && availableFlags.some(f => f.id === currentFlag.id);
+  
+  // CRITICAL FIX: Strengthen shouldDisplayFlag logic to prevent race conditions
+  // This addresses the core visual reset failure issue
+  const shouldDisplayFlag = currentStep === "flag" && 
+                           currentFlag && 
+                           currentFlag.id && 
+                           availableFlags.length > 0 && 
+                           availableFlags.some(f => f && f.id === currentFlag.id);
+
+  // Debug logging to track rendering conditions (can be removed after verification)
+  console.log("EventWizard render conditions:", {
+    currentStep,
+    selectedCategory,
+    currentFlag: currentFlag?.id || 'none',
+    availableFlagsCount: availableFlags.length,
+    shouldDisplayFlag,
+    renderingComponent: currentStep === "default" ? "DefaultView" : shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
+  });
 
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
@@ -68,7 +84,7 @@ export const EventWizard: React.FC = () => {
         </button>
       )}
 
-      {/* Default View - handles both main view and category-specific views */}
+      {/* FIXED: Enhanced conditional rendering with explicit priority for currentStep */}
       {currentStep === "default" && (
         <DefaultView 
           selectedCategory={selectedCategory} 
@@ -77,11 +93,20 @@ export const EventWizard: React.FC = () => {
         />
       )}
       
-      {/* Flag Selection - only show flags that aren't hidden by conditions */}
+      {/* FIXED: Only show FlagStep when explicitly in flag step AND all conditions are met */}
       {currentStep === "flag" && shouldDisplayFlag && (
         <FlagStep 
           flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 
+        />
+      )}
+
+      {/* FIXED: Fallback to DefaultView if currentStep is not explicitly handled */}
+      {currentStep !== "default" && currentStep !== "flag" && (
+        <DefaultView 
+          selectedCategory={selectedCategory} 
+          onCategorySelect={handleCategorySelect}
+          onEventSelect={handleEventSelect}
         />
       )}
     </div>
