@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react';
 import { AnnotationLabel, EventCategory, AnnotationFlag } from '@/types/annotation';
 import { useLabels } from './useLabels';
 import { useFlags } from './useFlags';
+import { useCategories } from './useCategories';
 import { useDataInitialization } from './useDataInitialization';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
 import { useDefaultWizardConfig } from '../useDefaultWizardConfig';
-import { defaultCategories } from './constants';
 
 export function useAnnotationLabels() {
   const { 
@@ -28,6 +28,14 @@ export function useAnnotationLabels() {
     deleteFlag: deleteFlag_
   } = useFlags();
 
+  const {
+    categories,
+    setCategories,
+    loadCategories,
+    saveCategory,
+    deleteCategory
+  } = useCategories();
+
   const { getConfiguredQuickEvents, getConfiguredFlagDefinitions } = useDefaultWizardConfig();
   
   const {
@@ -36,8 +44,14 @@ export function useAnnotationLabels() {
     isInitialized
   } = useDataInitialization(setLabels, setFlags, setIsLoading, processLabels);
   
+  // Enhanced real-time subscription to include categories
+  const enhancedLoadData = async () => {
+    await loadData();
+    await loadCategories();
+  };
+
   // Set up real-time subscription for changes
-  useRealtimeSubscription(loadData);
+  useRealtimeSubscription(enhancedLoadData);
   
   // Initialize defaults after loading
   useEffect(() => {
@@ -80,16 +94,18 @@ export function useAnnotationLabels() {
   return {
     labels,
     flags,
+    categories,
     isLoading,
     getQuickEvents,
     getLabelsByCategory,
     getFlagsByLabel,
-    getDefaultFlagDefinitions, // New method for explicit default flag definitions
-    categories: defaultCategories,
+    getDefaultFlagDefinitions,
     saveLabel,
     deleteLabel,
     saveFlag,
-    deleteFlag
+    deleteFlag,
+    saveCategory,
+    deleteCategory
   };
 }
 

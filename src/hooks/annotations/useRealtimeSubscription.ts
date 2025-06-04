@@ -25,10 +25,20 @@ export function useRealtimeSubscription(loadData: () => Promise<void>) {
         () => loadData()
       )
       .subscribe();
+
+    const categoriesSubscription = supabase
+      .channel('annotation_categories_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'annotation_categories' },
+        () => loadData()
+      )
+      .subscribe();
       
     return () => {
       supabase.removeChannel(labelsSubscription);
       supabase.removeChannel(flagsSubscription);
+      supabase.removeChannel(categoriesSubscription);
     };
   }, []);
 }

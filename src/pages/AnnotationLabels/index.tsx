@@ -3,6 +3,7 @@ import React from "react";
 import { DefaultWizardConfig } from "./DefaultWizardConfig";
 import { FlagManagement } from "./FlagManagement";
 import { LabelManagement } from "./components/LabelManagement";
+import { CategoryManagement } from "./components/CategoryManagement";
 import { LoadingState } from "./LoadingState";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 
@@ -10,12 +11,14 @@ const AnnotationLabelsPage = () => {
   const { 
     labels, 
     flags, 
+    categories,
     isLoading, 
-    categories, 
     saveLabel, 
     deleteLabel, 
     saveFlag, 
-    deleteFlag 
+    deleteFlag,
+    saveCategory,
+    deleteCategory
   } = useAnnotationLabels();
 
   // Handle editing a flag (passed to FlagManagement)
@@ -33,6 +36,14 @@ const AnnotationLabelsPage = () => {
       
       {/* Default Wizard Configuration Section */}
       <DefaultWizardConfig labels={labels} flags={flags} />
+      
+      {/* Category Management Section */}
+      <CategoryManagement
+        categories={categories}
+        labels={labels}
+        onSaveCategory={saveCategory}
+        onDeleteCategory={deleteCategory}
+      />
       
       {/* Flag Management Section */}
       <FlagManagement
