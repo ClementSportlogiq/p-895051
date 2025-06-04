@@ -57,7 +57,15 @@ export function useWizardState(): WizardStateContextValue {
         flagLogic.setCurrentFlagIndex(0);
         flagLogic.setFlagValues({});
         flagLogic.setAvailableFlags([]);
-        flagLogic.setFlagConditions([]);
+        // Generate default flag conditions from available flags
+        const defaultFlagConditions = (flags || []).flatMap(flag => 
+          flag.values?.flatMap(value => ({
+            flagId: flag.id,
+            value: value.value,
+            flagsToHideIds: []
+          })) || []
+        );
+        flagLogic.setFlagConditions(defaultFlagConditions);
       }
       
       // Reset soccer context with null check
@@ -79,6 +87,10 @@ export function useWizardState(): WizardStateContextValue {
   // State validation function to ensure complete reset
   const validateResetState = () => {
     const expectedFlagsCount = (flags || []).length;
+    // Calculate expected flag conditions count (all flag values combinations)
+    const expectedFlagConditionsCount = (flags || []).reduce((total, flag) => 
+      total + (flag.values?.length || 0), 0
+    );
     
     const validationResults = {
       selection: {
@@ -94,7 +106,7 @@ export function useWizardState(): WizardStateContextValue {
         availableFlags: flagLogic.availableFlags.length === 0, // Should be empty until a label is selected
         currentFlagIndex: flagLogic.currentFlagIndex === 0,
         flagValues: Object.keys(flagLogic.flagValues).length === 0,
-        flagConditions: flagLogic.flagConditions.length === 0 // Event-specific conditions should be empty
+        flagConditions: flagLogic.flagConditions.length === expectedFlagConditionsCount // Should contain all default flag conditions
       }
     };
     
@@ -104,6 +116,7 @@ export function useWizardState(): WizardStateContextValue {
     if (allValid) {
       console.log("✅ Wizard reset validation PASSED - all state properly reset");
       console.log(`flagsForLabel correctly contains ${flagLogic.flagsForLabel.length} default flags`);
+      console.log(`flagConditions correctly contains ${flagLogic.flagConditions.length} default conditions`);
     } else {
       console.warn("❌ Wizard reset validation FAILED:", validationResults);
       console.warn("Current state values:", {
@@ -120,7 +133,7 @@ export function useWizardState(): WizardStateContextValue {
           availableFlags: flagLogic.availableFlags.length,
           currentFlagIndex: flagLogic.currentFlagIndex,
           flagValues: flagLogic.flagValues,
-          flagConditions: flagLogic.flagConditions.length
+          flagConditions: `${flagLogic.flagConditions.length} conditions (expected: ${expectedFlagConditionsCount})`
         }
       });
     }

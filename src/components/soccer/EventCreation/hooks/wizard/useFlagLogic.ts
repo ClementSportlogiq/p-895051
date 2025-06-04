@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 import { AnnotationFlag, FlagCondition } from "@/types/annotation";
@@ -30,16 +29,27 @@ export function useFlagLogic() {
     });
     
     setCurrentLabelId(null);
-    // Reset flagsForLabel and flagConditions to their default populated state
+    // Reset flagsForLabel to their default populated state
     // These should contain the complete available flags from the annotation system
     setFlagsForLabel(flags || []); // Reset to all available flags from the system
     setAvailableFlags([]);
     setCurrentFlagIndex(0);
     setFlagValues({});
-    // flagConditions should reset to empty since these are event-specific conditions
-    setFlagConditions([]);
+    
+    // Reset flagConditions to their default populated state
+    // These should contain the complete list of general flag definitions
+    // Extract all flag conditions from all available flags as the default set
+    const defaultFlagConditions: FlagCondition[] = (flags || []).flatMap(flag => 
+      flag.values?.flatMap(value => ({
+        flagId: flag.id,
+        value: value.value,
+        flagsToHideIds: [] // Default to no flags hidden
+      })) || []
+    );
+    setFlagConditions(defaultFlagConditions);
     
     console.log("Flag logic reset - flagsForLabel restored to default flags:", (flags || []).length);
+    console.log("Flag logic reset - flagConditions restored to default conditions:", defaultFlagConditions.length);
   };
 
   // Update available flags based on current selections and flag conditions
