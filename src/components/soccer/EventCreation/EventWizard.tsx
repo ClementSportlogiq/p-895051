@@ -69,28 +69,41 @@ export const EventWizard: React.FC = () => {
   // Get current flag to display - with enhanced defensive checks
   const currentFlag = flagsForLabel[currentFlagIndex];
   
-  // CRITICAL FIX: Strengthen shouldDisplayFlag logic to prevent race conditions
-  // This addresses the core visual reset failure issue
-  const shouldDisplayFlag = currentStep === "flag" && 
-                           currentFlag && 
-                           currentFlag.id && 
-                           availableFlags.length > 0 && 
-                           availableFlags.some(f => f && f.id === currentFlag.id);
+  // STRENGTHENED: Enhanced shouldDisplayFlag logic with explicit boolean checks
+  const shouldDisplayFlag = Boolean(
+    currentStep === "flag" && 
+    currentFlag && 
+    currentFlag.id && 
+    availableFlags.length > 0 && 
+    availableFlags.some(f => f && f.id === currentFlag.id)
+  );
 
-  // Debug logging to track rendering conditions (can be removed after verification)
-  console.log("EventWizard render conditions:", {
+  // STRENGTHENED: Explicit check for DefaultView display conditions
+  const shouldDisplayDefaultView = Boolean(
+    currentStep === "default" || 
+    (currentStep !== "flag" || !shouldDisplayFlag)
+  );
+
+  // Enhanced debug logging to track rendering conditions
+  console.log("🎯 EventWizard render decision:", {
     currentStep,
     selectedCategory,
     currentFlag: currentFlag?.id || 'none',
     availableFlagsCount: availableFlags.length,
     shouldDisplayFlag,
+    shouldDisplayDefaultView,
     resetCounter,
-    renderingComponent: currentStep === "default" ? "DefaultView" : shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
+    willRender: shouldDisplayDefaultView ? "DefaultView" : shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
   });
 
-  // CRITICAL: Generate dynamic keys for conditional components to force re-mounting
-  const defaultViewKey = `default-${resetCounter}-${selectedCategory || 'main'}`;
-  const flagStepKey = `flag-${resetCounter}-${currentFlag?.id || 'none'}`;
+  // CRITICAL: Generate more specific dynamic keys for component identity
+  const defaultViewKey = selectedCategory 
+    ? `category-${selectedCategory}-${resetCounter}` 
+    : `default-main-${resetCounter}`;
+  
+  const flagStepKey = currentFlag 
+    ? `flag-${currentFlag.id}-${resetCounter}` 
+    : `empty-flag-${resetCounter}`;
 
   return (
     <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
@@ -105,32 +118,22 @@ export const EventWizard: React.FC = () => {
         </button>
       )}
 
-      {/* FIXED: Enhanced conditional rendering with explicit priority for currentStep and dynamic keys */}
-      {currentStep === "default" && (
+      {/* FIXED: Strengthened conditional rendering with explicit priority and unique keys */}
+      {shouldDisplayDefaultView && (
         <DefaultView 
-          key={defaultViewKey} // CRITICAL: Dynamic key forces re-mount on reset
+          key={defaultViewKey} // CRITICAL: Unique key forces re-mount on state changes
           selectedCategory={selectedCategory} 
           onCategorySelect={handleCategorySelect}
           onEventSelect={handleEventSelect}
         />
       )}
       
-      {/* FIXED: Only show FlagStep when explicitly in flag step AND all conditions are met */}
-      {currentStep === "flag" && shouldDisplayFlag && (
+      {/* FIXED: Only render FlagStep when explicitly required AND prevent overlap */}
+      {!shouldDisplayDefaultView && shouldDisplayFlag && (
         <FlagStep 
-          key={flagStepKey} // CRITICAL: Dynamic key forces re-mount on reset
+          key={flagStepKey} // CRITICAL: Unique key forces re-mount on flag changes
           flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 
-        />
-      )}
-
-      {/* FIXED: Fallback to DefaultView if currentStep is not explicitly handled */}
-      {currentStep !== "default" && currentStep !== "flag" && (
-        <DefaultView 
-          key={`fallback-${resetCounter}`} // CRITICAL: Dynamic key for fallback
-          selectedCategory={selectedCategory} 
-          onCategorySelect={handleCategorySelect}
-          onEventSelect={handleEventSelect}
         />
       )}
     </div>
