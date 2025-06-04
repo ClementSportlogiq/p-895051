@@ -9,7 +9,7 @@ import {
 } from "@/types/annotation";
 
 // Export WizardStep so it can be imported elsewhere
-export { WizardStep };
+export type { WizardStep };
 
 export interface WizardStateContextValue {
   currentStep: WizardStep;

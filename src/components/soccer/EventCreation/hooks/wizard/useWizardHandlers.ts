@@ -6,13 +6,13 @@ import { WizardStep } from "@/types/annotation";
 interface UseWizardHandlersProps {
   selection: {
     setSelectedCategory: (category: EventCategory | null) => void;
-    setSelectedEvent: (event: AnnotationLabel | null) => void;
+    setSelectedEvent: (event: string | null) => void; // Changed to string
     setSelectedEventName: (name: string | null) => void;
     setCurrentStep: (step: WizardStep) => void;
     setFlagConditions: (conditions: any[]) => void;
     currentStep: WizardStep;
     selectedCategory: EventCategory | null;
-    selectedEvent: AnnotationLabel | null;
+    selectedEvent: string | null; // Changed to string
     selectedEventName: string | null;
   };
   flagLogic: {
@@ -36,7 +36,7 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   const handleQuickEventSelect = useCallback((eventId: string) => {
     // Find event from context or annotation labels
     const event = { id: eventId, name: eventId } as AnnotationLabel; // This should be properly resolved from context
-    selection.setSelectedEvent(event);
+    selection.setSelectedEvent(event.id); // Store just the ID as string
     selection.setSelectedEventName(event.name);
     
     // Load flags for this specific event/label
@@ -51,7 +51,7 @@ export function useWizardHandlers({ selection, flagLogic, sockerContext }: UseWi
   }, [selection, flagLogic, sockerContext]);
 
   const handleEventSelect = useCallback((event: AnnotationLabel) => {
-    selection.setSelectedEvent(event);
+    selection.setSelectedEvent(event.id); // Store just the ID as string
     selection.setSelectedEventName(event.name);
     
     // Set flag conditions from the event
