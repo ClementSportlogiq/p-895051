@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnnotationLabel, AnnotationFlag } from "@/types/annotation";
 import { useDefaultWizardConfig } from "@/hooks/useDefaultWizardConfig";
 import { MatrixConfiguration } from "./MatrixConfiguration";
+import { QuickEventsConfig } from "./components/QuickEventsConfig";
+import { FlagDefinitionsConfig } from "./components/FlagDefinitionsConfig";
 
 interface DefaultWizardConfigProps {
   labels: AnnotationLabel[];
@@ -138,84 +140,21 @@ export const DefaultWizardConfig: React.FC<DefaultWizardConfigProps> = ({
           </TabsContent>
 
           <TabsContent value="quick-events" className="mt-6">
-            {/* Current Configuration Preview */}
-            <div className="bg-white p-4 rounded border">
-              <h3 className="font-medium mb-3">Current Quick Events Configuration</h3>
-              <div className="space-y-1">
-                {configuredQuickEvents.map((event, index) => (
-                  <div key={event.id} className="text-sm bg-gray-100 px-2 py-1 rounded">
-                    {index + 1}. {event.name} ({event.hotkey})
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Events Selection */}
-            <div>
-              <h3 className="font-medium mb-3">Select Default Quick Events (exactly 4)</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Choose which events should appear as quick actions on the wizard's default start screen.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {labels.map((label) => (
-                  <label key={label.id} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuickEvents.includes(label.id)}
-                      onChange={() => handleQuickEventToggle(label.id)}
-                      disabled={!selectedQuickEvents.includes(label.id) && selectedQuickEvents.length >= 4}
-                      className="rounded"
-                    />
-                    <span className="text-sm">
-                      {label.name} ({label.hotkey}) - {label.category}
-                    </span>
-                  </label>
-                ))}
-              </div>
-              {selectedQuickEvents.length >= 4 && (
-                <p className="text-sm text-amber-600 mt-2">
-                  Maximum of 4 quick events selected. Uncheck an event to select a different one.
-                </p>
-              )}
-            </div>
+            <QuickEventsConfig
+              labels={labels}
+              selectedQuickEvents={selectedQuickEvents}
+              configuredQuickEvents={configuredQuickEvents}
+              onQuickEventToggle={handleQuickEventToggle}
+            />
           </TabsContent>
 
           <TabsContent value="flags" className="mt-6">
-            {/* Current Configuration Preview */}
-            <div className="bg-white p-4 rounded border">
-              <h3 className="font-medium mb-3">Current Flag Definitions ({configuredFlagDefinitions.length})</h3>
-              <div className="space-y-1">
-                {configuredFlagDefinitions.map((flag) => (
-                  <div key={flag.id} className="text-sm bg-gray-100 px-2 py-1 rounded">
-                    {flag.name} ({flag.values?.length || 0} values)
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Flag Definitions Selection */}
-            <div>
-              <h3 className="font-medium mb-3">Select Default Flag Definitions</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Choose which flag definitions should be available by default in the wizard's reset state.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {flags.map((flag) => (
-                  <label key={flag.id} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedFlagDefinitions.includes(flag.id)}
-                      onChange={() => handleFlagDefinitionToggle(flag.id)}
-                      className="rounded"
-                    />
-                    <span className="text-sm">
-                      {flag.name} ({flag.values?.length || 0} values)
-                      {flag.description && ` - ${flag.description}`}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <FlagDefinitionsConfig
+              flags={flags}
+              selectedFlagDefinitions={selectedFlagDefinitions}
+              configuredFlagDefinitions={configuredFlagDefinitions}
+              onFlagDefinitionToggle={handleFlagDefinitionToggle}
+            />
           </TabsContent>
         </Tabs>
 

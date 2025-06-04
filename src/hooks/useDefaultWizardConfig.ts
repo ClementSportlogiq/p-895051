@@ -32,13 +32,13 @@ export function useDefaultWizardConfig() {
       if (error) throw error;
 
       if (data) {
-        // Cast the Json types to string arrays and objects
+        // Cast the Json types to string arrays and objects with proper type checking
         const configData: WizardDefaultConfig = {
           ...data,
           default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
           default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : [],
-          quick_events_matrix_positions: data.quick_events_matrix_positions || {},
-          categories_matrix_positions: data.categories_matrix_positions || {}
+          quick_events_matrix_positions: (data.quick_events_matrix_positions && typeof data.quick_events_matrix_positions === 'object' && !Array.isArray(data.quick_events_matrix_positions)) ? data.quick_events_matrix_positions as Record<string, string> : {},
+          categories_matrix_positions: (data.categories_matrix_positions && typeof data.categories_matrix_positions === 'object' && !Array.isArray(data.categories_matrix_positions)) ? data.categories_matrix_positions as Record<string, string> : {}
         };
         setConfig(configData);
       } else {
@@ -91,8 +91,8 @@ export function useDefaultWizardConfig() {
           ...data,
           default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
           default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : [],
-          quick_events_matrix_positions: data.quick_events_matrix_positions || {},
-          categories_matrix_positions: data.categories_matrix_positions || {}
+          quick_events_matrix_positions: (data.quick_events_matrix_positions && typeof data.quick_events_matrix_positions === 'object' && !Array.isArray(data.quick_events_matrix_positions)) ? data.quick_events_matrix_positions as Record<string, string> : {},
+          categories_matrix_positions: (data.categories_matrix_positions && typeof data.categories_matrix_positions === 'object' && !Array.isArray(data.categories_matrix_positions)) ? data.categories_matrix_positions as Record<string, string> : {}
         };
         setConfig(configData);
       }
