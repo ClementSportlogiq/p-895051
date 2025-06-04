@@ -35,6 +35,10 @@ export function useWizardState(): WizardStateContextValue {
     try {
       console.log("Starting comprehensive wizard reset...");
       
+      // Store current team and player selections to preserve them
+      const currentSelectedTeam = sockerContext.selectedTeam;
+      const currentSelectedPlayer = sockerContext.selectedPlayer;
+      
       // Reset selection state using its own reset function
       if (selection.resetSelectionState) {
         selection.resetSelectionState();
@@ -68,14 +72,22 @@ export function useWizardState(): WizardStateContextValue {
         flagLogic.setFlagConditions(defaultFlagConditions);
       }
       
-      // Reset soccer context with null check
+      // Reset soccer context with null check, but preserve team and player selections
       if (sockerContext && sockerContext.resetEventSelection) {
         sockerContext.resetEventSelection();
+        
+        // Restore team and player selections after context reset
+        if (currentSelectedTeam && sockerContext.setSelectedTeam) {
+          sockerContext.setSelectedTeam(currentSelectedTeam);
+        }
+        if (currentSelectedPlayer && sockerContext.setSelectedPlayer) {
+          sockerContext.setSelectedPlayer(currentSelectedPlayer);
+        }
       }
       
       // Validate reset state after a brief delay to ensure all state updates have completed
       setTimeout(() => {
-        validateResetState();
+        validateResetState(currentSelectedTeam, currentSelectedPlayer);
       }, 100);
       
       console.log("Wizard state comprehensive reset completed");
@@ -84,8 +96,8 @@ export function useWizardState(): WizardStateContextValue {
     }
   };
 
-  // State validation function to ensure complete reset
-  const validateResetState = () => {
+  // State validation function to ensure complete reset while preserving team/player selections
+  const validateResetState = (expectedTeam?: any, expectedPlayer?: any) => {
     const expectedFlagsCount = (flags || []).length;
     // Calculate expected flag conditions count (all flag values combinations)
     const expectedFlagConditionsCount = (flags || []).reduce((total, flag) => 
@@ -107,16 +119,24 @@ export function useWizardState(): WizardStateContextValue {
         currentFlagIndex: flagLogic.currentFlagIndex === 0,
         flagValues: Object.keys(flagLogic.flagValues).length === 0,
         flagConditions: flagLogic.flagConditions.length === expectedFlagConditionsCount // Should contain all default flag conditions
+      },
+      soccerContext: {
+        // Team and player should retain their values, not be forced to null
+        selectedTeam: expectedTeam ? sockerContext.selectedTeam === expectedTeam : true, // Should retain value if it existed
+        selectedPlayer: expectedPlayer ? sockerContext.selectedPlayer === expectedPlayer : true // Should retain value if it existed
       }
     };
     
     const allValid = Object.values(validationResults.selection).every(Boolean) &&
-                    Object.values(validationResults.flagLogic).every(Boolean);
+                    Object.values(validationResults.flagLogic).every(Boolean) &&
+                    Object.values(validationResults.soccerContext).every(Boolean);
     
     if (allValid) {
       console.log("✅ Wizard reset validation PASSED - all state properly reset");
       console.log(`flagsForLabel correctly contains ${flagLogic.flagsForLabel.length} default flags`);
       console.log(`flagConditions correctly contains ${flagLogic.flagConditions.length} default conditions`);
+      console.log(`selectedTeam correctly preserved: ${sockerContext.selectedTeam}`);
+      console.log(`selectedPlayer correctly preserved: ${sockerContext.selectedPlayer?.number || 'none'}`);
     } else {
       console.warn("❌ Wizard reset validation FAILED:", validationResults);
       console.warn("Current state values:", {
@@ -134,6 +154,10 @@ export function useWizardState(): WizardStateContextValue {
           currentFlagIndex: flagLogic.currentFlagIndex,
           flagValues: flagLogic.flagValues,
           flagConditions: `${flagLogic.flagConditions.length} conditions (expected: ${expectedFlagConditionsCount})`
+        },
+        soccerContext: {
+          selectedTeam: sockerContext.selectedTeam,
+          selectedPlayer: sockerContext.selectedPlayer?.number || 'none'
         }
       });
     }
