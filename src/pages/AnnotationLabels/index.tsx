@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
-import LoadingState from "./LoadingState";
+import { LoadingState } from "./LoadingState";
 import { LabelManagement } from "./components/LabelManagement";
 import { FlagManagement } from "./FlagManagement";
 import { CategoryManagement } from "./components/CategoryManagement";
@@ -70,7 +70,6 @@ export default function AnnotationLabels() {
       {/* Flag Management */}
       <FlagManagement
         flags={flags}
-        labels={labels}
         onSaveFlag={saveFlag}
         onDeleteFlag={deleteFlag}
       />
