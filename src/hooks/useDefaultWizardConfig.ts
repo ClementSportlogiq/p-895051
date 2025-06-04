@@ -29,7 +29,17 @@ export function useDefaultWizardConfig() {
 
       if (error) throw error;
 
-      setConfig(data);
+      if (data) {
+        // Cast the Json types to string arrays
+        const configData: WizardDefaultConfig = {
+          ...data,
+          default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
+          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : []
+        };
+        setConfig(configData);
+      } else {
+        setConfig(null);
+      }
     } catch (error) {
       console.error('Error loading wizard default config:', error);
       toast({
@@ -57,7 +67,16 @@ export function useDefaultWizardConfig() {
 
       if (error) throw error;
 
-      setConfig(data);
+      if (data) {
+        // Cast the Json types to string arrays
+        const configData: WizardDefaultConfig = {
+          ...data,
+          default_quick_events: Array.isArray(data.default_quick_events) ? data.default_quick_events as string[] : [],
+          default_flag_definitions: Array.isArray(data.default_flag_definitions) ? data.default_flag_definitions as string[] : []
+        };
+        setConfig(configData);
+      }
+      
       toast({
         title: "Configuration saved",
         description: "Default wizard settings have been updated successfully.",

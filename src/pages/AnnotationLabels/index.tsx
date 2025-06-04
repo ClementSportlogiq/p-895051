@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -12,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import FlagManagement from "./FlagManagement";
 import DefaultWizardConfig from "./DefaultWizardConfig";
-import LoadingState from "./LoadingState";
+import { LoadingState } from "./LoadingState";
 import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 
 const AnnotationLabelsPage = () => {
