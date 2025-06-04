@@ -32,6 +32,11 @@ export default function AnnotationLabels() {
     category: label.category
   }));
 
+  // Placeholder function for editing flags - this will be handled internally by FlagManagement
+  const handleEditFlag = () => {
+    // This is handled internally by the FlagManagement component
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="text-center">
@@ -70,6 +75,7 @@ export default function AnnotationLabels() {
       {/* Flag Management */}
       <FlagManagement
         flags={flags}
+        onEditFlag={handleEditFlag}
         onSaveFlag={saveFlag}
         onDeleteFlag={deleteFlag}
       />
