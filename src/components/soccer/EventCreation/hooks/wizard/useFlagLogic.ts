@@ -18,7 +18,7 @@ export function useFlagLogic() {
     setCurrentFlagIndex(0);
   };
 
-  // ENHANCED: Comprehensive reset function with immediate state clearing
+  // Simplified comprehensive reset function with immediate state clearing to empty arrays
   const resetFlagLogic = () => {
     console.log("Resetting flag logic - before:", {
       currentLabelId,
@@ -29,7 +29,7 @@ export function useFlagLogic() {
       flagConditions: flagConditions.length
     });
     
-    // CRITICAL: Immediately clear all flag-related state to prevent UI persistence
+    // Reset all flag-related state to empty/default values
     setCurrentLabelId(null);
     setFlagsForLabel([]);
     setAvailableFlags([]);
@@ -37,7 +37,7 @@ export function useFlagLogic() {
     setFlagValues({});
     setFlagConditions([]);
     
-    console.log("Flag logic reset - all flag state cleared for correct visual reset");
+    console.log("Flag logic reset - all flag state cleared to empty arrays/objects");
   };
 
   // Load default flags when a label is selected (not during reset)

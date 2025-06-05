@@ -5,11 +5,9 @@ import { useFlagLogic } from "./wizard/useFlagLogic";
 import { useContextUpdater } from "./wizard/useContextUpdater";
 import { useWizardHandlers } from "./wizard/useWizardHandlers";
 import { WizardStateContextValue } from "./wizard/types";
-import { useAnnotationLabels } from "@/hooks/useAnnotationLabels";
 
 export function useWizardState(): WizardStateContextValue {
-  const sockerContext = useSoccer();
-  const { getDefaultFlagDefinitions } = useAnnotationLabels();
+  const soccerContext = useSoccer();
   
   // Get state from modular hooks
   const selection = useSelectionState();
@@ -27,105 +25,65 @@ export function useWizardState(): WizardStateContextValue {
   const handlers = useWizardHandlers({
     selection,
     flagLogic,
-    sockerContext
+    sockerContext: soccerContext
   });
 
-  // Enhanced comprehensive reset function with state validation
+  // Simplified comprehensive reset function
   const resetWizard = () => {
-    try {
-      console.log("Starting comprehensive wizard reset...");
+    console.log("Starting simplified wizard reset...");
+    
+    // Store current team and player selections to preserve them
+    const currentSelectedTeam = soccerContext.selectedTeam;
+    const currentSelectedPlayer = soccerContext.selectedPlayer;
+    
+    // Reset selection state directly
+    selection.resetSelectionState();
+    
+    // Reset flag state directly
+    flagLogic.resetFlagLogic();
+    
+    // Reset soccer context but preserve team and player selections
+    if (soccerContext && soccerContext.resetEventSelection) {
+      soccerContext.resetEventSelection();
       
-      // Store current team and player selections to preserve them
-      const currentSelectedTeam = sockerContext.selectedTeam;
-      const currentSelectedPlayer = sockerContext.selectedPlayer;
-      
-      // Reset selection state using its own reset function
-      if (selection.resetSelectionState) {
-        selection.resetSelectionState();
-      } else {
-        // Fallback to manual reset
-        selection.setSelectedCategory(null);
-        selection.setSelectedEvent(null);
-        selection.setSelectedEventName(null);
-        selection.setFlagConditions([]);
-        selection.setCurrentStep("default");
+      // Restore team and player selections after context reset
+      if (currentSelectedTeam && soccerContext.setSelectedTeam) {
+        soccerContext.setSelectedTeam(currentSelectedTeam);
       }
-      
-      // Reset flag state using its own reset function
-      if (flagLogic.resetFlagLogic) {
-        flagLogic.resetFlagLogic();
-      } else {
-        // Fallback to manual reset with explicit defaults
-        flagLogic.setCurrentLabelId(null);
-        const defaultFlags = getDefaultFlagDefinitions();
-        flagLogic.setFlagsForLabel(defaultFlags);
-        flagLogic.setCurrentFlagIndex(0);
-        flagLogic.setFlagValues({});
-        flagLogic.setAvailableFlags([]);
-        // Generate default flag conditions from configured flags
-        const defaultFlagConditions = defaultFlags.flatMap(flag => 
-          flag.values?.flatMap(value => ({
-            flagId: flag.id,
-            value: value.value,
-            flagsToHideIds: []
-          })) || []
-        );
-        flagLogic.setFlagConditions(defaultFlagConditions);
+      if (currentSelectedPlayer && soccerContext.setSelectedPlayer) {
+        soccerContext.setSelectedPlayer(currentSelectedPlayer);
       }
-      
-      // Reset soccer context with null check, but preserve team and player selections
-      if (sockerContext && sockerContext.resetEventSelection) {
-        sockerContext.resetEventSelection();
-        
-        // Restore team and player selections after context reset
-        if (currentSelectedTeam && sockerContext.setSelectedTeam) {
-          sockerContext.setSelectedTeam(currentSelectedTeam);
-        }
-        if (currentSelectedPlayer && sockerContext.setSelectedPlayer) {
-          sockerContext.setSelectedPlayer(currentSelectedPlayer);
-        }
-      }
-      
-      // Validate reset state after a brief delay to ensure all state updates have completed
-      setTimeout(() => {
-        validateResetState(currentSelectedTeam, currentSelectedPlayer);
-      }, 100);
-      
-      console.log("Wizard state comprehensive reset completed");
-    } catch (error) {
-      console.error("Error in wizard reset:", error);
     }
+    
+    // Validate reset state
+    setTimeout(() => {
+      validateResetState(currentSelectedTeam, currentSelectedPlayer);
+    }, 100);
+    
+    console.log("Simplified wizard reset completed");
   };
 
-  // Comprehensive state validation function using explicit default configuration
+  // Simplified state validation function
   const validateResetState = (expectedTeam?: any, expectedPlayer?: any) => {
-    const expectedDefaultFlags = getDefaultFlagDefinitions();
-    const expectedFlagsCount = expectedDefaultFlags.length;
-    // Calculate expected flag conditions count from configured default flags
-    const expectedFlagConditionsCount = expectedDefaultFlags.reduce((total, flag) => 
-      total + (flag.values?.length || 0), 0
-    );
-    
     const validationResults = {
       selection: {
         currentStep: selection.currentStep === "default",
-        selectedCategory: selection.selectedCategory === null, // CRITICAL: Must be null for visual reset
+        selectedCategory: selection.selectedCategory === null,
         selectedEvent: selection.selectedEvent === null,
         selectedEventName: selection.selectedEventName === null,
         flagConditions: selection.flagConditions.length === 0
       },
       flagLogic: {
         currentLabelId: flagLogic.currentLabelId === null,
-        flagsForLabel: flagLogic.flagsForLabel.length === expectedFlagsCount, // Should contain configured default flags
-        availableFlags: flagLogic.availableFlags.length === 0, // Should be empty until a label is selected
+        flagsForLabel: flagLogic.flagsForLabel.length === 0,
+        availableFlags: flagLogic.availableFlags.length === 0,
         currentFlagIndex: flagLogic.currentFlagIndex === 0,
         flagValues: Object.keys(flagLogic.flagValues).length === 0,
-        flagConditions: flagLogic.flagConditions.length === expectedFlagConditionsCount // Should contain configured default conditions
+        flagConditions: flagLogic.flagConditions.length === 0
       },
       soccerContext: {
-        // Team and player should retain their values, not be forced to null
-        selectedTeam: expectedTeam ? sockerContext.selectedTeam === expectedTeam : true, // Should retain value if it existed
-        selectedPlayer: expectedPlayer ? sockerContext.selectedPlayer === expectedPlayer : true // Should retain value if it existed
+        selectedTeam: expectedTeam ? soccerContext.selectedTeam === expectedTeam : true,
+        selectedPlayer: expectedPlayer ? soccerContext.selectedPlayer === expectedPlayer : true
       }
     };
     
@@ -134,40 +92,33 @@ export function useWizardState(): WizardStateContextValue {
                     Object.values(validationResults.soccerContext).every(Boolean);
     
     if (allValid) {
-      console.log("✅ Wizard reset validation PASSED - all state properly reset to configured defaults");
-      console.log(`currentStep correctly set to: ${selection.currentStep}`);
-      console.log(`selectedCategory correctly reset to: ${selection.selectedCategory} (must be null for visual reset)`);
-      console.log(`flagsForLabel correctly contains ${flagLogic.flagsForLabel.length} configured default flags`);
-      console.log(`flagConditions correctly contains ${flagLogic.flagConditions.length} configured default conditions`);
-      console.log(`selectedTeam correctly preserved: ${sockerContext.selectedTeam}`);
-      console.log(`selectedPlayer correctly preserved: ${sockerContext.selectedPlayer?.number || 'none'}`);
+      console.log("✅ Simplified wizard reset validation PASSED - all state correctly reset");
+      console.log(`currentStep: ${selection.currentStep} (expected: default)`);
+      console.log(`selectedCategory: ${selection.selectedCategory} (expected: null)`);
+      console.log(`flagsForLabel: ${flagLogic.flagsForLabel.length} items (expected: 0)`);
+      console.log(`flagConditions: ${flagLogic.flagConditions.length} items (expected: 0)`);
+      console.log(`flagValues: ${Object.keys(flagLogic.flagValues).length} items (expected: 0)`);
+      console.log(`selectedTeam preserved: ${soccerContext.selectedTeam}`);
+      console.log(`selectedPlayer preserved: ${soccerContext.selectedPlayer?.number || 'none'}`);
     } else {
-      console.warn("❌ Wizard reset validation FAILED:", validationResults);
+      console.warn("❌ Simplified wizard reset validation FAILED:", validationResults);
       console.warn("Current state values:", {
-        selection: {
-          currentStep: selection.currentStep,
-          selectedCategory: selection.selectedCategory, // This is key for visual issues
-          selectedEvent: selection.selectedEvent,
-          selectedEventName: selection.selectedEventName,
-          flagConditions: selection.flagConditions
-        },
-        flagLogic: {
-          currentLabelId: flagLogic.currentLabelId,
-          flagsForLabel: `${flagLogic.flagsForLabel.length} flags (expected: ${expectedFlagsCount} configured defaults)`,
-          availableFlags: flagLogic.availableFlags.length,
-          currentFlagIndex: flagLogic.currentFlagIndex,
-          flagValues: flagLogic.flagValues,
-          flagConditions: `${flagLogic.flagConditions.length} conditions (expected: ${expectedFlagConditionsCount} configured defaults)`
-        },
-        soccerContext: {
-          selectedTeam: sockerContext.selectedTeam,
-          selectedPlayer: sockerContext.selectedPlayer?.number || 'none'
-        }
+        currentStep: selection.currentStep,
+        selectedCategory: selection.selectedCategory,
+        selectedEvent: selection.selectedEvent,
+        selectedEventName: selection.selectedEventName,
+        flagsForLabel: flagLogic.flagsForLabel.length,
+        availableFlags: flagLogic.availableFlags.length,
+        currentFlagIndex: flagLogic.currentFlagIndex,
+        flagValues: Object.keys(flagLogic.flagValues).length,
+        flagConditions: flagLogic.flagConditions.length,
+        selectedTeam: soccerContext.selectedTeam,
+        selectedPlayer: soccerContext.selectedPlayer?.number || 'none'
       });
     }
   };
 
-  // Return the public API with all required properties
+  // Return the simplified public API
   return {
     currentStep: selection.currentStep,
     selectedCategory: selection.selectedCategory,
@@ -178,7 +129,6 @@ export function useWizardState(): WizardStateContextValue {
     availableFlags: flagLogic.availableFlags,
     currentFlagIndex: flagLogic.currentFlagIndex,
     flagConditions: selection.flagConditions,
-    resetCounter: selection.resetCounter, // ADDED: Expose reset counter
     handleCategorySelect: handlers.handleCategorySelect,
     handleQuickEventSelect: handlers.handleQuickEventSelect,
     handleEventSelect: handlers.handleEventSelect,
