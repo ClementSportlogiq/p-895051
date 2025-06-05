@@ -16,13 +16,11 @@ export const EventWizard: React.FC = () => {
   const {
     currentStep,
     selectedCategory,
-    resetCounter
   } = wizardState;
 
   console.log("🔄 EventWizard state capture (Direct):", {
     currentStep,
     selectedCategory,
-    resetCounter,
     timestamp: new Date().toISOString()
   });
 
@@ -31,7 +29,6 @@ export const EventWizard: React.FC = () => {
     wizardState,
     currentStep,
     selectedCategory,
-    resetCounter,
     onStateStale: setIsStateStale
   });
 
@@ -45,7 +42,6 @@ export const EventWizard: React.FC = () => {
   console.log("🎯 EventWizard render decision:", {
     currentStep,
     selectedCategory,
-    resetCounter,
     isStateStale,
     willRender: isStateStale ? "BLOCKED (state settling)" : 
                                 renderConditions.shouldDisplayDefaultView ? "DefaultView" : 
@@ -61,7 +57,6 @@ export const EventWizard: React.FC = () => {
     <WizardContainer 
       wizardState={wizardState}
       renderConditions={renderConditions}
-      resetCounter={resetCounter}
     />
   );
 };
