@@ -1,62 +1,77 @@
 
 import React from "react";
 import { useWizardState } from "./hooks/useWizardState";
-import { useStateValidation } from "./hooks/useStateValidation";
-import { useRenderConditions } from "./hooks/useRenderConditions";
-import { RenderGuard } from "./components/RenderGuard";
-import { WizardContainer } from "./components/WizardContainer";
-import { useState } from "react";
+import DefaultView from "./DefaultView";
+import FlagStep from "./FlagStep";
 
 export const EventWizard: React.FC = () => {
-  const [isStateStale, setIsStateStale] = useState(false);
-
-  // Get state from useWizardState directly
-  const wizardState = useWizardState();
+  // Direct state consumption from useWizardState
   const {
     currentStep,
     selectedCategory,
-  } = wizardState;
+    selectedEvent,
+    selectedEventName,
+    currentLabelId,
+    flagsForLabel,
+    availableFlags,
+    currentFlagIndex,
+    flagConditions,
+    handleCategorySelect,
+    handleQuickEventSelect,
+    handleEventSelect,
+    handleFlagValueSelect,
+    handleBack,
+    resetWizard
+  } = useWizardState();
 
-  console.log("🔄 EventWizard state capture (Direct):", {
-    currentStep,
-    selectedCategory,
-    timestamp: new Date().toISOString()
-  });
+  // Get current flag simply from flagsForLabel array
+  const currentFlag = flagsForLabel.length > 0 && currentFlagIndex < flagsForLabel.length
+    ? flagsForLabel[currentFlagIndex]
+    : null;
 
-  // State validation and freshness tracking
-  const { validateStateConsistency } = useStateValidation({
-    wizardState,
-    currentStep,
-    selectedCategory,
-    onStateStale: setIsStateStale
-  });
+  // Simple conditional rendering logic
+  const shouldShowDefaultView = currentStep === "default" && selectedCategory === null;
+  const shouldShowCategoryView = currentStep === "default" && selectedCategory !== null;
+  const shouldShowFlagStep = currentStep === "flag" && currentFlag !== null;
 
-  // Get render conditions
-  const renderConditions = useRenderConditions({
-    wizardState,
-    isStateStale,
-    validateStateConsistency
-  });
-
-  console.log("🎯 EventWizard render decision:", {
-    currentStep,
-    selectedCategory,
-    isStateStale,
-    willRender: isStateStale ? "BLOCKED (state settling)" : 
-                                renderConditions.shouldDisplayDefaultView ? "DefaultView" : 
-                                renderConditions.shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
-  });
-
-  // Render guard for state synchronization
-  if (isStateStale) {
-    return <RenderGuard isStateStale={isStateStale} />;
-  }
+  // Generate simple keys for component remounting
+  const getViewKey = () => {
+    if (shouldShowDefaultView) return "default-main";
+    if (shouldShowCategoryView) return `category-${selectedCategory}`;
+    if (shouldShowFlagStep) return `flag-${currentFlag?.id || 'none'}`;
+    return "default-fallback";
+  };
 
   return (
-    <WizardContainer 
-      wizardState={wizardState}
-      renderConditions={renderConditions}
-    />
+    <div className="min-w-60 text-base text-white font-normal flex-1 shrink basis-[0%] p-4 max-md:max-w-full">
+      {/* Back button (appears after first selection) */}
+      {(currentStep !== "default" || selectedCategory) && (
+        <button 
+          onClick={handleBack}
+          className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 mb-3 hover:bg-[#6b7883] transition-colors"
+        >
+          Back
+        </button>
+      )}
+
+      {/* Simple conditional rendering */}
+      {(shouldShowDefaultView || shouldShowCategoryView) && (
+        <DefaultView 
+          key={getViewKey()}
+          selectedCategory={selectedCategory} 
+          onCategorySelect={handleCategorySelect}
+          onEventSelect={handleEventSelect}
+        />
+      )}
+      
+      {shouldShowFlagStep && (
+        <FlagStep 
+          key={getViewKey()}
+          flag={currentFlag} 
+          onFlagValueSelect={handleFlagValueSelect} 
+        />
+      )}
+    </div>
   );
 };
 
