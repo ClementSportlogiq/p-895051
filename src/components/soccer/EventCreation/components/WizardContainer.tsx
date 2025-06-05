@@ -12,13 +12,11 @@ interface WizardContainerProps {
     defaultViewKey: string;
     flagStepKey: string;
   };
-  resetCounter: number;
 }
 
 export const WizardContainer: React.FC<WizardContainerProps> = ({
   wizardState,
-  renderConditions,
-  resetCounter
+  renderConditions
 }) => {
   const {
     currentStep,
@@ -50,7 +48,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
     availableFlagsCount: availableFlags.length,
     shouldDisplayFlag,
     shouldDisplayDefaultView,
-    resetCounter,
     wizardStateMatches: wizardState.currentStep === currentStep && wizardState.selectedCategory === selectedCategory,
     willRender: shouldDisplayDefaultView ? "DefaultView" : 
                 shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
@@ -61,7 +58,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
       {/* Back button (appears after first selection) */}
       {(currentStep !== "default" || selectedCategory) && (
         <button 
-          key={`back-${resetCounter}`}
           onClick={handleBack}
           className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 mb-3 hover:bg-[#6b7883] transition-colors"
         >

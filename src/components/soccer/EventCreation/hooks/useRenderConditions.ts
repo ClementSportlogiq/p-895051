@@ -17,7 +17,6 @@ export function useRenderConditions({
     currentFlagIndex,
     flagsForLabel,
     availableFlags,
-    resetCounter,
     selectedCategory
   } = wizardState;
 
@@ -42,15 +41,14 @@ export function useRenderConditions({
     (currentStep === "default" || (currentStep !== "flag" || !shouldDisplayFlag))
   );
 
-  // FIXED: Generate specific dynamic keys for component identity
-  // Since selectedCategory can be a string (like "offense"), not an object with id
+  // Generate specific dynamic keys for component identity
   const defaultViewKey = selectedCategory 
-    ? `category-${selectedCategory}-${resetCounter}` 
-    : `default-main-${resetCounter}`;
+    ? `category-${selectedCategory}` 
+    : `default-main`;
   
   const flagStepKey = currentFlag 
-    ? `flag-${currentFlag.id}-${resetCounter}` 
-    : `empty-flag-${resetCounter}`;
+    ? `flag-${currentFlag.id}` 
+    : `empty-flag`;
 
   return {
     shouldDisplayFlag,

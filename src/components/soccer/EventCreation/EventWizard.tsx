@@ -7,7 +7,6 @@ import { RenderGuard } from "./components/RenderGuard";
 import { WizardContainer } from "./components/WizardContainer";
 import { useState } from "react";
 
-// REMOVED: Any React.memo usage to ensure fresh rendering
 export const EventWizard: React.FC = () => {
   const [isStateStale, setIsStateStale] = useState(false);
 
@@ -61,5 +60,4 @@ export const EventWizard: React.FC = () => {
   );
 };
 
-// CRITICAL: Export without React.memo to ensure fresh rendering
 export default EventWizard;

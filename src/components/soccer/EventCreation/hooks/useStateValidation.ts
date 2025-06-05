@@ -6,7 +6,6 @@ interface UseStateValidationProps {
   wizardState: WizardStateContextValue;
   currentStep: string;
   selectedCategory: string | null;
-  resetCounter: number;
   onStateStale: (isStale: boolean) => void;
 }
 
@@ -14,68 +13,46 @@ export function useStateValidation({
   wizardState,
   currentStep,
   selectedCategory,
-  resetCounter,
   onStateStale
 }: UseStateValidationProps) {
-  const lastResetCounterRef = useRef<number>(0);
   const renderBlockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // CRITICAL FIX: Add explicit wizardState object reference tracking
+  // Add explicit wizardState object reference tracking
   useEffect(() => {
     console.log("🔄 EventWizard wizardState object changed:", {
       currentStep,
       selectedCategory,
-      resetCounter,
       wizardStateRef: wizardState,
       timestamp: new Date().toISOString()
     });
-  }, [wizardState, currentStep, selectedCategory, resetCounter]);
+  }, [wizardState, currentStep, selectedCategory]);
 
-  // CRITICAL FIX: Add state freshness validation
+  // State freshness validation
   useEffect(() => {
-    const isExpectedResetState = currentStep === "default" && selectedCategory === null;
-    
     // Validate that destructured values match the wizardState object
     if (wizardState.currentStep !== currentStep || wizardState.selectedCategory !== selectedCategory) {
       console.warn("⚠️ Stale state detected in EventWizard - destructured values don't match wizardState object", {
         destructured: { currentStep, selectedCategory },
-        wizardStateObject: { currentStep: wizardState.currentStep, selectedCategory: wizardState.selectedCategory },
-        resetCounter
+        wizardStateObject: { currentStep: wizardState.currentStep, selectedCategory: wizardState.selectedCategory }
       });
       onStateStale(true);
       return;
     }
 
-    // Check for reset condition and manage render blocking
-    if (resetCounter > lastResetCounterRef.current) {
-      console.log("🔄 Reset detected, managing state synchronization", {
-        oldResetCounter: lastResetCounterRef.current,
-        newResetCounter: resetCounter
-      });
-      
-      // Clear any existing timeout
-      if (renderBlockTimeoutRef.current) {
-        clearTimeout(renderBlockTimeoutRef.current);
-      }
-      
-      // Briefly block rendering to allow state to fully settle
-      onStateStale(true);
-      renderBlockTimeoutRef.current = setTimeout(() => {
-        onStateStale(false);
-        console.log("🔄 State synchronization complete, allowing fresh render");
-      }, 10);
-      
-      lastResetCounterRef.current = resetCounter;
-    } else {
-      onStateStale(false);
+    // Clear any existing timeout
+    if (renderBlockTimeoutRef.current) {
+      clearTimeout(renderBlockTimeoutRef.current);
     }
+    
+    // Allow rendering
+    onStateStale(false);
     
     return () => {
       if (renderBlockTimeoutRef.current) {
         clearTimeout(renderBlockTimeoutRef.current);
       }
     };
-  }, [wizardState, currentStep, selectedCategory, resetCounter, onStateStale]);
+  }, [wizardState, currentStep, selectedCategory, onStateStale]);
 
   // State freshness validation function
   const validateStateConsistency = () => {
@@ -87,8 +64,7 @@ export function useStateValidation({
         currentStep,
         selectedCategory,
         flagsForLabel: wizardState.flagsForLabel.length,
-        availableFlags: wizardState.availableFlags.length,
-        resetCounter
+        availableFlags: wizardState.availableFlags.length
       });
       return false;
     }
