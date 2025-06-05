@@ -12,10 +12,8 @@ export const EventWizard: React.FC = () => {
   const lastResetCounterRef = useRef<number>(0);
   const renderBlockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get state from useWizardState with explicit destructuring for better tracking
+  // CRITICAL FIX: Use direct state destructuring instead of problematic useMemo wrapper
   const wizardState = useWizardState();
-  
-  // CRITICAL FIX: Use useMemo to ensure fresh state capture with proper dependencies
   const {
     currentStep,
     selectedCategory,
@@ -28,39 +26,35 @@ export const EventWizard: React.FC = () => {
     handleEventSelect,
     handleFlagValueSelect,
     handleBack
-  } = useMemo(() => {
-    // State freshness validation
-    const isResetState = wizardState.currentStep === "default" && 
-                        wizardState.selectedCategory === null;
-    
-    console.log("🔄 EventWizard state capture:", {
-      currentStep: wizardState.currentStep,
-      selectedCategory: wizardState.selectedCategory,
-      resetCounter: wizardState.resetCounter,
-      isResetState,
-      timestamp: new Date().toISOString()
-    });
-    
-    return wizardState;
-  }, [
-    wizardState.currentStep,
-    wizardState.selectedCategory,
-    wizardState.resetCounter,
-    wizardState.flagsForLabel.length,
-    wizardState.availableFlags.length,
-    wizardState.currentFlagIndex
-  ]);
+  } = wizardState;
 
   const { getLabelsByCategory, getQuickEvents } = useAnnotationLabels();
 
-  // CRITICAL FIX: Add explicit state dependency tracking to force re-renders
+  // CRITICAL FIX: Add explicit wizardState object reference tracking
   useEffect(() => {
-    console.log("🔄 EventWizard state dependency effect triggered", { 
-      currentStep, 
-      selectedCategory, 
+    console.log("🔄 EventWizard wizardState object changed:", {
+      currentStep,
+      selectedCategory,
       resetCounter,
-      timestamp: new Date().toISOString() 
+      wizardStateRef: wizardState,
+      timestamp: new Date().toISOString()
     });
+  }, [wizardState, currentStep, selectedCategory, resetCounter]);
+
+  // CRITICAL FIX: Add state freshness validation
+  useEffect(() => {
+    const isExpectedResetState = currentStep === "default" && selectedCategory === null;
+    
+    // Validate that destructured values match the wizardState object
+    if (wizardState.currentStep !== currentStep || wizardState.selectedCategory !== selectedCategory) {
+      console.warn("⚠️ Stale state detected in EventWizard - destructured values don't match wizardState object", {
+        destructured: { currentStep, selectedCategory },
+        wizardStateObject: { currentStep: wizardState.currentStep, selectedCategory: wizardState.selectedCategory },
+        resetCounter
+      });
+      setIsStateStale(true);
+      return;
+    }
 
     // Check for reset condition and manage render blocking
     if (resetCounter > lastResetCounterRef.current) {
@@ -79,9 +73,11 @@ export const EventWizard: React.FC = () => {
       renderBlockTimeoutRef.current = setTimeout(() => {
         setIsStateStale(false);
         console.log("🔄 State synchronization complete, allowing fresh render");
-      }, 10); // Very brief delay to allow state batching to complete
+      }, 10);
       
       lastResetCounterRef.current = resetCounter;
+    } else {
+      setIsStateStale(false);
     }
     
     return () => {
@@ -89,9 +85,9 @@ export const EventWizard: React.FC = () => {
         clearTimeout(renderBlockTimeoutRef.current);
       }
     };
-  }, [currentStep, selectedCategory, resetCounter]);
+  }, [wizardState, currentStep, selectedCategory, resetCounter]);
 
-  // CRITICAL FIX: Component lifecycle logging with resetCounter dependency
+  // Component lifecycle logging
   useEffect(() => {
     console.log("🔄 EventWizard mounted/re-mounted", { 
       currentStep, 
@@ -103,7 +99,7 @@ export const EventWizard: React.FC = () => {
     return () => {
       console.log("🔄 EventWizard unmounting", { resetCounter });
     };
-  }, [resetCounter]); // Depend on resetCounter to log on forced re-mounts
+  }, [resetCounter]);
 
   // Setup keyboard event handlers
   useEventTreeKeyboard({
@@ -134,7 +130,7 @@ export const EventWizard: React.FC = () => {
     handleFlagValueSelect
   });
 
-  // CRITICAL FIX: Add state freshness validation before render decisions
+  // State freshness validation function
   const validateStateConsistency = () => {
     const expectedResetState = currentStep === "default" && selectedCategory === null;
     const isInExpectedResetState = expectedResetState;
@@ -155,7 +151,7 @@ export const EventWizard: React.FC = () => {
   // Get current flag to display - with enhanced defensive checks
   const currentFlag = flagsForLabel[currentFlagIndex];
   
-  // STRENGTHENED: Enhanced shouldDisplayFlag logic with explicit boolean checks and state validation
+  // Enhanced shouldDisplayFlag logic with explicit boolean checks and state validation
   const shouldDisplayFlag = Boolean(
     !isStateStale &&
     validateStateConsistency() &&
@@ -166,7 +162,7 @@ export const EventWizard: React.FC = () => {
     availableFlags.some(f => f && f.id === currentFlag.id)
   );
 
-  // STRENGTHENED: Explicit check for DefaultView display conditions with state validation
+  // Explicit check for DefaultView display conditions with state validation
   const shouldDisplayDefaultView = Boolean(
     !isStateStale &&
     validateStateConsistency() &&
@@ -183,12 +179,13 @@ export const EventWizard: React.FC = () => {
     shouldDisplayDefaultView,
     isStateStale,
     resetCounter,
+    wizardStateMatches: wizardState.currentStep === currentStep && wizardState.selectedCategory === selectedCategory,
     willRender: isStateStale ? "BLOCKED (state settling)" : 
                 shouldDisplayDefaultView ? "DefaultView" : 
                 shouldDisplayFlag ? "FlagStep" : "DefaultView (fallback)"
   });
 
-  // CRITICAL FIX: Generate more specific dynamic keys for component identity
+  // Generate specific dynamic keys for component identity
   const defaultViewKey = selectedCategory 
     ? `category-${selectedCategory}-${resetCounter}` 
     : `default-main-${resetCounter}`;
@@ -197,7 +194,7 @@ export const EventWizard: React.FC = () => {
     ? `flag-${currentFlag.id}-${resetCounter}` 
     : `empty-flag-${resetCounter}`;
 
-  // CRITICAL FIX: Render blocking for state synchronization
+  // Render blocking for state synchronization
   if (isStateStale) {
     console.log("🛑 Render blocked: waiting for state synchronization");
     return (
@@ -212,7 +209,7 @@ export const EventWizard: React.FC = () => {
       {/* Back button (appears after first selection) */}
       {(currentStep !== "default" || selectedCategory) && (
         <button 
-          key={`back-${resetCounter}`} // ADDED: Dynamic key for back button
+          key={`back-${resetCounter}`}
           onClick={handleBack}
           className="bg-[rgba(137,150,159,1)] text-white px-3 py-1 mb-3 hover:bg-[#6b7883] transition-colors"
         >
@@ -220,20 +217,20 @@ export const EventWizard: React.FC = () => {
         </button>
       )}
 
-      {/* FIXED: Strengthened conditional rendering with explicit priority and unique keys */}
+      {/* Strengthened conditional rendering with explicit priority and unique keys */}
       {shouldDisplayDefaultView && (
         <DefaultView 
-          key={defaultViewKey} // CRITICAL: Unique key forces re-mount on state changes
+          key={defaultViewKey}
           selectedCategory={selectedCategory} 
           onCategorySelect={handleCategorySelect}
           onEventSelect={handleEventSelect}
         />
       )}
       
-      {/* FIXED: Only render FlagStep when explicitly required AND prevent overlap */}
+      {/* Only render FlagStep when explicitly required AND prevent overlap */}
       {!shouldDisplayDefaultView && shouldDisplayFlag && (
         <FlagStep 
-          key={flagStepKey} // CRITICAL: Unique key forces re-mount on flag changes
+          key={flagStepKey}
           flag={currentFlag} 
           onFlagValueSelect={handleFlagValueSelect} 
         />
