@@ -6,20 +6,19 @@ import { WizardStateContextValue } from "../hooks/wizard/types";
 
 interface WizardContainerProps {
   wizardState: WizardStateContextValue;
-  shouldDisplayDefaultView: boolean;
-  shouldDisplayFlag: boolean;
-  defaultViewKey: string;
-  flagStepKey: string;
-  validateStateConsistency: () => boolean;
+  renderConditions: {
+    shouldDisplayFlag: boolean;
+    shouldDisplayDefaultView: boolean;
+    defaultViewKey: string;
+    flagStepKey: string;
+  };
+  resetCounter: number;
 }
 
 export const WizardContainer: React.FC<WizardContainerProps> = ({
   wizardState,
-  shouldDisplayDefaultView,
-  shouldDisplayFlag,
-  defaultViewKey,
-  flagStepKey,
-  validateStateConsistency
+  renderConditions,
+  resetCounter
 }) => {
   const {
     currentStep,
@@ -27,12 +26,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
     currentFlagIndex,
     flagsForLabel,
     availableFlags,
-    resetCounter,
     handleCategorySelect,
     handleEventSelect,
     handleFlagValueSelect,
     handleBack
   } = wizardState;
+
+  const {
+    shouldDisplayFlag,
+    shouldDisplayDefaultView,
+    defaultViewKey,
+    flagStepKey
+  } = renderConditions;
 
   // Get current flag to display - with enhanced defensive checks
   const currentFlag = flagsForLabel[currentFlagIndex];
