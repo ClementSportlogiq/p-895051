@@ -42,7 +42,8 @@ export function useRenderConditions({
     (currentStep === "default" || (currentStep !== "flag" || !shouldDisplayFlag))
   );
 
-  // Generate specific dynamic keys for component identity
+  // FIXED: Generate specific dynamic keys for component identity
+  // Since selectedCategory can be a string (like "offense"), not an object with id
   const defaultViewKey = selectedCategory 
     ? `category-${selectedCategory}-${resetCounter}` 
     : `default-main-${resetCounter}`;
